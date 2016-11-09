@@ -1,0 +1,109 @@
+﻿<core:ActivityDesignerTemplate x:Class="Dev2.Activities.Designers2.HtmlParser.Small"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                               xmlns:ui="clr-namespace:Dev2.UI;assembly=Dev2.Intellisense"
+                               xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+                               xmlns:core="clr-namespace:Dev2.Activities.Designers2.Core"
+             
+                               xmlns:help="clr-namespace:Dev2.Activities.Designers2.Core.Help"
+                               xmlns:errors="clr-namespace:Dev2.Activities.Designers2.Core.Errors"
+    xmlns:attachedProperties2="clr-namespace:Dev2.Studio.AppResources.AttachedProperties"
+    xmlns:provider="clr-namespace:Dev2.Intellisense.Provider;assembly=Dev2.Intellisense"
+    xmlns:upload="clr-namespace:Dev2.Activities.Designers2.HtmlParser"
+    Width="250"
+                               MaxWidth="250"
+                               Padding="7"
+                               mc:Ignorable="d"
+                               d:DesignWidth="250"
+                               d:DataContext="{d:DesignInstance upload:HtmlParserViewModel}">
+
+    <core:ActivityDesignerTemplate.Resources>
+        <ResourceDictionary x:Name="TheResources"
+                            Source="pack://application:,,,/Dev2.Activities.Designers;component/Themes/ActivityResources.xaml" />
+    </core:ActivityDesignerTemplate.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+
+        </Grid.RowDefinitions>
+
+
+        <Label Grid.Column="0"
+               Grid.Row="0"
+               Content="Left" 
+               FontWeight="Normal"
+Style="{StaticResource ActivityLabelStyle}"
+               VerticalAlignment="Top"
+               VerticalContentAlignment="Top"/>
+        <ui:IntellisenseTextBox  x:Name="InitialFocusElement"
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                IsInCalculateMode="False"
+            FilterType="All"
+            Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
+                                ToolTip="Left String"
+                                Text="{Binding Path=ModelItem.Left, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_fxtxt_AutoID}"
+                                attachedProperties2:WizardEngineAttachedProperties.DontOpenWizard="True">
+
+        </ui:IntellisenseTextBox>
+        <Grid Grid.Column="1"
+              Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+        </Grid>
+        <Label Grid.Column="0"
+               Grid.Row="1"
+               Content="Operation" 
+               FontWeight="Normal"
+Style="{StaticResource ActivityLabelStyle}"
+               VerticalAlignment="Top"
+               VerticalContentAlignment="Top"/>
+        <ui:IntellisenseTextBox 
+                                Grid.Column="1"
+                                Grid.Row="1"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                IsInCalculateMode="False"
+            FilterType="All"
+            Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
+                                Text="{Binding Path=ModelItem.Right, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_fxtxt_AutoID}"
+                                attachedProperties2:WizardEngineAttachedProperties.DontOpenWizard="True">
+
+        </ui:IntellisenseTextBox>
+
+        <Label Grid.Column="0"
+               Grid.Row="2"
+               Content="Result" 
+               FontWeight="Normal"
+                Style="{StaticResource ActivityLabelStyle}"
+               VerticalAlignment="Top"
+               VerticalContentAlignment="Top"/>
+
+        <ui:IntellisenseTextBox 
+                                Grid.Column="1"
+                                Grid.Row="2"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                IsInCalculateMode="False"
+            FilterType="All"
+            Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
+                                
+                                Text="{Binding Path=ModelItem.Result, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_fxtxt_AutoID}"
+                                attachedProperties2:WizardEngineAttachedProperties.DontOpenWizard="True">
+
+        </ui:IntellisenseTextBox>
+    </Grid>
+</core:ActivityDesignerTemplate>

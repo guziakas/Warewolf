@@ -361,6 +361,10 @@
     <Compile Include="Designers2\DropBox2016\Upload\Small.xaml.cs">
       <DependentUpon>Small.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Designers2\HtmlParser\HtmlParserViewModel.cs" />
+    <Compile Include="Designers2\HtmlParser\Small.xaml.cs">
+      <DependentUpon>Small.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Designers2\RabbitMQ\Consume\Large.xaml.cs">
       <DependentUpon>Large.xaml</DependentUpon>
     </Compile>
@@ -1448,6 +1452,14 @@
     <Page Include="Designers2\GetWebRequest\GetWebRequest\Small.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\HtmlParser\HtmlParserDesigner.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\HtmlParser\Small.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Designers2\RabbitMQ\Consume\Large.xaml">
       <SubType>Designer</SubType>
