@@ -97,6 +97,7 @@ using Dev2.Activities.Designers2.ComDLL;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Dev2.Activities.Designers2.MultiAssignObject;
 using Dev2.Activities.Scripting;
+using Dev2.Activities.Designers2.HtmlParser;
 
 // ReSharper disable RedundantNameQualifier
 
@@ -188,6 +189,8 @@ namespace Dev2.Studio.ActivityDesigners
                 { typeof(DsfPublishRabbitMQActivity), typeof(RabbitMQPublishDesigner) },
                 { typeof(DsfSelectAndApplyActivity), typeof(SelectAndApplyDesigner) },
                 { typeof(DsfConsumeRabbitMQActivity), typeof(RabbitMQConsumeDesigner) },
+            {typeof(DsfHtmlParserActivity),typeof(HtmlParserDesigner) },
+            {typeof(DsfConcatenateActivity),typeof(Dev2.Activities.Designers2.Concatenate.ConcatenateDesigner) }
             };
         private static Hashtable _hashTable;
 

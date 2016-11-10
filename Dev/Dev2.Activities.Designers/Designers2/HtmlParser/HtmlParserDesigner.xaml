@@ -22,7 +22,7 @@
     <sap:ActivityDesigner.Resources>
         <ResourceDictionary>
             <local:Small x:Key="Small" AutomationProperties.AutomationId="SmallViewContent" />
-            <!--<local:Large x:Key="Large" AutomationProperties.AutomationId="LargeViewContent" />-->
+            <local:Large x:Key="Large" AutomationProperties.AutomationId="LargeViewContent" />
             <quickVariableInput:QuickVariableInputView x:Key="QuickVariableInput" AutomationProperties.AutomationId="QuickVariableInputContent" />
 
             <Style x:Key="ContentViewStyle" BasedOn="{StaticResource ActivityDesignerStyle}" TargetType="{x:Type sap:ActivityDesigner}">

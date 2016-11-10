@@ -28,42 +28,46 @@ namespace Dev2.Activities
     {
         public void AddListToCollection(IList<string> listToAdd, bool overwrite, ModelItem modelItem)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public int GetCollectionCount()
         {
-            throw new NotImplementedException();
+
+            //throw new NotImplementedException();
+            return 0; 
         }
 
         public override IList<DsfForEachItem> GetForEachInputs()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return new List<DsfForEachItem>();
         }
 
         public override IList<DsfForEachItem> GetForEachOutputs()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return new List<DsfForEachItem>();
         }
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            throw new NotImplementedException();
+        //    throw new NotImplementedException();
         }
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            throw new NotImplementedException();
+           // throw new NotImplementedException();
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-            throw new NotImplementedException();
+          //  throw new NotImplementedException();
         }
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
     }
 }
