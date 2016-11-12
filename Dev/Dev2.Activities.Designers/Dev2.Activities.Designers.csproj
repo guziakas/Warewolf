@@ -236,10 +236,6 @@
     <Compile Include="Designers2\Comment\Large.xaml.cs">
       <DependentUpon>Large.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Designers2\Concatenate\ConcatenateViewModel.cs" />
-    <Compile Include="Designers2\Concatenate\Small.xaml.cs">
-      <DependentUpon>Small.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Designers2\Core\ActionInputDatatalistMapper.cs" />
     <Compile Include="Designers2\Core\ActionRegion\ComActionRegion.cs" />
     <Compile Include="Designers2\Core\ActionRegion\DbActionRegion.cs" />
@@ -323,6 +319,16 @@
       <DependentUpon>Large.xaml</DependentUpon>
     </Compile>
     <Compile Include="Designers2\DeleteRecords\Small.xaml.cs">
+      <DependentUpon>Small.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Designers2\Demo\DemoDesigner.xaml.cs">
+      <DependentUpon>DemoDesigner.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Designers2\Demo\DemoDesignerViewModel.cs" />
+    <Compile Include="Designers2\Demo\Large.xaml.cs">
+      <DependentUpon>Large.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Designers2\Demo\Small.xaml.cs">
       <DependentUpon>Small.xaml</DependentUpon>
     </Compile>
     <Compile Include="Designers2\DropBox2016\Delete\DropBoxDeleteDesigner.xaml.cs">
@@ -1312,14 +1318,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Designers2\Concatenate\ConcatenateDesigner.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Designers2\Concatenate\Small.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Designers2\Core\CustomToolDesignerRegions.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -1377,6 +1375,18 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Designers2\DeleteRecords\Small.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\Demo\DemoDesigner.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\Demo\Large.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\Demo\Small.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

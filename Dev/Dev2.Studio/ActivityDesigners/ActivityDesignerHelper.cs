@@ -110,6 +110,7 @@ namespace Dev2.Studio.ActivityDesigners
             {
                 { typeof(DsfMultiAssignActivity), typeof(MultiAssignDesigner) },
                 { typeof(DsfMultiAssignObjectActivity), typeof(MultiAssignObjectDesigner) },
+                { typeof(DsfDemoActivity), typeof(Activities.Designers2.Demo.DemoDesigner) },
                 { typeof(DsfDateTimeActivity), typeof(DateTimeDesigner) },
                 { typeof(DsfWebGetRequestWithTimeoutActivity), typeof(GetWebRequestWithTimeOutDesigner) },
                 { typeof(DsfWebGetRequestActivity), typeof(GetWebRequestDesigner) },
@@ -190,7 +191,7 @@ namespace Dev2.Studio.ActivityDesigners
                 { typeof(DsfSelectAndApplyActivity), typeof(SelectAndApplyDesigner) },
                 { typeof(DsfConsumeRabbitMQActivity), typeof(RabbitMQConsumeDesigner) },
             {typeof(DsfHtmlParserActivity),typeof(HtmlParserDesigner) },
-            {typeof(DsfConcatenateActivity),typeof(Dev2.Activities.Designers2.Concatenate.ConcatenateDesigner) }
+           // {typeof(DsfConcatenateActivity),typeof(Dev2.Activities.Designers2.Concatenate.ConcatenateDesigner) }
             };
         private static Hashtable _hashTable;
 
