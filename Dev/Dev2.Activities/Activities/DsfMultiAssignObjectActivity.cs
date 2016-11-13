@@ -81,7 +81,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Ctor
 
-        public DsfMultiAssignObjectActivity()
+        public DsfDemoActivity()
             : base("Assign Object")
         {
             _fieldsCollection = new List<AssignObjectDTO>();
