@@ -38,8 +38,9 @@ using WarewolfParserInterop;
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 // ReSharper restore CheckNamespace
 {
-    [ToolDescriptorInfo("AssignObject", "Assign Object", ToolType.Native, "A86C4D10-B4D0-4775-AF4D-C66D5A6CE76F", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Assign Object_Tags")]
-    public class DsfMultiAssignObjectActivity : DsfActivityAbstract<string>
+    
+    [ToolDescriptorInfo("Demo - AssignObject", "Demo - Assign Object", ToolType.Native, "A86C4D10-B4D0-4775-AF4D-C66D5A6CE76F", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Assign Object_Tags")]
+    public class DsfDemoActivity : DsfActivityAbstract<string>
     {
         #region Constants
 
@@ -81,7 +82,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Ctor
 
-        public DsfMultiAssignObjectActivity()
+        public DsfDemoActivity()
             : base("Assign Object")
         {
             _fieldsCollection = new List<AssignObjectDTO>();
@@ -136,7 +137,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                                 if (dataObject.IsDebugMode())
                                 {
                                     debugItem = AddSingleInputDebugItem(dataObject.Environment, innerCount, assignValue, update);
-                                }                                
+                                }
                                 if (isCalcEvaluation)
                                 {
                                     DoCalculation(dataObject.Environment, t.FieldName, t.FieldValue, update);
