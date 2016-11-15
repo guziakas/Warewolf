@@ -1,13 +1,18 @@
 /*
 *  Warewolf - Once bitten, there's no going back
 *  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
+using System.Activities;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
@@ -19,48 +24,37 @@ using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
-using Dev2.MathOperations;
-using Dev2.TO;
-using System;
-using System.Activities;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using Dev2.Interfaces;
+using Dev2.MathOperations;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 using WarewolfParserInterop;
-
 // ReSharper disable UnusedMember.Global
 
 // ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 // ReSharper restore CheckNamespace
 {
-   
-
-    [ToolDescriptorInfo("AssignObject", "Assign Object", ToolType.Native, "A86C4D10-B4D0-4775-AF4D-C66D5A6CE76F", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Assign Object_Tags")]
-    public class DsfMultiAssignObjectActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Data-Assign", "Assign", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Assign_Tags")]
+    public class DsfMultiAssignActivity : DsfActivityAbstract<string>
     {
         #region Constants
-
         public const string CalculateTextConvertPrefix = GlobalConstants.CalculateTextConvertPrefix;
         public const string CalculateTextConvertSuffix = GlobalConstants.CalculateTextConvertSuffix;
         public const string CalculateTextConvertFormat = GlobalConstants.CalculateTextConvertFormat;
-
-        #endregion Constants
+        #endregion
 
         #region Fields
 
-        private IList<AssignObjectDTO> _fieldsCollection;
+        private IList<ActivityDTO> _fieldsCollection;
 
-        #endregion Fields
+        #endregion
 
         #region Properties
 
         // ReSharper disable ConvertToAutoProperty
-        public IList<AssignObjectDTO> FieldsCollection
+        public IList<ActivityDTO> FieldsCollection
         // ReSharper restore ConvertToAutoProperty
         {
             get
@@ -79,17 +73,17 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         protected override bool CanInduceIdle => true;
 
-        #endregion Properties
+        #endregion
 
         #region Ctor
 
-        public DsfMultiAssignObjectActivity()
-            : base("Assign Object")
+        public DsfMultiAssignActivity()
+            : base("Assign")
         {
-            _fieldsCollection = new List<AssignObjectDTO>();
+            _fieldsCollection = new List<ActivityDTO>();
         }
 
-        #endregion Ctor
+        #endregion
 
         #region Overridden NativeActivity Methods
 
@@ -98,7 +92,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             base.CacheMetadata(metadata);
         }
-
         // ReSharper restore RedundantOverridenMember
 
         protected override void OnExecute(NativeActivityContext context)
@@ -106,6 +99,21 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
+
+        #region Overrides of DsfNativeActivity<string>
+
+        //public override IDev2Activity Execute(IDSFDataObject data)
+        //{
+        //    ExecuteTool(data);
+        //    if(NextNodes != null && NextNodes.Count()>0)
+        //    {
+        //        NextNodes.First().Execute(data);
+        //        return NextNodes.First();
+        //    }
+        //    return null;
+        //}
+
+        #endregion
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
@@ -118,47 +126,52 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
             try
             {
-                if (!errors.HasErrors())
+                if(!errors.HasErrors())
                 {
                     int innerCount = 1;
-                    foreach (AssignObjectDTO t in FieldsCollection)
+                    foreach(ActivityDTO t in FieldsCollection)
                     {
                         try
                         {
-                            if (!string.IsNullOrEmpty(t.FieldName))
+                            if(!string.IsNullOrEmpty(t.FieldName))
                             {
                                 string cleanExpression;
                                 var assignValue = new AssignValue(t.FieldName, t.FieldValue);
                                 var isCalcEvaluation = DataListUtil.IsCalcEvaluation(t.FieldValue, out cleanExpression);
-                                if (isCalcEvaluation)
+                                if(isCalcEvaluation)
                                 {
                                     assignValue = new AssignValue(t.FieldName, cleanExpression);
                                 }
                                 DebugItem debugItem = null;
-                                if (dataObject.IsDebugMode())
+                                if(dataObject.IsDebugMode())
                                 {
                                     debugItem = AddSingleInputDebugItem(dataObject.Environment, innerCount, assignValue, update);
                                 }
                                 if (isCalcEvaluation)
                                 {
-                                    DoCalculation(dataObject.Environment, t.FieldName, t.FieldValue, update);
+                                     DoCalculation(dataObject.Environment, t.FieldName, t.FieldValue, update);
                                 }
                                 else
                                 {
-                                    dataObject.Environment.AssignJson(assignValue, update);
+                                    dataObject.Environment.AssignWithFrame(assignValue, update);
                                 }
-                                if (debugItem != null)
+                                if(debugItem != null)
                                 {
                                     _debugInputs.Add(debugItem);
                                 }
-                                if (dataObject.IsDebugMode())
+                                if(dataObject.IsDebugMode())
                                 {
+                                    if(DataListUtil.IsValueRecordset(assignValue.Name) && DataListUtil.GetRecordsetIndexType(assignValue.Name) == enRecordsetIndexType.Blank)
+                                    {
+                                        var length = dataObject.Environment.GetLength(DataListUtil.ExtractRecordsetNameFromValue(assignValue.Name));
+                                        assignValue = new AssignValue(DataListUtil.ReplaceRecordsetBlankWithIndex(assignValue.Name, length), assignValue.Value);
+                                    }
                                     AddSingleDebugOutputItem(dataObject.Environment, innerCount, assignValue, update);
                                 }
                             }
                             innerCount++;
                         }
-                        catch (Exception e)
+                        catch(Exception e)
                         {
                             Dev2Logger.Error(e);
                             allErrors.AddError(e.Message);
@@ -168,7 +181,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     allErrors.MergeErrors(errors);
                 }
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Dev2Logger.Error(e);
                 allErrors.AddError(e.Message);
@@ -177,13 +190,13 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 // Handle Errors
                 var hasErrors = allErrors.HasErrors();
-                if (hasErrors)
+                if(hasErrors)
                 {
-                    DisplayAndWriteError("DsfMultiAssignObjectActivity", allErrors);
+                    DisplayAndWriteError("DsfAssignActivity", allErrors);
                     var errorString = allErrors.MakeDisplayReady();
                     dataObject.Environment.AddError(errorString);
                 }
-                if (dataObject.IsDebugMode())
+                if(dataObject.IsDebugMode())
                 {
                     DispatchDebugState(dataObject, StateType.Before, update);
                     DispatchDebugState(dataObject, StateType.After, update);
@@ -195,15 +208,15 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             var functionEvaluator = new FunctionEvaluator();
             var warewolfEvalResult = environment.Eval(cleanExpression, update);
-
+         
             if (warewolfEvalResult.IsWarewolfAtomResult)
             {
                 var result = warewolfEvalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                if (result != null)
+                if(result != null)
                 {
                     var eval = PerformCalcForAtom(result.Item, functionEvaluator);
                     var doCalculation = new AssignValue(fieldName, eval);
-                    environment.AssignJson(doCalculation, update);
+                    environment.AssignWithFrame(doCalculation, update);                    
                 }
             }
             if (warewolfEvalResult.IsWarewolfAtomListresult)
@@ -212,11 +225,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 if (result != null)
                 {
                     var counter = 1;
-                    foreach (var item in result.Item)
+                    foreach(var item in result.Item)
                     {
                         var eval = PerformCalcForAtom(item, functionEvaluator);
                         var doCalculation = new AssignValue(fieldName, eval);
-                        environment.AssignJson(doCalculation, update == 0 ? counter : update);
+                        environment.AssignWithFrame(doCalculation, update == 0 ? counter : update);
                         counter++;
                     }
                 }
@@ -231,23 +244,23 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             string eval;
             string error;
             var res = functionEvaluator.TryEvaluateFunction(exp, out eval, out error);
-            if (eval == exp.Replace("\"", "") && exp.Contains("\""))
+            if(eval == exp.Replace("\"", "") && exp.Contains("\""))
             {
                 try
                 {
                     string eval2;
                     var b = functionEvaluator.TryEvaluateFunction(exp.Replace("\"", ""), out eval2, out error);
-                    if (b)
+                    if(b)
                     {
                         eval = eval2;
                     }
                 }
-                catch (Exception err)
+                catch(Exception err)
                 {
                     Dev2Logger.Warn(err);
                 }
             }
-            if (!res)
+            if(!res)
             {
                 throw new Exception(ErrorResource.InvalidCalculate);
             }
@@ -259,36 +272,39 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             var debugItem = new DebugItem();
             const string VariableLabelText = "Variable";
             const string NewFieldLabelText = "New Value";
-
+            
             try
             {
                 if (!DataListUtil.IsEvaluated(assignValue.Value))
                 {
-                    if (assignValue.Name.EndsWith("()]]"))
-                    {
-                        throw new Exception("Append data to array");
-                    }
-                    CommonFunctions.WarewolfEvalResult evalResult = environment.Eval(assignValue.Name, update);
+                    var evalResult = environment.Eval(assignValue.Name, update);
                     AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), debugItem);
                     if (evalResult.IsWarewolfAtomResult)
                     {
                         var scalarResult = evalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
                         if (scalarResult != null)
                         {
-                            AddDebugItem(new DebugItemWarewolfAtomResult(ExecutionEnvironment.WarewolfAtomToString(scalarResult.Item), assignValue.Value, environment.EvalToExpression(assignValue.Name, update), "", VariableLabelText, NewFieldLabelText, "="), debugItem);
+                            AddDebugItem(new DebugItemWarewolfAtomResult(ExecutionEnvironment.WarewolfAtomToString(scalarResult.Item),assignValue.Value, environment.EvalToExpression(assignValue.Name, update),"", VariableLabelText, NewFieldLabelText, "="), debugItem);
                         }
                     }
-                    else if (evalResult.IsWarewolfAtomListresult)
+                    else if(evalResult.IsWarewolfAtomListresult)
                     {
-                        AddDebugItem(new DebugItemWarewolfAtomListResult(null, assignValue.Value, "", environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
+                        if (DataListUtil.GetRecordsetIndexType(assignValue.Name) == enRecordsetIndexType.Blank)
+                        {
+                            AddDebugItem(new DebugItemWarewolfAtomListResult(null, assignValue.Value, "", environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
+                        }
+                        else
+                        {
+                            var recSetResult = evalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+                            if (recSetResult != null)
+                            {
+                                AddDebugItem(new DebugItemWarewolfAtomListResult(recSetResult, assignValue.Value, "", environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
+                            }
+                        }
                     }
                 }
                 else if (DataListUtil.IsEvaluated(assignValue.Value))
                 {
-                    if (assignValue.Name.EndsWith("()]]"))
-                    {
-                        throw new Exception("Append data to array");
-                    }
                     var oldValueResult = environment.Eval(assignValue.Name, update);
                     var newValueResult = environment.Eval(assignValue.Value, update);
                     AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), debugItem);
@@ -296,39 +312,31 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     {
                         var valueResult = newValueResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
                         var scalarResult = oldValueResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                        if (valueResult != null && scalarResult != null)
+                        if (valueResult != null && scalarResult!=null)
                         {
-                            AddDebugItem(new DebugItemWarewolfAtomResult(ExecutionEnvironment.WarewolfAtomToString(scalarResult.Item), ExecutionEnvironment.WarewolfAtomToString(valueResult.Item), assignValue.Name, environment.EvalToExpression(assignValue.Value, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
+                            AddDebugItem(new DebugItemWarewolfAtomResult(ExecutionEnvironment.WarewolfAtomToString(scalarResult.Item), ExecutionEnvironment.WarewolfAtomToString(valueResult.Item),assignValue.Name, environment.EvalToExpression(assignValue.Value, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
                         }
                     }
                     else if (newValueResult.IsWarewolfAtomResult && oldValueResult.IsWarewolfAtomListresult)
                     {
-                        AddDebugItem(new DebugItemWarewolfAtomListResult(null, newValueResult, environment.EvalToExpression(assignValue.Value, update), assignValue.Name, VariableLabelText, NewFieldLabelText, "="), debugItem);
+                        AddDebugItem(new DebugItemWarewolfAtomListResult(null, newValueResult, environment.EvalToExpression(assignValue.Value, update), environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
                     }
                     else if (oldValueResult.IsWarewolfAtomResult && newValueResult.IsWarewolfAtomListresult)
                     {
-                        AddDebugItem(new DebugItemWarewolfAtomListResult(null, newValueResult, environment.EvalToExpression(assignValue.Value, update), assignValue.Name, VariableLabelText, NewFieldLabelText, "="), debugItem);
+                        AddDebugItem(new DebugItemWarewolfAtomListResult(null, newValueResult, environment.EvalToExpression(assignValue.Value, update), environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
                     }
                     else if (oldValueResult.IsWarewolfAtomListresult && newValueResult.IsWarewolfAtomListresult)
                     {
-                        var old = (CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult)oldValueResult;
-                        if (!old.Item.Any())
-                        {
-                            AddDebugItem(new DebugItemWarewolfAtomListResult(null, newValueResult, environment.EvalToExpression(assignValue.Value, update), assignValue.Name, VariableLabelText, NewFieldLabelText, "="), debugItem);
-                        }
-                        else
-                        {
-                            var recSetResult = oldValueResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
-                            AddDebugItem(new DebugItemWarewolfAtomListResult(recSetResult, newValueResult, environment.EvalToExpression(assignValue.Value, update), assignValue.Name, VariableLabelText, NewFieldLabelText, "="), debugItem);
-                        }
+                        var recSetResult = oldValueResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+                        AddDebugItem(new DebugItemWarewolfAtomListResult(recSetResult, newValueResult, environment.EvalToExpression(assignValue.Value, update), environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
                     }
-                }
+                }                
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 if (e.Message.Contains("ParseError"))
                 {
-                    AddDebugItem(new DebugItemWarewolfAtomResult("", assignValue.Value, environment.EvalToExpression(assignValue.Name, update), "", VariableLabelText, NewFieldLabelText, "="), debugItem);
+                    AddDebugItem(new DebugItemWarewolfAtomResult("", assignValue.Value,environment.EvalToExpression(assignValue.Name, update), "", VariableLabelText, NewFieldLabelText, "="), debugItem);
                     return debugItem;
                 }
                 string errorMessage;
@@ -367,7 +375,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             const string VariableLabelText = "";
             const string NewFieldLabelText = "";
             var debugItem = new DebugItem();
-
+            
             try
             {
                 if (!DataListUtil.IsEvaluated(assignValue.Value))
@@ -403,7 +411,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                             AddDebugItem(new DebugItemWarewolfAtomResult(ExecutionEnvironment.WarewolfAtomToString(scalarResult.Item), "", environment.EvalToExpression(assignValue.Name, update), "", VariableLabelText, NewFieldLabelText, "="), debugItem);
                         }
                     }
-                    var evalResult2 = environment.Eval(assignValue.Value, update);
+                    var evalResult2 = environment.Eval(assignValue.Value, update);                                  
                     if (evalResult.IsWarewolfAtomListresult)
                     {
                         var recSetResult = evalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
@@ -416,7 +424,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                             }
                             else
                             {
-                                AddDebugItem(new DebugItemWarewolfAtomListResult(recSetResult, environment.EvalToExpression(assignValue.Value, update), "", assignValue.Name, VariableLabelText, NewFieldLabelText, "="), debugItem);
+
+                                AddDebugItem(new DebugItemWarewolfAtomListResult(recSetResult, environment.EvalToExpression(assignValue.Value, update), "", environment.EvalToExpression(assignValue.Name, update), VariableLabelText, NewFieldLabelText, "="), debugItem);
+
                             }
                         }
                     }
@@ -436,14 +446,14 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            foreach (Tuple<string, string> t in updates)
+            foreach(Tuple<string, string> t in updates)
             {
                 // locate all updates for this tuple
                 Tuple<string, string> t1 = t;
                 var items = FieldsCollection.Where(c => !string.IsNullOrEmpty(c.FieldValue) && c.FieldValue.Contains(t1.Item1));
 
                 // issues updates
-                foreach (var a in items)
+                foreach(var a in items)
                 {
                     a.FieldValue = a.FieldValue.Replace(t.Item1, t.Item2);
                 }
@@ -452,21 +462,22 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            foreach (Tuple<string, string> t in updates)
+            foreach(Tuple<string, string> t in updates)
             {
+
                 // locate all updates for this tuple
                 Tuple<string, string> t1 = t;
                 var items = FieldsCollection.Where(c => !string.IsNullOrEmpty(c.FieldName) && c.FieldName.Contains(t1.Item1));
 
                 // issues updates
-                foreach (var a in items)
+                foreach(var a in items)
                 {
                     a.FieldName = a.FieldName.Replace(t.Item1, t.Item2);
                 }
             }
         }
 
-        #endregion Overridden NativeActivity Methods
+        #endregion
 
         #region Get Debug Inputs/Outputs
 
@@ -479,8 +490,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             return _debugOutputs;
         }
-
-        #endregion Get Debug Inputs/Outputs
+        
+        #endregion Get Inputs/Outputs
 
         #region GetForEachInputs/Outputs
 
@@ -498,6 +509,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     select new DsfForEachItem { Name = item.FieldValue, Value = item.FieldName }).ToList();
         }
 
-        #endregion GetForEachInputs/Outputs
+        #endregion
+
+       
     }
+
 }

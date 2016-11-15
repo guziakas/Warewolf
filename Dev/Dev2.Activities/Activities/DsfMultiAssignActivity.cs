@@ -36,8 +36,8 @@ using WarewolfParserInterop;
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 // ReSharper restore CheckNamespace
 {
-    [ToolDescriptorInfo("Data-Assign", "Assign", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Assign_Tags")]
-    public class DsfMultiAssignActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("AAA", "Custom Activity", ToolType.Native, "E2821EDC-DF8A-4D2B-8CB4-2D106C111729", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Assign_Tags")]
+    public class DsfCustomActivity : DsfActivityAbstract<string>
     {
         #region Constants
         public const string CalculateTextConvertPrefix = GlobalConstants.CalculateTextConvertPrefix;
@@ -77,7 +77,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Ctor
 
-        public DsfMultiAssignActivity()
+        public DsfCustomActivity()
             : base("Assign")
         {
             _fieldsCollection = new List<ActivityDTO>();

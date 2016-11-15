@@ -110,6 +110,7 @@ namespace Dev2.Studio.ActivityDesigners
             {
                // {typeof(DsfHtmlParserActivity),typeof(HtmlParserDesigner) },
                 { typeof(DsfDemoActivity), typeof(Activities.Designers2.Demo.DemoDesigner) },
+                {typeof(DsfCustomActivity),typeof(Activities.Designers2.Custom.CustomDesigner) },
 
                 { typeof(DsfMultiAssignActivity), typeof(MultiAssignDesigner) },
                 { typeof(DsfMultiAssignObjectActivity), typeof(MultiAssignObjectDesigner) },

@@ -489,12 +489,13 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y /E /F /D "$(SolutionDir)Resources - Release" "$(TargetDir)"
 if "$(ConfigurationName)"=="Debug" xcopy /Y /E /F /D "$(SolutionDir)Resources - Debug" "$(TargetDir)"
-taskkill /f /im WarewolfCOMIPC.exe /fi "STATUS eq RUNNING"
-taskkill /f /im WarewolfCOMIPC.vshost.exe /fi "STATUS eq RUNNING"
+
 xcopy /Y "$(SolutionDir)WarewolfCOMIPC\bin\x86\$(ConfigurationName)\WarewolfCOMIPC.exe" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>copy /Y "$(SolutionDir)Binaries\Trackerbird.x64.dll" "$(TargetDir)"
+    <PreBuildEvent>taskkill /f /im WarewolfCOMIPC.exe /fi "STATUS eq RUNNING"
+taskkill /f /im WarewolfCOMIPC.vshost.exe /fi "STATUS eq RUNNING"
+copy /Y "$(SolutionDir)Binaries\Trackerbird.x64.dll" "$(TargetDir)"
 copy /Y "$(SolutionDir)Binaries\Trackerbird.x86.dll" "$(TargetDir)"</PreBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\FsLexYacc.6.1.0\build\FsLexYacc.targets" Condition="Exists('..\packages\FsLexYacc.6.1.0\build\FsLexYacc.targets')" />

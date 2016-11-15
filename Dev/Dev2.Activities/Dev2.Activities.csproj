@@ -214,6 +214,7 @@
     <Compile Include="Activities\DsfHtmlParserActivity.cs" />
     <Compile Include="Activities\DsfMethodBasedActivity.cs" />
     <Compile Include="Activities\DsfDemoActivity.cs" />
+    <Compile Include="Activities\DsfCustomActivity.cs" />
     <Compile Include="Activities\DsfMultiAssignObjectActivity.cs" />
     <Compile Include="Activities\DsfMySqlDatabaseActivity.cs" />
     <Compile Include="Activities\DsfODBCDatabaseActivity.cs" />
