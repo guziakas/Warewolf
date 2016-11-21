@@ -27,7 +27,7 @@ namespace Dev2.Activities.Designers2.Custom
             : base(modelItem)
         {
             AddTitleBarLargeToggle();
-            AddTitleBarQuickVariableInputToggle();
+           // AddTitleBarQuickVariableInputToggle();
 
             dynamic mi = ModelItem;
             InitializeItems(mi.FieldsCollection);

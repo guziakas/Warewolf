@@ -108,7 +108,8 @@ namespace Dev2.Studio.ActivityDesigners
     {
         static readonly Dictionary<Type, Type> DesignerAttributes = new Dictionary<Type, Type>
             {
-               // {typeof(DsfHtmlParserActivity),typeof(HtmlParserDesigner) },
+            // {typeof(DsfHtmlParserActivity),typeof(HtmlParserDesigner) },
+            { typeof(DsfWebClientActivity), typeof(Activities.Designers2.WebClient.WebClientDesigner) },
                 { typeof(DsfDemoActivity), typeof(Activities.Designers2.Demo.DemoDesigner) },
                 {typeof(DsfCustomActivity),typeof(Activities.Designers2.Custom.CustomDesigner) },
 

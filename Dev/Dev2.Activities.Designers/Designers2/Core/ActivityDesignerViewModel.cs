@@ -44,6 +44,9 @@ namespace Dev2.Activities.Designers2.Core
 
         protected ActivityDesignerViewModel(ModelItem modelItem)
         {
+            
+            if (DesignerProperties.GetIsInDesignMode(this) == true) return;
+
             VerifyArgument.IsNotNull("modelItem", modelItem);
             _modelItem = modelItem;
             _modelItem.PropertyChanged += OnModelItemPropertyChanged;

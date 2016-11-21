@@ -35,7 +35,7 @@
         <controls:Dev2DataGrid x:Name="SmallDataGrid"
                            ItemsSource="{Binding ModelItem.FieldsCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                           
                            Style="{StaticResource SpacedActivityDataGridStyle}"
-                           MinHeight="56"
+                           MinHeight="150"
                            RowStyle="{StaticResource ActivityGridRowStyle}"
                            LoadingRow="DataGrid_LoadingRow">
 
@@ -69,7 +69,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="*" d:DataContext="{d:DesignInstance Type=activities:ActivityDTO}">
+                <DataGridTemplateColumn Width="*" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ui:IntellisenseTextBox DefaultText="{Binding WatermarkTextVariable}"
@@ -101,7 +101,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="*" d:DataContext="{d:DesignInstance Type=activities:ActivityDTO}">
+                <DataGridTemplateColumn Width="*" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ui:IntellisenseTextBox DefaultText="{Binding WatermarkTextValue}"

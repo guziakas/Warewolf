@@ -13,7 +13,7 @@
              d:DataContext="{d:DesignInstance local:PreviewViewModel}">
     <GroupBox x:Name="PreviewGroupBox"
               Margin="2"
-              Style="{StaticResource ActivityGroupBoxStyle}"
+            
               VerticalContentAlignment="Stretch"
               Width="Auto">
         <GroupBox.Header>
@@ -127,7 +127,7 @@
                         Margin="0,4">
                 <Button Command="{Binding PreviewCommand}"
                         Content="Preview"
-                        Style="{StaticResource ActivityDesignerButtonStyle}" />
+                        />
             </StackPanel>
 
             <TextBox Text="{Binding Output}"

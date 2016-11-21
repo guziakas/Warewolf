@@ -381,6 +381,16 @@
     <Compile Include="Designers2\DropBox2016\Upload\Small.xaml.cs">
       <DependentUpon>Small.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Designers2\WebClient\GetWebRequest\WebClientDesigner.xaml.cs">
+      <DependentUpon>WebClientDesigner.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Designers2\WebClient\GetWebRequest\WebClientDesignerViewModel.cs" />
+    <Compile Include="Designers2\WebClient\GetWebRequest\Large.xaml.cs">
+      <DependentUpon>Large.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Designers2\WebClient\GetWebRequest\Small.xaml.cs">
+      <DependentUpon>Small.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Designers2\HtmlParser\HtmlParserViewModel.cs" />
     <Compile Include="Designers2\HtmlParser\Large.xaml.cs">
       <DependentUpon>Large.xaml</DependentUpon>
@@ -1487,6 +1497,18 @@
     <Page Include="Designers2\GatherSystemInformation\Large.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Designers2\WebClient\GetWebRequest\WebClientDesigner.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\WebClient\GetWebRequest\Large.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Designers2\WebClient\GetWebRequest\Small.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Designers2\GetWebRequest\GetWebRequest\GetWebRequestDesigner.xaml">
       <Generator>MSBuild:Compile</Generator>
