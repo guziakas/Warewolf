@@ -51,6 +51,12 @@ namespace Dev2.Activities
         [Inputs("Url")]
         [FindMissing]
         public string Url { get; set; }
+
+        [FindMissing]
+        [Inputs("Test")]
+        public string Test { get; set; }
+
+
         [FindMissing]
         public string Headers { get; set; }
 

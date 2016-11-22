@@ -47,6 +47,10 @@ namespace Dev2.Activities.Designers2.WebClient
             {
                 Headers = string.Empty;
             }
+            if(Test == null)
+            {
+                Test = string.Empty;
+            }
         }
 
         public PreviewViewModel PreviewViewModel { get; private set; }
@@ -68,6 +72,11 @@ namespace Dev2.Activities.Designers2.WebClient
         }
 
         private string Headers
+        {
+            get { return GetProperty<string>(); }
+            set { SetProperty(value); }
+        }
+        private string Test
         {
             get { return GetProperty<string>(); }
             set { SetProperty(value); }
@@ -95,6 +104,7 @@ namespace Dev2.Activities.Designers2.WebClient
             {
                 case "Url":
                 case "Headers":
+                case "Cookies":
                     ExtractVariables();
                     break;
             }
@@ -105,9 +115,11 @@ namespace Dev2.Activities.Designers2.WebClient
         private void ExtractVariables()
         {
             PreviewViewModel.Output = string.Empty;
+
             var urlVariables = DataListCleaningUtils
                 .SplitIntoRegions(Url)
                 .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+
             var headersVariables = DataListCleaningUtils
                 .SplitIntoRegions(Headers)
                 .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
@@ -144,6 +156,7 @@ namespace Dev2.Activities.Designers2.WebClient
         {
             Errors = null;
             PreviewViewModel.Output = string.Empty;
+           
 
             var url = GetUrl(PreviewViewModel.Inputs);
             if (IsValid)

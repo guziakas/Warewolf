@@ -355,7 +355,10 @@ namespace Dev2.Activities.Designers2.Core
         /// </summary>
         protected T GetProperty<T>([CallerMemberName] string propertyName = null)
         {
+            if(_modelItem!=null)
             return _modelItem.GetProperty<T>(propertyName);
+
+            return default(T);
         }
 
         /// <summary>

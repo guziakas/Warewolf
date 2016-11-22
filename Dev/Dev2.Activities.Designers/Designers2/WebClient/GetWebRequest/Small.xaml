@@ -30,6 +30,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -56,13 +57,15 @@
         </ui:IntellisenseTextBox>
 
         <TextBlock Grid.Column="0" Grid.Row="1" Text="Result" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}"/>
-        <ui:IntellisenseTextBox Grid.Column="1"
+        <ui:IntellisenseTextBox 
+            Text="{Binding Path=ModelItem.Result, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            Grid.Column="1"
                                 Grid.Row="1"
                                 DefaultText="[[HTML]]"
                                 WrapInBrackets="True"
                                 Margin="{StaticResource ControlBorderTop}"
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
-                                Text="{Binding Path=ModelItem.Result, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_InputFormattxt_AutoID}"
                                 ToolTip="{x:Static languages:Core.WebRequestToolTipResult}">
             <i:Interaction.Behaviors>
@@ -73,6 +76,30 @@
                                      Target="{Binding}" />
             </i:Interaction.Behaviors>
         </ui:IntellisenseTextBox>
+        
+        
+        <TextBlock Grid.Column="0" Grid.Row="2" Text="Cookies or session" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" />
+        <ui:IntellisenseTextBox Grid.Column="1" Grid.Row="2"
+                                    
+                                     Margin="{StaticResource ControlBorderTop}"
+                                Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
+                                    DefaultText="From text" 
+                                    AcceptsReturn="True"
+                                    AllowUserInsertLine="False"
+                                    WrapInBrackets="False" 
+                                    Text="{Binding Path=ModelItem.Test, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_ForEachFromTextbox_AutoID}"
+                                    ToolTip="{x:Static languages:Core.ForEachToolTipForEachType}">
+            <i:Interaction.Behaviors>
+                <core1:HelpSetter Text="{x:Static languages:Core.ForEachHelpForEachType}" DataContext="{Binding}" />
+                <errors:ErrorsSetter Source="{Binding}"
+                                         SourcePropertyName="ModelItem.Test"
+                                         SourcePropertyValue="{Binding ModelItem.Test, UpdateSourceTrigger=PropertyChanged}"
+                                         Target="{Binding}" />
+            </i:Interaction.Behaviors>
+        </ui:IntellisenseTextBox>
+       
+
 
     </Grid>
 </core:ActivityDesignerTemplate>
