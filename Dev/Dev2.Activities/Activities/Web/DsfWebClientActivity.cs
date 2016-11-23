@@ -26,12 +26,21 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Storage;
 using Warewolf.Core;
 using Dev2.Common.Interfaces.Toolbox;
+using WarewolfParserInterop;
+using System.Net;
+using System.Text;
+using System.Collections.Specialized;
 
 namespace Dev2.Activities
 {
     [ToolDescriptorInfo("Utility-GetWebRequest", "Web Client (CUSTOM)", ToolType.Native, "0CBE331F-1B15-4B93-ACA2-204862EB4C51", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Get_Tags")]    
     public class DsfWebClientActivity : DsfActivityAbstract<string>
     {
+
+        //private readonly CookieContainer cookieContainer = new CookieContainer();
+
+        private List<String> CookieCollection { get; set; } = new List<string>();
+
         #region Properties
         IWebRequestInvoker _webRequestInvoker;
         public IWebRequestInvoker WebRequestInvoker
@@ -48,14 +57,10 @@ namespace Dev2.Activities
 
         [FindMissing]
         public string Method { get; set; }
+
         [Inputs("Url")]
         [FindMissing]
         public string Url { get; set; }
-
-        [FindMissing]
-        [Inputs("Test")]
-        public string Test { get; set; }
-
 
         [FindMissing]
         public string Headers { get; set; }
@@ -66,8 +71,13 @@ namespace Dev2.Activities
         [Outputs("Result")]
         [FindMissing]
         public new string Result { get; set; }
+
+        [FindMissing]
+        [Outputs("Test")]
+        public string Test { get; set; }
+
         #endregion
-           
+
         public DsfWebClientActivity() : base("Web Client (Custom)")
         {
             Method = "GET";
@@ -107,16 +117,18 @@ namespace Dev2.Activities
                 var colItr = new WarewolfListIterator();
                 var urlitr = new WarewolfIterator(dataObject.Environment.Eval(Url, update));
                 var headerItr = new WarewolfIterator(dataObject.Environment.Eval(Headers, update));
+                
+
                 colItr.AddVariableToIterateOn(urlitr);
                 colItr.AddVariableToIterateOn(headerItr);
+                
+
                 const int IndexToUpsertTo = 1;
                 while (colItr.HasMoreData())
                 {
                     var c = colItr.FetchNextValue(urlitr);
                     var headerValue = colItr.FetchNextValue(headerItr);
-                    var headers = string.IsNullOrEmpty(headerValue)
-                        ? new string[0]
-                        : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    var headers = string.IsNullOrEmpty(headerValue) ? new string[0] : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
 
                     var headersEntries = new List<Tuple<string, string>>();
 
@@ -133,11 +145,17 @@ namespace Dev2.Activities
                         }
                     }
 
-                    var result = WebRequestInvoker.ExecuteRequest(Method, c, headersEntries);
+                    var result = ExecuteRequest(Method, c,null, headersEntries);
                     allErrors.MergeErrors(errorsTo);
                     var expression = GetExpression(IndexToUpsertTo);
+
+
                     PushResultsToDataList(expression, result, dataObject, update);
+                    //PushResultsToDataList(Test, CookieCollection.Aggregate((current, next) => current + ", " + next), dataObject, update);
+                    dataObject.Environment.AssignWithFrame(new AssignValue(Test, CookieCollection.Aggregate((current, next) => current + ", " + next)), update);
                 }
+                
+
             }
             catch (Exception e)
             {
@@ -269,5 +287,57 @@ namespace Dev2.Activities
 
         #endregion
         #endregion
+
+        public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers = null, Action<string> asyncCallback = null)
+        {
+            using (var webClient = new WebClient())
+            {
+                webClient.Credentials = CredentialCache.DefaultCredentials;
+               
+                webClient.Encoding = Encoding.UTF8;
+                if (headers != null)
+                {
+                    foreach (var header in headers)
+                    {
+                        webClient.Headers.Add(header.Item1, header.Item2);
+                    }
+                }
+
+                var uri = new Uri(url.Contains("http://") || url.Contains("https://") ? url : "http://" + url);
+
+                switch (method)
+                {
+                    case "GET":
+                        if (asyncCallback == null)
+                        {
+                            
+                            var result = webClient.DownloadString(uri);
+                            var nameValueCollection = (NameValueCollection)webClient.ResponseHeaders;
+
+                            var kukiai = webClient.ResponseHeaders.GetValues("set-cookie");
+                            CookieCollection.AddRange(kukiai);
+                             
+                            return result;
+                        }
+
+                        webClient.DownloadStringCompleted += (sender, args) => asyncCallback(args.Result);
+                        webClient.DownloadStringAsync(uri, null);
+
+                        break;
+                    case "POST":
+                        if (asyncCallback == null)
+                        {
+                            var result = webClient.UploadString(uri, data);
+                            return result;
+                        }
+
+                        webClient.UploadStringCompleted += (sender, args) => asyncCallback(args.Result);
+                        webClient.UploadStringAsync(uri, data);
+
+                        break;
+                }
+            }
+            return string.Empty;
+        }
     }
 }
