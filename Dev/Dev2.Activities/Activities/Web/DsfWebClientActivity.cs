@@ -55,7 +55,8 @@ namespace Dev2.Activities
             }
         }
 
-        [FindMissing]
+        [Inputs("Method")]
+        [FindMissing]        
         public string Method { get; set; }
 
         [Inputs("Url")]
@@ -64,6 +65,10 @@ namespace Dev2.Activities
 
         [FindMissing]
         public string Headers { get; set; }
+
+        [Inputs("PostData")]
+        [FindMissing]
+        public string PostData { get; set; }
 
         /// <summary>
         /// The property that holds the result string the user enters into the "Result" box
@@ -74,13 +79,14 @@ namespace Dev2.Activities
 
         [FindMissing]
         [Outputs("Test")]
+        [Inputs("Test")]
         public string Test { get; set; }
 
         #endregion
 
         public DsfWebClientActivity() : base("Web Client (Custom)")
         {
-            Method = "GET";
+            //Method = "GET";
             Headers = string.Empty;
         }
 
@@ -117,19 +123,21 @@ namespace Dev2.Activities
                 var colItr = new WarewolfListIterator();
                 var urlitr = new WarewolfIterator(dataObject.Environment.Eval(Url, update));
                 var headerItr = new WarewolfIterator(dataObject.Environment.Eval(Headers, update));
-                
+                var postDataItr = new WarewolfIterator(dataObject.Environment.Eval(PostData, update));
 
                 colItr.AddVariableToIterateOn(urlitr);
                 colItr.AddVariableToIterateOn(headerItr);
-                
+                colItr.AddVariableToIterateOn(postDataItr);
 
                 const int IndexToUpsertTo = 1;
                 while (colItr.HasMoreData())
                 {
                     var c = colItr.FetchNextValue(urlitr);
                     var headerValue = colItr.FetchNextValue(headerItr);
-                    var headers = string.IsNullOrEmpty(headerValue) ? new string[0] : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    var postDataValue = colItr.FetchNextValue(postDataItr);
 
+                    var headers = string.IsNullOrEmpty(headerValue) ? new string[0] : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    var postDataItems = string.IsNullOrEmpty(postDataValue) ? new string[0] : postDataValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
                     var headersEntries = new List<Tuple<string, string>>();
 
                     foreach (var header in headers)
@@ -145,7 +153,8 @@ namespace Dev2.Activities
                         }
                     }
 
-                    var result = ExecuteRequest(Method, c,null, headersEntries);
+                    var result = ExecuteRequest(Method, c,null, headersEntries, postDataItems:postDataItems);
+
                     allErrors.MergeErrors(errorsTo);
                     var expression = GetExpression(IndexToUpsertTo);
 
@@ -288,7 +297,7 @@ namespace Dev2.Activities
         #endregion
         #endregion
 
-        public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers = null, Action<string> asyncCallback = null)
+        public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers = null, Action<string> asyncCallback = null,string[] postDataItems=null)
         {
             using (var webClient = new WebClient())
             {

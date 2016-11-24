@@ -28,14 +28,15 @@ namespace Dev2.Activities.Designers2.WebClient
 {
     public class WebClientDesignerViewModel : ActivityDesignerViewModel
     {
-        public WebClientDesignerViewModel(ModelItem modelItem): base(modelItem)
+        public WebClientDesignerViewModel(ModelItem modelItem) : base(modelItem)
         {
             AddTitleBarLargeToggle();
-
+            RequestMethods.Add("POST");
+            RequestMethods.Add("GET");
             PreviewViewModel = new PreviewViewModel
-                {
-                    InputsVisibility = Visibility.Collapsed,
-                };
+            {
+                InputsVisibility = Visibility.Collapsed,
+            };
             PreviewViewModel.PreviewRequested += DoPreview;
 
             if (Url == null)
@@ -47,12 +48,17 @@ namespace Dev2.Activities.Designers2.WebClient
             {
                 Headers = string.Empty;
             }
-            if(Test == null)
+            if (Test == null)
             {
                 Test = string.Empty;
             }
+            if (Method == null)
+            {
+                Method = "Post";
+            }
         }
 
+        public ObservableCollection<string> RequestMethods { get; set; } = new ObservableCollection<string>();
         public PreviewViewModel PreviewViewModel { get; private set; }
 
         public bool IsUrlFocused
@@ -77,6 +83,12 @@ namespace Dev2.Activities.Designers2.WebClient
             set { SetProperty(value); }
         }
         private string Test
+        {
+            get { return GetProperty<string>(); }
+            set { SetProperty(value); }
+        }
+
+        private string Method
         {
             get { return GetProperty<string>(); }
             set { SetProperty(value); }
