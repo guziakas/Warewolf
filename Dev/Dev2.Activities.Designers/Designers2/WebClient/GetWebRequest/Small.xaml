@@ -81,7 +81,7 @@
             </ui:IntellisenseTextBox>
         </Grid>
        
-        <TextBlock Grid.Column="0" Grid.Row="2" Text="Post Data" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" />
+        <Label Grid.Column="0" Grid.Row="2" Text="Post Data" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" Style="{Binding Mode=OneWay, Source={StaticResource IsPostSelectedStyle}}" />
         <ui:IntellisenseTextBox Grid.Column="1" Grid.Row="2"
             Text="{Binding Path=ModelItem.PostData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
           
