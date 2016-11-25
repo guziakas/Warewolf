@@ -317,6 +317,9 @@
     <Compile Include="Activities\WebRequestInvoker.cs" />
     <Compile Include="Activities\ResponseManager.cs" />
     <Compile Include="Activities\IResponseManager.cs" />
+    <Compile Include="Activities\Web\CookieAwareWebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Activities\Web\DsfWebClientActivity.cs" />
     <Compile Include="BussinessLogic\RsOpIsBase64.cs" />
     <Compile Include="BussinessLogic\RsOpIsBetween.cs" />

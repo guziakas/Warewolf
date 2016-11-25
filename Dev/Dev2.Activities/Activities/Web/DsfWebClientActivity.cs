@@ -30,6 +30,9 @@ using WarewolfParserInterop;
 using System.Net;
 using System.Text;
 using System.Collections.Specialized;
+using Dev2.Activities.Web;
+using System.Collections;
+using System.Reflection;
 
 namespace Dev2.Activities
 {
@@ -38,7 +41,7 @@ namespace Dev2.Activities
     {
 
         //private readonly CookieContainer cookieContainer = new CookieContainer();
-
+        private CookieContainer CookieContainer { get; set; } = new CookieContainer();
         private List<String> CookieCollection { get; set; } = new List<string>();
 
         #region Properties
@@ -160,6 +163,32 @@ namespace Dev2.Activities
                         AddDebugItem(new DebugEvalResult(postData, "PostData", dataObject.Environment, update), debugItem);
                         _debugInputs.Add(debugItem);
                     }
+                    // initialize cookies from string to array
+                    var cookieValueString = ExecutionEnvironment.WarewolfEvalResultToString(dataObject.Environment.Eval(Cookies, update));
+                    if (cookieValueString != null)
+                    {
+                        var cookiesList = cookieValueString.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var cookie in cookiesList)
+                        {
+                            var splitCookie=cookie.Split(new char[] { '|' },StringSplitOptions.RemoveEmptyEntries);
+                            var cookieObj = new Cookie();
+                            cookieObj.Name = splitCookie[0];
+                            cookieObj.Value = splitCookie[1];
+                            cookieObj.Domain = splitCookie[2]);
+                            CookieContainer.Add(cookieObj);
+                        }                       
+                    }
+
+                    if (dataObject.IsDebugMode())
+                    {
+                        
+                        if (cookieValueString != null)
+                        {
+                            DebugItem debugItem = new DebugItem();
+                            AddDebugItem(new DebugEvalResult(cookieValueString, "Cookies", dataObject.Environment, update), debugItem);
+                            _debugInputs.Add(debugItem);
+                        }
+                    }
 
                     //act
                     var result = ExecuteRequest(Method, c,postData, headersEntries);
@@ -167,25 +196,40 @@ namespace Dev2.Activities
                     allErrors.MergeErrors(errorsTo);
                     var expression = GetExpression(IndexToUpsertTo);
 
-                   
-                    if (dataObject.IsDebugMode())
+                    Hashtable table = (Hashtable)CookieContainer.GetType().InvokeMember("m_domainTable",
+                                                                         BindingFlags.NonPublic |
+                                                                         BindingFlags.GetField |
+                                                                         BindingFlags.Instance,
+                                                                         null,
+                                                                         CookieContainer,
+                                                                         new object[] { });
+
+
+
+                    foreach (var key in table.Keys)
                     {
-                        var cookieValue = ExecutionEnvironment.WarewolfEvalResultToString(dataObject.Environment.Eval(Cookies, update));
-                        DebugItem debugItem = new DebugItem();
-                        AddDebugItem(new DebugEvalResult(cookieValue, "Cookies", dataObject.Environment, update), debugItem);
-                        _debugInputs.Add(debugItem);
+                        var returnStr = "";
+                        foreach (Cookie cookie in CookieContainer.GetCookies(new Uri(string.Format("http://{0}/", key))))
+                        {
+                            returnStr += cookie.Name + "|" + cookie.Value + "|" + cookie.Domain + ";";
+                        }
+                        if (returnStr.Length > 0)
+                        {
+                            dataObject.Environment.AssignWithFrame(new AssignValue(Cookies, returnStr), update);
+                        }
                     }
+
 
                     PushResultsToDataList(expression, result, dataObject, update);
                     //PushResultsToDataList(Test, CookieCollection.Aggregate((current, next) => current + ", " + next), dataObject, update);
-                    var cookieString = CookieCollection.Aggregate((current, next) => current + ";" + next);
-                    dataObject.Environment.AssignWithFrame(new AssignValue(Cookies,cookieString), update);
+                    var cookieString = CookieCollection.Aggregate((current, next) => current.TrimEnd() + "; " + next.TrimEnd());
+                    // dataObject.Environment.AssignWithFrame(new AssignValue(Cookies,cookieString), update);
 
                     if (dataObject.IsDebugMode())
                     {
                         DebugItem debugItem = new DebugItem();
                         AddDebugItem(new DebugEvalResult(cookieString, "Cookies", dataObject.Environment, update), debugItem);
-                        _debugInputs.Add(debugItem);
+                        _debugOutputs.Add(debugItem);
                     }
                 }
                 
@@ -324,7 +368,7 @@ namespace Dev2.Activities
 
         public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers = null, Action<string> asyncCallback = null)
         {
-            using (var webClient = new WebClient())
+            using (var webClient = new CookieAwareWebClient(CookieContainer))
             {
                 webClient.Credentials = CredentialCache.DefaultCredentials;
                 webClient.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
@@ -347,10 +391,9 @@ namespace Dev2.Activities
                             
                             var result = webClient.DownloadString(uri);
                             var nameValueCollection = (NameValueCollection)webClient.ResponseHeaders;
+                            GetNewResponseCookies(webClient);
 
-                            var kukiai = webClient.ResponseHeaders.GetValues("set-cookie");
-                            CookieCollection.AddRange(kukiai);
-                             
+
                             return result;
                         }
 
@@ -362,8 +405,7 @@ namespace Dev2.Activities
                         if (asyncCallback == null)
                         {
                             var result = webClient.UploadString(uri, data);
-                            var kukiai = webClient.ResponseHeaders.GetValues("set-cookie");
-                            CookieCollection.AddRange(kukiai);
+                            GetNewResponseCookies(webClient);
 
                             return result;
                         }
@@ -375,6 +417,19 @@ namespace Dev2.Activities
                 }
             }
             return string.Empty;
+        }
+
+        private void GetNewResponseCookies(WebClient webClient)
+        {
+            var kukiai = webClient.ResponseHeaders.GetValues("set-cookie");
+            foreach (var c in kukiai)
+            {
+                var trimmedCookie = c.Split(new char[] { ';' }).FirstOrDefault();
+                if (string.IsNullOrEmpty(trimmedCookie) == false)
+                {
+                    CookieCollection.Add(trimmedCookie);
+                }
+            }
         }
     }
 }
