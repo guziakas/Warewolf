@@ -23,11 +23,22 @@
             <ResourceDictionary.MergedDictionaries>
                 <luna:SharedResourceDictionary Source="/Warewolf.Studio.Themes.Luna;component/Theme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="IsPostSelectedStyle" TargetType="{x:Type Control}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding ModelItem.Method}" Value="POST">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding ModelItem.Method}" Value="GET">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </core:ActivityDesignerTemplate.Resources>
-    
+
     <Grid Margin="{StaticResource ElementBorder}">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -37,10 +48,22 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-
-        <TextBlock Grid.Column="0" Grid.Row="0" Text="URL" VerticalAlignment="Bottom" />
-        <ui:IntellisenseTextBox Grid.Column="1"
-                                Grid.Row="0"
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+               
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox Grid.Column="0"
+                      Width="80"
+                  ItemsSource="{Binding RequestMethods}"
+                  SelectedValue="{Binding ModelItem.Method, Mode=TwoWay}" >
+            </ComboBox>
+            <ui:IntellisenseTextBox Grid.Column="1"
+                Width="auto"
                                 Name="InitialFocusElement"
                                 AllowUserInsertLine="False"
                                 DefaultText="http://mywebpage.com"
@@ -48,25 +71,41 @@
                                 Text="{Binding Path=ModelItem.Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource ModelTextConverter}, ConverterParameter=True}"                                
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Inputtxt_AutoID}"
                                 ToolTip="{x:Static languages:Core.WebRequestToolTipURL}">
-            <i:Interaction.Behaviors>
-                <core1:HelpSetter Text="{x:Static languages:Core.WebRequestHelpURL}" DataContext="{Binding}" />
-                <errors:ErrorsSetter Source="{Binding}"
+                <i:Interaction.Behaviors>
+                    <core1:HelpSetter Text="{x:Static languages:Core.WebRequestHelpURL}" DataContext="{Binding}" />
+                    <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="Url"
                                      SourcePropertyValue="{Binding ModelItem.Url, UpdateSourceTrigger=PropertyChanged}"
                                      Target="{Binding}" />
+                </i:Interaction.Behaviors>
+            </ui:IntellisenseTextBox>
+        </Grid>
+       
+        <TextBlock Grid.Column="0" Grid.Row="2" Text="Post Data" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" />
+        <ui:IntellisenseTextBox Grid.Column="1" Grid.Row="2"
+            Text="{Binding Path=ModelItem.PostData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+          
+                                DefaultText="[[PostData]]"
+                                WrapInBrackets="True"
+                                Margin="{StaticResource ControlBorderTop}"
+                                Style="{StaticResource IsPostSelectedStyle}"
+                                
+                                AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_InputFormattxt_AutoID}"
+                                ToolTip="{x:Static languages:Core.WebRequestToolTipResult}">
+            <i:Interaction.Behaviors>
+                <core1:HelpSetter Text="{x:Static languages:Core.WebRequestHelpResult}" DataContext="{Binding}" />
+                <errors:ErrorsSetter Source="{Binding}"
+                                     SourcePropertyName="Result"
+                                     SourcePropertyValue="{Binding ModelItem.Result, UpdateSourceTrigger=PropertyChanged}"
+                                     Target="{Binding}" />
             </i:Interaction.Behaviors>
         </ui:IntellisenseTextBox>
-        <TextBlock Grid.Column="0" Grid.Row="1" Text="Method" VerticalAlignment="Bottom" />
-        <ComboBox Grid.Row="1" Grid.Column="1"
-                  ItemsSource="{Binding RequestMethods}"
-                  SelectedValue="{Binding ModelItem.Method, Mode=TwoWay}" >
-        </ComboBox>
 
-        <TextBlock Grid.Column="0" Grid.Row="2" Text="Result" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}"/>
+        <TextBlock Grid.Column="0" Grid.Row="3" Text="Result" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}"/>
         <ui:IntellisenseTextBox 
             Text="{Binding Path=ModelItem.Result, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             Grid.Column="1"
-                                Grid.Row="2"
+                                Grid.Row="3"
                                 DefaultText="[[HTML]]"
                                 WrapInBrackets="True"
                                 Margin="{StaticResource ControlBorderTop}"
@@ -82,10 +121,10 @@
                                      Target="{Binding}" />
             </i:Interaction.Behaviors>
         </ui:IntellisenseTextBox>
-        
-        
-        <TextBlock Grid.Column="0" Grid.Row="3" Text="Cookies or session" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" />
-        <ui:IntellisenseTextBox Grid.Column="1" Grid.Row="3"
+
+
+        <TextBlock Grid.Column="0" Grid.Row="4" Text="Cookies or session" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" />
+        <ui:IntellisenseTextBox Grid.Column="1" Grid.Row="4"
                                     
                                      Margin="{StaticResource ControlBorderTop}"
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
@@ -93,18 +132,18 @@
                                     AcceptsReturn="True"
                                     AllowUserInsertLine="False"
                                     WrapInBrackets="False" 
-                                    Text="{Binding Path=ModelItem.Test, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Text="{Binding Path=ModelItem.Cookies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                     AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_ForEachFromTextbox_AutoID}"
                                     ToolTip="{x:Static languages:Core.ForEachToolTipForEachType}">
             <i:Interaction.Behaviors>
                 <core1:HelpSetter Text="{x:Static languages:Core.ForEachHelpForEachType}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
-                                         SourcePropertyName="ModelItem.Test"
-                                         SourcePropertyValue="{Binding ModelItem.Test, UpdateSourceTrigger=PropertyChanged}"
+                                         SourcePropertyName="ModelItem.Cookies"
+                                         SourcePropertyValue="{Binding ModelItem.Cookies, UpdateSourceTrigger=PropertyChanged}"
                                          Target="{Binding}" />
             </i:Interaction.Behaviors>
         </ui:IntellisenseTextBox>
-       
+
 
 
     </Grid>

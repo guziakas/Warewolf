@@ -48,13 +48,13 @@ namespace Dev2.Activities.Designers2.WebClient
             {
                 Headers = string.Empty;
             }
-            if (Test == null)
+            if (Cookies == null)
             {
-                Test = string.Empty;
+                Cookies = string.Empty;
             }
             if (Method == null)
             {
-                Method = "Post";
+                Method = "GET";
             }
         }
 
@@ -82,7 +82,7 @@ namespace Dev2.Activities.Designers2.WebClient
             get { return GetProperty<string>(); }
             set { SetProperty(value); }
         }
-        private string Test
+        private string Cookies
         {
             get { return GetProperty<string>(); }
             set { SetProperty(value); }
@@ -93,6 +93,12 @@ namespace Dev2.Activities.Designers2.WebClient
             get { return GetProperty<string>(); }
             set { SetProperty(value); }
         }
+        private string PostData
+        {
+            get { return GetProperty<string>(); }
+            set { SetProperty(value); }
+        }
+
 
         public override void Validate()
         {

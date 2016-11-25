@@ -78,9 +78,9 @@ namespace Dev2.Activities
         public new string Result { get; set; }
 
         [FindMissing]
-        [Outputs("Test")]
-        [Inputs("Test")]
-        public string Test { get; set; }
+        [Outputs("Cookies")]
+        [Inputs("Cookies")]
+        public string Cookies { get; set; }
 
         #endregion
 
@@ -123,21 +123,18 @@ namespace Dev2.Activities
                 var colItr = new WarewolfListIterator();
                 var urlitr = new WarewolfIterator(dataObject.Environment.Eval(Url, update));
                 var headerItr = new WarewolfIterator(dataObject.Environment.Eval(Headers, update));
-                var postDataItr = new WarewolfIterator(dataObject.Environment.Eval(PostData, update));
-
+              
                 colItr.AddVariableToIterateOn(urlitr);
                 colItr.AddVariableToIterateOn(headerItr);
-                colItr.AddVariableToIterateOn(postDataItr);
-
+               
                 const int IndexToUpsertTo = 1;
                 while (colItr.HasMoreData())
                 {
                     var c = colItr.FetchNextValue(urlitr);
                     var headerValue = colItr.FetchNextValue(headerItr);
-                    var postDataValue = colItr.FetchNextValue(postDataItr);
+                    
 
                     var headers = string.IsNullOrEmpty(headerValue) ? new string[0] : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    var postDataItems = string.IsNullOrEmpty(postDataValue) ? new string[0] : postDataValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
                     var headersEntries = new List<Tuple<string, string>>();
 
                     foreach (var header in headers)
@@ -152,16 +149,44 @@ namespace Dev2.Activities
                             _debugInputs.Add(debugItem);
                         }
                     }
+                    string postData = null;
+                    if (PostData != null)
+                    {
+                        postData = ExecutionEnvironment.WarewolfEvalResultToString(dataObject.Environment.Eval(PostData, update));
+                    }
+                    if (dataObject.IsDebugMode() && PostData != null)
+                    {
+                        DebugItem debugItem = new DebugItem();
+                        AddDebugItem(new DebugEvalResult(postData, "PostData", dataObject.Environment, update), debugItem);
+                        _debugInputs.Add(debugItem);
+                    }
 
-                    var result = ExecuteRequest(Method, c,null, headersEntries, postDataItems:postDataItems);
+                    //act
+                    var result = ExecuteRequest(Method, c,postData, headersEntries);
 
                     allErrors.MergeErrors(errorsTo);
                     var expression = GetExpression(IndexToUpsertTo);
 
+                   
+                    if (dataObject.IsDebugMode())
+                    {
+                        var cookieValue = ExecutionEnvironment.WarewolfEvalResultToString(dataObject.Environment.Eval(Cookies, update));
+                        DebugItem debugItem = new DebugItem();
+                        AddDebugItem(new DebugEvalResult(cookieValue, "Cookies", dataObject.Environment, update), debugItem);
+                        _debugInputs.Add(debugItem);
+                    }
 
                     PushResultsToDataList(expression, result, dataObject, update);
                     //PushResultsToDataList(Test, CookieCollection.Aggregate((current, next) => current + ", " + next), dataObject, update);
-                    dataObject.Environment.AssignWithFrame(new AssignValue(Test, CookieCollection.Aggregate((current, next) => current + ", " + next)), update);
+                    var cookieString = CookieCollection.Aggregate((current, next) => current + ";" + next);
+                    dataObject.Environment.AssignWithFrame(new AssignValue(Cookies,cookieString), update);
+
+                    if (dataObject.IsDebugMode())
+                    {
+                        DebugItem debugItem = new DebugItem();
+                        AddDebugItem(new DebugEvalResult(cookieString, "Cookies", dataObject.Environment, update), debugItem);
+                        _debugInputs.Add(debugItem);
+                    }
                 }
                 
 
@@ -297,12 +322,12 @@ namespace Dev2.Activities
         #endregion
         #endregion
 
-        public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers = null, Action<string> asyncCallback = null,string[] postDataItems=null)
+        public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers = null, Action<string> asyncCallback = null)
         {
             using (var webClient = new WebClient())
             {
                 webClient.Credentials = CredentialCache.DefaultCredentials;
-               
+                webClient.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
                 webClient.Encoding = Encoding.UTF8;
                 if (headers != null)
                 {
@@ -337,6 +362,9 @@ namespace Dev2.Activities
                         if (asyncCallback == null)
                         {
                             var result = webClient.UploadString(uri, data);
+                            var kukiai = webClient.ResponseHeaders.GetValues("set-cookie");
+                            CookieCollection.AddRange(kukiai);
+
                             return result;
                         }
 
