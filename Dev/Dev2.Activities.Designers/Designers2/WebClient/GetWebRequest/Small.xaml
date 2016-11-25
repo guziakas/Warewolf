@@ -80,8 +80,8 @@
                 </i:Interaction.Behaviors>
             </ui:IntellisenseTextBox>
         </Grid>
-       
-        <Label Grid.Column="0" Grid.Row="2" Text="Post Data" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" Style="{Binding Mode=OneWay, Source={StaticResource IsPostSelectedStyle}}" />
+
+        <Label Grid.Column="0" Grid.Row="2" VerticalAlignment="Bottom" Margin="{StaticResource ControlBorderTop}" Style="{Binding Mode=OneWay, Source={StaticResource IsPostSelectedStyle}}" >Post data</Label>
         <ui:IntellisenseTextBox Grid.Column="1" Grid.Row="2"
             Text="{Binding Path=ModelItem.PostData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
           
