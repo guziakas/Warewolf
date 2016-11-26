@@ -174,7 +174,7 @@ namespace Dev2.Activities
                             var cookieObj = new Cookie();
                             cookieObj.Name = splitCookie[0];
                             cookieObj.Value = splitCookie[1];
-                            cookieObj.Domain = splitCookie[2]);
+                            cookieObj.Domain = splitCookie[2];
                             CookieContainer.Add(cookieObj);
                         }                       
                     }
@@ -196,20 +196,20 @@ namespace Dev2.Activities
                     allErrors.MergeErrors(errorsTo);
                     var expression = GetExpression(IndexToUpsertTo);
 
-                    Hashtable table = (Hashtable)CookieContainer.GetType().InvokeMember("m_domainTable",
-                                                                         BindingFlags.NonPublic |
-                                                                         BindingFlags.GetField |
-                                                                         BindingFlags.Instance,
-                                                                         null,
-                                                                         CookieContainer,
-                                                                         new object[] { });
+                    //Hashtable table = (Hashtable)CookieContainer.GetType().InvokeMember("m_domainTable",
+                    //                                                     BindingFlags.NonPublic |
+                    //                                                     BindingFlags.GetField |
+                    //                                                     BindingFlags.Instance,
+                    //                                                     null,
+                    //                                                     CookieContainer,
+                    //                                                     new object[] { });
 
 
 
-                    foreach (var key in table.Keys)
-                    {
+                    //foreach (var key in table.Keys)
+                    //{
                         var returnStr = "";
-                        foreach (Cookie cookie in CookieContainer.GetCookies(new Uri(string.Format("http://{0}/", key))))
+                        foreach (Cookie cookie in CookieContainer.GetCookies(new Uri(c)))
                         {
                             returnStr += cookie.Name + "|" + cookie.Value + "|" + cookie.Domain + ";";
                         }
@@ -217,7 +217,7 @@ namespace Dev2.Activities
                         {
                             dataObject.Environment.AssignWithFrame(new AssignValue(Cookies, returnStr), update);
                         }
-                    }
+                    //}
 
 
                     PushResultsToDataList(expression, result, dataObject, update);
@@ -391,7 +391,7 @@ namespace Dev2.Activities
                             
                             var result = webClient.DownloadString(uri);
                             var nameValueCollection = (NameValueCollection)webClient.ResponseHeaders;
-                            GetNewResponseCookies(webClient);
+                            //GetNewResponseCookies(webClient);
 
 
                             return result;
@@ -405,7 +405,7 @@ namespace Dev2.Activities
                         if (asyncCallback == null)
                         {
                             var result = webClient.UploadString(uri, data);
-                            GetNewResponseCookies(webClient);
+                           // GetNewResponseCookies(webClient);
 
                             return result;
                         }
