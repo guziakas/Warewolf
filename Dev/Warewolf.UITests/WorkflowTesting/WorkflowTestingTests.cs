@@ -14,13 +14,13 @@ namespace Warewolf.UITests
         public void Run_Failing_Test()
         {
             UIMap.Click_View_Tests_In_Explorer_Context_Menu(HelloWorld);
-            Assert.AreEqual("Blank Input", UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test1.TestNameDisplay.DisplayText, "First 'Hello World' test is not 'Blank Input' as expected.");
+            Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test1.Exists, "First 'Hello World' test does not exist as expected.");
             UIMap.Click_Create_New_Tests(true,4);
             UIMap.Click_Test_Run_Button(4);
             Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test4.Failing.Exists, "Test failing icon is not displayed after running a failing test.");
             UIMap.Click_EnableDisable_This_Test_CheckBox(true, 4);
             UIMap.Click_Delete_Test_Button(4);
-            UIMap.Click_Close_Tests_Tab();
+            UIMap.Click_MessageBox_Yes();
         }
 
         [TestMethod]
@@ -28,10 +28,9 @@ namespace Warewolf.UITests
         public void Run_Passing_Test()
         {
             UIMap.Click_View_Tests_In_Explorer_Context_Menu(HelloWorld);
-            Assert.AreEqual("Valid Input", UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test3.TestNameDisplay.DisplayText, "Third 'Hello World' test is not 'Valid Input' as expected.");
-            UIMap.Click_Test_Run_Button(3);
+            Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test3.Exists,
+                "Third 'Hello World' test does not exist as expected.");
             Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test3.Invalid.Exists, "Test passing icon is not displayed after running a passing test.");
-            UIMap.Click_Close_Tests_Tab();
         }
 
         [TestMethod]
@@ -39,7 +38,7 @@ namespace Warewolf.UITests
         public void Show_Duplicate_Test_Dialog()
         {
             UIMap.Click_View_Tests_In_Explorer_Context_Menu(HelloWorld);
-            Assert.AreEqual("Blank Input", UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test1.TestNameDisplay.DisplayText, "First 'Hello World' test is not 'Blank Input' as expected.");
+            Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTabPage.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test1.Exists, "First 'Hello World' test does not exist as expected.");
             UIMap.Click_Workflow_Testing_Tab_Create_New_Test_Button();
             UIMap.Update_Test_Name("Blank Input");
             UIMap.Click_Save_Ribbon_Button_With_No_Save_Dialog();
@@ -79,8 +78,7 @@ namespace Warewolf.UITests
             UIMap.Click_Create_New_Tests(true, 4);
             UIMap.Click_EnableDisable_This_Test_CheckBox(true, 4);
             UIMap.Click_Delete_Test_Button(4);
-            UIMap.Click_Yes_On_The_Confirm_Delete();
-            UIMap.Click_Close_Tests_Tab();
+            UIMap.Click_MessageBox_Yes();
         }
 
         [TestMethod]
@@ -100,9 +98,7 @@ namespace Warewolf.UITests
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
             UIMap.CloseHangingDialogs();
-#endif
         }
 
         UIMap UIMap

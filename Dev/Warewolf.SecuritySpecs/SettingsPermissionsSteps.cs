@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using Dev2.Activities.Specs.Scheduler;
 using Dev2.Network;
@@ -305,7 +304,8 @@ namespace Dev2.Activities.Specs.Permissions
             settings.Security.WindowsGroupPermissions.RemoveAll(permission => permission.ResourceID == resourceModel.ID);
             var windowsGroupPermission = new WindowsGroupPermission { WindowsGroup = groupName, ResourceID = resourceModel.ID, ResourceName = resourceName, IsServer = false, Permissions = resourcePermissions };
             settings.Security.WindowsGroupPermissions.Add(windowsGroupPermission);
-            resourceRepository.WriteSettings(environmentModel, settings);
+            var SettingsWriteResult = resourceRepository.WriteSettings(environmentModel, settings);
+            Assert.IsFalse(SettingsWriteResult.HasError, "Cannot setup for security spec.\n Error writing initial resource permissions settings to localhost server.\n" + SettingsWriteResult.Message);
         }
 
         [Then(@"""(.*)"" should have ""(.*)""")]
@@ -355,6 +355,14 @@ namespace Dev2.Activities.Specs.Permissions
 
             }
             currentEnvironment?.Disconnect();
+        }
+
+        [Given(@"I have a server ""(.*)""")]
+        public void GivenIHaveAServer(string serverName)
+        {
+            AppSettings.LocalHost = string.Format("http://{0}:3142", Environment.MachineName.ToLowerInvariant());
+            var environmentModel = EnvironmentRepository.Instance.Source;
+            scenarioContext.Add("environment", environmentModel);
         }
     }
 }

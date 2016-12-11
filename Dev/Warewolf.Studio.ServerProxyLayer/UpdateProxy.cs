@@ -181,7 +181,7 @@ namespace Warewolf.Studio.ServerProxyLayer
                 {
                     throw new WarewolfTestException("No Test Response returned", null);
                 }
-                throw new WarewolfTestException(ErrorResource.UnableToContactServer +" : " + output.TestMessage, null);
+                throw new WarewolfTestException(ErrorResource.UnableToContactServer + " : " + output.TestMessage, null);
             }
             resource.IsSharepointOnline = output.IsSharepointOnline;
         }
@@ -222,7 +222,7 @@ namespace Warewolf.Studio.ServerProxyLayer
             if (output.HasError)
                 throw new WarewolfSaveException(output.Message.ToString(), null);
         }
-       
+
 
         public void SaveComPluginSource(IComPluginSource source, Guid serverWorkspaceID)
         {
@@ -262,7 +262,7 @@ namespace Warewolf.Studio.ServerProxyLayer
 
         public string TestComPluginService(IComPluginService plugin)
         {
-            
+
             var con = Connection;
             var comsController = CommunicationControllerFactory.CreateController("TestComPluginService");
             Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
@@ -333,8 +333,14 @@ namespace Warewolf.Studio.ServerProxyLayer
             Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
             comsController.AddPayloadArgument("EmailServiceSource", serialiser.SerializeToBuilder(model));
             var output = comsController.ExecuteCommand<IExecuteMessage>(con, GlobalConstants.ServerWorkspaceID);
+            if (output == null)
+            {
+                throw new WarewolfSaveException("No response from server. Please ensure server is connected.", null);
+            }
             if (output.HasError)
+            {
                 throw new WarewolfSaveException(output.Message.ToString(), null);
+            }
         }
 
         public void SaveExchangeSource(IExchangeSource model, Guid serverWorkspaceID)

@@ -24,6 +24,7 @@ using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Communication;
 using Dev2.Controller;
+using Dev2.Data;
 using Dev2.Data.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Security;
@@ -303,6 +304,9 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             if (saveResource != null && !saveResource.HasError)
             {
                 _environmentModel.FireWorkflowSaved();
+                var connection = _environmentModel.Connection;
+                var comsController = new CommunicationController();
+                comsController.FetchResourceAffectedMessages(connection, instanceObj.ID);
             }
             return saveResource;
         }
@@ -392,7 +396,7 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             }
 
             var comsController = new CommunicationController { ServiceName = "DeleteResourceService" };
-            if (!String.IsNullOrEmpty(resource.ResourceName) && resource.ResourceName.Contains("Unsaved"))
+            if (!string.IsNullOrEmpty(resource.ResourceName) && resource.ResourceName.Contains("Unsaved"))
             {
                 comsController.AddPayloadArgument("ResourceID", resource.ID.ToString());
                 comsController.AddPayloadArgument("ResourceType", resource.ResourceType.ToString());
@@ -497,6 +501,12 @@ namespace Dev2.Studio.Core.AppResources.Repositories
 
         public IResourceModel HydrateResourceModel(SerializableResource data, Guid serverId, bool forced = false, bool fetchXaml = false, bool prepairForDeployment = false)
         {
+            if (!_environmentModel.Connection.IsConnected)
+            {
+                ShowServerDisconnectedPopup();
+                return null;
+            }
+
             Guid id = data.ResourceID;
 
             if (!IsInCache(id) || forced)
@@ -557,7 +567,7 @@ namespace Dev2.Studio.Core.AppResources.Repositories
                 if (fetchXaml)
                 {
                     var msg = FetchResourceDefinition(_environmentModel, GlobalConstants.ServerWorkspaceID, id, prepairForDeployment);
-                    if(msg == null || msg.HasError)
+                    if (msg == null || msg.HasError)
                         return null;
                     resource.WorkflowXaml = msg.Message;
                 }
@@ -599,7 +609,7 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             CompressedExecuteMessage message = new CompressedExecuteMessage();
             message.SetMessage(serializer.Serialize(tests));
             comsController.AddPayloadArgument("resourceID", resource.ID.ToString());
-            comsController.AddPayloadArgument("resourcePath", resource.Category);
+            comsController.AddPayloadArgument("resourcePath", string.IsNullOrEmpty(resource.Category) ? resource.ResourceName : resource.Category);
             comsController.AddPayloadArgument("testDefinitions", serializer.SerializeToBuilder(message));
 
             var result = comsController.ExecuteCommand<ExecuteMessage>(_environmentModel.Connection, GlobalConstants.ServerWorkspaceID);
@@ -608,29 +618,54 @@ namespace Dev2.Studio.Core.AppResources.Repositories
         }
 
 
-        public TestRunResult ExecuteTest(IContextualResourceModel resourceModel, string testName)
+        public IServiceTestModelTO ExecuteTest(IContextualResourceModel resourceModel, string testName)
         {
             if (resourceModel?.Environment == null || !resourceModel.Environment.IsConnected)
             {
-                var testRunReuslt = new TestRunResult { Result = RunResult.TestFailed };
+                var testRunReuslt = new ServiceTestModelTO { TestFailing = true };
                 return testRunReuslt;
             }
 
             var clientContext = resourceModel.Environment.Connection;
             if (clientContext == null)
             {
-                var testRunReuslt = new TestRunResult { Result = RunResult.TestFailed };
+                var testRunReuslt = new ServiceTestModelTO { TestFailing = true };
                 return testRunReuslt;
             }
             var controller = new CommunicationController { ServiceName = string.IsNullOrEmpty(resourceModel.Category) ? resourceModel.ResourceName : resourceModel.Category };
             controller.AddPayloadArgument("ResourceID", resourceModel.ID.ToString());
             controller.AddPayloadArgument("IsDebug", true.ToString());
             controller.ServicePayload.TestName = testName;
-            var res = controller.ExecuteCommand<TestRunResult>(clientContext, clientContext.WorkspaceID);
+            var res = controller.ExecuteCommand<IServiceTestModelTO>(clientContext, clientContext.WorkspaceID);
             return res;
 
         }
+        public void ReloadResourceTests()
+        {
+            var comsController = GetCommunicationController("ReloadTestsService");
+            var executeCommand = comsController.ExecuteCommand<CompressedExecuteMessage>(_environmentModel.Connection, GlobalConstants.ServerWorkspaceID);
+            var serializer = new Dev2JsonSerializer();
+            var message = executeCommand.GetDecompressedMessage();
+            if (executeCommand.HasError)
+            {
+                var msg = serializer.Deserialize<StringBuilder>(message);
+                throw new Exception(msg.ToString());
+            }
+        }
 
+        public void DeleteAlltests(List<string> ignoreList)
+        {
+            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializeToBuilder = serializer.SerializeToBuilder(ignoreList);
+            var comsController = GetCommunicationController("DeleteAllTestsService");
+            comsController.AddPayloadArgument("excludeList", serializeToBuilder);
+            var executeCommand = comsController.ExecuteCommand<CompressedExecuteMessage>(_environmentModel.Connection, GlobalConstants.ServerWorkspaceID);
+            var message = executeCommand.GetDecompressedMessage();
+            if (executeCommand.HasError)
+            {
+                throw new Exception(message);
+            }
+        }
         public List<IServiceTestModelTO> LoadResourceTests(Guid resourceId)
         {
             var comsController = GetCommunicationController("FetchTests");

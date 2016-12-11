@@ -10,7 +10,7 @@ namespace Dev2
         
         public static void RaiseCanExecuteChanged(ICommand commandForCanExecuteChange)
         {
-            if (Application.Current != null && Application.Current.Dispatcher != null)
+            if (Application.Current != null && Application.Current.Dispatcher != null && Application.Current.CheckAccess())
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -54,6 +54,14 @@ namespace Dev2
                     {
                         command.RaiseCanExecuteChanged();
                         return;
+                    }
+                }
+                if (typeOfCommand == typeof(DelegateCommand))
+                {
+                    var command = commandForCanExecuteChange as DelegateCommand;
+                    if (command != null)
+                    {
+                        command.RaiseCanExecuteChanged();
                     }
                 }
                 if (typeOfCommand == typeof(AuthorizeCommand))

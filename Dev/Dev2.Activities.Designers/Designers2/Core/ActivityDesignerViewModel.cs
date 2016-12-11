@@ -10,6 +10,7 @@
 
 using System;
 using System.Activities.Presentation.Model;
+using System.Activities.Presentation.View;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -26,6 +27,7 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.Activities.Utils;
+// ReSharper disable ConvertToAutoProperty
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -59,10 +61,7 @@ namespace Dev2.Activities.Designers2.Core
             OpenErrorsLinkCommand = new DelegateCommand(o =>
             {
                 var actionableErrorInfo = o as IActionableErrorInfo;
-                if(actionableErrorInfo != null)
-                {
-                    actionableErrorInfo.Do();
-                }
+                actionableErrorInfo?.Do();
             });
 
             BindingOperations.SetBinding(this, IsClosedProperty, new Binding(ShowLargeProperty.Name)
@@ -170,10 +169,7 @@ namespace Dev2.Activities.Designers2.Core
 
             if(vm != null && (bool)e.NewValue)
             {
-                if(vm._setInitialFocus != null)
-                {
-                    vm._setInitialFocus();
-                }
+                vm._setInitialFocus?.Invoke();
             }
         }
 
@@ -341,9 +337,18 @@ namespace Dev2.Activities.Designers2.Core
 
         void ToggleTitleBarVisibility()
         {
+            DesignerView parentContentPane = FindDependencyParent.FindParent<DesignerView>(ModelItem.View);
+            var dataContext = parentContentPane?.DataContext;
             var isSelectedOrMouseOver = IsSelectedOrMouseOver;
-            TitleBarTogglesVisibility = isSelectedOrMouseOver ? Visibility.Visible : Visibility.Collapsed;
-            ZIndexPosition = isSelectedOrMouseOver ? ZIndexPosition.Front : ZIndexPosition.Back;
+            if (dataContext != null && dataContext.GetType().Name == "ServiceTestViewModel")
+            {
+                TitleBarTogglesVisibility = Visibility.Collapsed;
+            }
+            else
+            {
+                TitleBarTogglesVisibility = isSelectedOrMouseOver ? Visibility.Visible : Visibility.Collapsed;
+                ZIndexPosition = isSelectedOrMouseOver ? ZIndexPosition.Front : ZIndexPosition.Back;
+            }
         }
 
         protected string DisplayName { get { return GetProperty<string>(); } set { SetProperty(value); } }

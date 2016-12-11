@@ -27,6 +27,7 @@ using Oracle.ManagedDataAccess.Client;
 using System.Data.Odbc;
 using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Services.Sql;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 using Npgsql;
 using Warewolf.Resource.Errors;
@@ -541,7 +542,7 @@ namespace Dev2.Services.Execution
                     if (parameters != null)
                     {
                         // ReSharper disable CoVariantArrayConversion
-                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
+                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName)))
                         // ReSharper restore CoVariantArrayConversion
                         {
                             TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);

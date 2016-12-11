@@ -19,7 +19,7 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities.DropBox2016.DropboxFileActivity
 {
-    [ToolDescriptorInfo("Dropbox", "List Contents", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_List Contents_Tags")]
+    [ToolDescriptorInfo ("Dropbox", "List Contents", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_List_Contents_Tags")]
     public class DsfDropboxFileListActivity : DsfBaseActivity
     {
         // ReSharper disable MemberCanBePrivate.Global
@@ -98,7 +98,7 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
             return singleExecutor;
         }
 
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             var toPath = evaluatedValues["ToPath"];
 
@@ -124,7 +124,7 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
                     Files.AddRange(metadatas.Where(metadata => metadata.IsFile).Select(metadata => metadata.PathLower).ToList());
                 }
 
-                return GlobalConstants.DropBoxSucces;
+                return new List<string> { GlobalConstants.DropBoxSuccess };
             }
             var dropboxFailureResult = dropboxExecutionResult as DropboxFailureResult;
             if (dropboxFailureResult != null)

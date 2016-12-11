@@ -24,7 +24,6 @@ namespace Warewolf.UITests
 
             Keyboard.SendKeys(varValue, "{Back}", ModifierKeys.None);
             Assert.AreEqual(heightBeforeEnterClick, varValue.Height, "Debug input dialog value textbox does not resize after deleting second line.");
-            UIMap.Click_Cancel_DebugInput_Window();
         }
 
         #region Additional test attributes
@@ -33,9 +32,7 @@ namespace Warewolf.UITests
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
             UIMap.CloseHangingDialogs();
-#endif
         }
 
         UIMap UIMap

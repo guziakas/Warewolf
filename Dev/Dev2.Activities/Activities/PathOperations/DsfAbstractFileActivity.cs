@@ -12,12 +12,14 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.PathOperations;
 using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
@@ -61,9 +63,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
- 
-
             ErrorResultTO allErrors = new ErrorResultTO();
             ErrorResultTO errors = new ErrorResultTO();
 
@@ -98,7 +97,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                                     else
                                     {
                                         foreach (var region in DataListCleaningUtils.SplitIntoRegions(output.OutPutDescription))
-                                        {
+                                        {                                            
                                             dataObject.Environment.Assign(region, value, update);
                                         }
                                     }
@@ -219,6 +218,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             set;
         }
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
         /// <summary>
         /// Gets or sets a value indicating whether this instance is not cert verifiable.
         /// </summary>

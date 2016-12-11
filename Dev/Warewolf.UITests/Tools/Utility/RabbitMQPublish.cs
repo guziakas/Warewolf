@@ -13,15 +13,23 @@ namespace Warewolf.UITests.Tools.Utility
             UIMap.Open_RabbitMqPublish_LargeView();
         }
 
+        //[TestMethod]
+        //[TestCategory("Utility Tools")]
+        //public void ResizeAdornerMappings_Expected_AdornerMappingIsResized_UITest()
+        //{
+        //    UIMap.Open_RabbitMqPublish_LargeView();
+        //    var heightBefore = UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.RabbitMQPublish.LargeViewContentCustom.MessageComboBox.Width;
+        //    UIMap.Resize_RabbitMQPublish_LargeTool();
+        //    Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.RabbitMQPublish.LargeViewContentCustom.MessageComboBox.Width > heightBefore);
+        //}
+
         #region Additional test attributes
 
         [TestInitialize]
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
             UIMap.CloseHangingDialogs();
-#endif
             UIMap.Click_New_Workflow_Ribbon_Button();
             UIMap.Drag_Toolbox_RabbitMqPublish_Onto_DesignSurface();
         }

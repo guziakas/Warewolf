@@ -46,16 +46,6 @@ namespace Warewolf.UITests.Tools.Data
 
         [TestMethod]
         [TestCategory("Data Tools")]
-        public void AssignToolOpenAndCloseLargeViewWithExpandAllToggleUITest()
-        {
-            UIMap.Click_Workflow_ExpandAll();
-            Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.LargeView.Exists, "Assign tool large view does not exist after clicking expand all toggle button.");
-            UIMap.Click_Workflow_CollapseAll();
-            Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.SmallView.Exists, "Assign tool small view does not exist after clicking collapse all toggle button.");
-        }
-
-        [TestMethod]
-        [TestCategory("Data Tools")]
         public void AssignDeleteToolUITest()
         {
             UIMap.Delete_Assign_With_Context_Menu();
@@ -128,8 +118,9 @@ namespace Warewolf.UITests.Tools.Data
         {
             UIMap.Assign_Value_To_Variable_With_Assign_Tool_Small_View_Row_1();
             UIMap.Unpin_Tab_With_Drag(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab);
-            UIMap.Debug_Unpinned_Workflow_With_Ribbon_Button();
-            UIMap.Click_Debug_Output_Assign_Cell_For_Unpinned_Workflow_Tab();
+            UIMap.Debug_Unpinned_Workflow_With_F6();
+            Assert.AreEqual("[[SomeVariable]]", UIMap.MainStudioWindow.UnpinnedTab.SplitPane.WorkSurfaceContext.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.VariableTextbox2.DisplayText, "Variable name does not exist in unpinned debug output.");
+            Assert.AreEqual("50", UIMap.MainStudioWindow.UnpinnedTab.SplitPane.WorkSurfaceContext.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.ValueTextbox5.DisplayText, "Variable value does not exist in unpinned debug output.");
             UIMap.Pin_Unpinned_Pane_To_Default_Position();
         }
 
@@ -156,9 +147,7 @@ namespace Warewolf.UITests.Tools.Data
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
             UIMap.CloseHangingDialogs();
-#endif
             UIMap.Click_New_Workflow_Ribbon_Button();
             UIMap.Drag_Toolbox_MultiAssign_Onto_DesignSurface();
         }

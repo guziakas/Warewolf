@@ -23,7 +23,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         {
             if(action == null)
             {
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             }
 
             _action = action;
@@ -76,5 +76,14 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         }
 
         #endregion
+
+        public void RaiseCanExecuteChanged()
+        {
+            if (CanExecuteChanged != null)
+            {
+                CanExecuteChanged(this, EventArgs.Empty);
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
     }
 }

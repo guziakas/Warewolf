@@ -3,14 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Dev2;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Interfaces;
-using Microsoft.Practices.Prism.Commands;
+using Dev2.Runtime.Configuration.ViewModels.Base;
 using Microsoft.Practices.Prism.PubSubEvents;
 
 namespace Warewolf.Studio.ViewModels
@@ -74,8 +73,8 @@ namespace Warewolf.Studio.ViewModels
             VerifyArgument.IsNotNull("updateManager", updateManager);
             VerifyArgument.IsNotNull("aggregator", aggregator);
             _updateManager = updateManager;
-            SendCommand = new DelegateCommand(TestConnection, CanTest);
-            OkCommand = new DelegateCommand(SaveConnection, CanSave);
+            SendCommand = new DelegateCommand(o=>TestConnection(), o=>CanTest());
+            OkCommand = new DelegateCommand(o=>SaveConnection(), o=>CanSave());
             Testing = false;
             _testPassed = false;
             _testFailed = false;
@@ -147,11 +146,7 @@ namespace Warewolf.Studio.ViewModels
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
-
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void Save()
@@ -474,12 +469,9 @@ namespace Warewolf.Studio.ViewModels
         private void TestConnection()
         {
             _token = new CancellationTokenSource();
+            var t = new Task(SetupProgressSpinner, _token.Token);
 
-
-            var t = new Task(
-                SetupProgressSpinner, _token.Token);
-
-            t.ContinueWith(a => Dispatcher.CurrentDispatcher.Invoke(() =>
+            t.ContinueWith(a => Application.Current?.Dispatcher?.Invoke(() =>
             {
                 if (!_token.IsCancellationRequested)
                     switch (t.Status)
@@ -489,15 +481,15 @@ namespace Warewolf.Studio.ViewModels
                                 TestFailed = true;
                                 TestPassed = false;
                                 Testing = false;
-                                TestMessage = t.Exception != null ? t.Exception.Message : "Failed";
+                                TestMessage = GetExceptionMessage(t.Exception);
                                 break;
                             }
                         case TaskStatus.RanToCompletion:
                             {
                                 TestMessage = "Passed";
                                 TestFailed = false;
-                                TestPassed = true;
                                 Testing = false;
+                                TestPassed = true;
                                 break;
                             }
                     }
@@ -507,16 +499,15 @@ namespace Warewolf.Studio.ViewModels
 
         void SetupProgressSpinner()
         {
-            Dispatcher.CurrentDispatcher.Invoke(() =>
+            Application.Current?.Dispatcher?.Invoke(() =>
             {
                 Testing = true;
                 TestFailed = false;
                 TestPassed = false;
             });
-
             _updateManager.TestConnection(ToNewSource());
-
         }
+
         IEmailServiceSource ToNewSource()
         {
             return new EmailServiceSourceDefinition
@@ -529,7 +520,7 @@ namespace Warewolf.Studio.ViewModels
                 EnableSsl = EnableSsl,
                 EmailFrom = EmailFrom,
                 EmailTo = EmailTo,
-                Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.Id
+                Id = _emailServiceSource?.Id ?? Guid.NewGuid()
             };
         }
 
@@ -546,7 +537,7 @@ namespace Warewolf.Studio.ViewModels
                     EnableSsl = EnableSsl,
                     EmailFrom = EmailFrom,
                     EmailTo = EmailTo,
-                    Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.Id
+                    Id = _emailServiceSource?.Id ?? Guid.NewGuid()
                 }
             ;
             // ReSharper disable once RedundantIfElseBlock
@@ -582,7 +573,7 @@ namespace Warewolf.Studio.ViewModels
                     EnableSsl = EnableSsl,
                     EmailFrom = EmailFrom,
                     EmailTo = EmailTo,
-                    Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.Id
+                    Id = _emailServiceSource?.Id ?? Guid.NewGuid()
                 };
         }
 
@@ -660,7 +651,7 @@ namespace Warewolf.Studio.ViewModels
         {
             if (RequestServiceNameViewModel != null)
             {
-                if (RequestServiceNameViewModel.Result != null) RequestServiceNameViewModel.Result.Dispose();
+                RequestServiceNameViewModel.Result?.Dispose();
                 RequestServiceNameViewModel.Dispose();
             }
             Dispose(true);
@@ -683,7 +674,7 @@ namespace Warewolf.Studio.ViewModels
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    if (_token != null) _token.Dispose();
+                    _token?.Dispose();
                 }
 
                 // Dispose unmanaged resources.

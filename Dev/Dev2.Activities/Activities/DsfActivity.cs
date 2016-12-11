@@ -22,6 +22,7 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
@@ -32,6 +33,8 @@ using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable CyclomaticComplexity
+// ReSharper disable FunctionComplexityOverflow
 
 // ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
@@ -592,7 +595,20 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         }
 
-
+        public override List<string> GetOutputs()
+        {
+            if (Outputs == null)
+            {
+                if (IsObject)
+                {
+                    return new List<string> {ObjectName};
+                }
+                IDev2LanguageParser parser = DataListFactory.CreateOutputParser();
+                IList<IDev2Definition> outputs = parser.Parse(OutputMapping);
+                return outputs.Select(definition => definition.MapsTo).ToList();
+            }
+            return Outputs.Select(mapping => mapping.MappedTo).ToList();
+        }
 
         #endregion
 

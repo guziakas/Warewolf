@@ -16,6 +16,7 @@ namespace Warewolf.UITests.Tabs
             UIMap.Click_New_Workflow_Ribbon_Button();
             UIMap.Unpin_Tab_With_Drag(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab);
             UIMap.Pin_Unpinned_Pane_To_Default_Position();
+            Assert.IsFalse(UIMap.ControlExistsNow(UIMap.MainStudioWindow.UnpinnedTab), "Unpinned pane still exists after being dragged onto the central dock indicator.");
             Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.Exists, "Workflow tab did not dock into it's default position after being dragged onto the central dock indicator.");
         }
 
@@ -63,10 +64,10 @@ namespace Warewolf.UITests.Tabs
 
         [TestMethod]
         [TestCategory("Tabs and Panes")]
-        public void UnpinAndRepinPluginSourceWizardTab()
+        public void UnpinAndRepinDotNetPluginSourceWizardTab()
         {
             UIMap.Click_NewPluginSource_Ribbon_Button();
-            UIMap.Unpin_Tab_With_Drag(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.PluginSourceWizardTab);
+            UIMap.Unpin_Tab_With_Drag(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DotNetPluginSourceWizardTab);
             UIMap.Restore_Unpinned_Tab_Using_Context_Menu();
         }
 
@@ -122,9 +123,7 @@ namespace Warewolf.UITests.Tabs
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
             UIMap.CloseHangingDialogs();
-#endif
         }
 
         UIMap UIMap

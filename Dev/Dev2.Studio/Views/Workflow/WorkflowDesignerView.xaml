@@ -180,16 +180,17 @@
                             OverridesDefaultStyle="False" 
                             MaxWidth="{Binding ElementName=ScrollViewer, Path=ActualWidth}" 
                             VerticalAlignment="Top" HorizontalAlignment="Center">
-                    <TextBlock Margin="0,5,0,0"
+                    <TextBlock Margin="0,5,0,0" 
                                TextWrapping="Wrap"
                                VerticalAlignment="Top"
+                               ToolTip="{x:Static languages:Core.ServiceViewInBrowserTooltip}"
                                MaxWidth="{Binding ElementName=ScrollViewer, Path=ActualWidth}"
                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                ScrollViewer.VerticalScrollBarVisibility="Auto"
                                ScrollViewer.CanContentScroll="True"
                                Visibility="{Binding WorkflowLinkVisible}"
                                HorizontalAlignment="Center">
-                    <Hyperlink Command="{Binding Path=OpenWorkflowLinkCommand}"
+                      <Hyperlink Command="{Binding Path=OpenWorkflowLinkCommand}"
                                Style="{StaticResource HyperLinkStyle}"
                                CommandParameter="{Binding}">
                         <Run Text="{Binding Path=DisplayWorkflowLink,Mode=OneWay}" />
@@ -198,7 +199,7 @@
                 </StackPanel>
             </ScrollViewer>
             <ContentControl Grid.Row="1"
-                                    Content="{Binding Path=DesignerView, IsAsync=True}"
+                                    Content="{Binding Path=DesignerView}"
                                     AutomationProperties.AutomationId="{Binding Path=DisplayName, Mode=OneWay}"
                                     cal:Message.Attach="[Event LostKeyboardFocus] = [Action DoWorkspaceSave]">
 

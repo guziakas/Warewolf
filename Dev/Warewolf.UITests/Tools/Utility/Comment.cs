@@ -6,12 +6,7 @@ namespace Warewolf.UITests.Tools.Utility
     [CodedUITest]
     public class Comment
     {
-        [TestMethod]
-        [TestCategory("Utility Tools")]
-        public void CommentTool_OpenLargeViewUITest()
-        {
-            UIMap.Drag_Toolbox_Comment_Onto_DesignSurface();
-        }
+        private const string CommentToolWf = "TestingCommentToolResize";
 
         [TestMethod]
         [TestCategory("Utility Tools")]
@@ -22,18 +17,28 @@ namespace Warewolf.UITests.Tools.Utility
             Assert.AreEqual("Comment", UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.CommentTreeItem.CommentButton.DisplayText);
         }
 
+        [TestMethod]
+        [TestCategory("Utility Tools")]
+        public void ToolDesigners_CommentSmallView_CanResize_UITest()
+        {            
+            UIMap.Enter_Text_Into_CommentTool("Some comment, some comment, some comment,");
+            Assert.IsTrue(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.TabDescription.DisplayText.Contains("*"));
+            UIMap.Save_With_Ribbon_Button_And_Dialog(CommentToolWf);
+            Assert.IsFalse(UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.TabDescription.DisplayText.Contains("*"));
+            var newHeight = UIMap.Expand_Comment_Tool_Size();
+            Assert.AreEqual(newHeight, UIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.Comment.LargeViewContentCustom.Height);
+        }
+
         #region Additional test attributes
 
         [TestInitialize]
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
             UIMap.CloseHangingDialogs();
-#endif
-            UIMap.Click_New_Workflow_Ribbon_Button();            
+            UIMap.Click_New_Workflow_Ribbon_Button();
+            UIMap.Drag_Toolbox_Comment_Onto_DesignSurface();
         }
-
 
         UIMap UIMap
         {
