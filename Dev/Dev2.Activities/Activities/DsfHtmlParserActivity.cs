@@ -50,6 +50,11 @@ namespace Dev2.Activities
             return new List<DsfForEachItem>();
         }
 
+        public override List<string> GetOutputs()
+        {
+            throw new NotImplementedException();
+        }
+
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
         //    throw new NotImplementedException();

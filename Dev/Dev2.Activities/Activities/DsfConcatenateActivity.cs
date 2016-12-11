@@ -21,10 +21,16 @@ namespace Dev2.Activities
         [Inputs("RightString")]
         // ReSharper disable once UnusedMember.Global
         public string Right { get; set; }
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
-            return Left + Right;
+            return new List<string> { Left + Right };
         }
+           
+        
+        //protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        //{
+        //    
+        //}
         #endregion
     }
 }

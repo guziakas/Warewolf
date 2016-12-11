@@ -33,6 +33,7 @@ using System.Collections.Specialized;
 using Dev2.Activities.Web;
 using System.Collections;
 using System.Reflection;
+using Dev2.Data.TO;
 
 namespace Dev2.Activities
 {
@@ -430,6 +431,11 @@ namespace Dev2.Activities
                     CookieCollection.Add(trimmedCookie);
                 }
             }
+        }
+
+        public override List<string> GetOutputs()
+        {
+            throw new NotImplementedException();
         }
     }
 }

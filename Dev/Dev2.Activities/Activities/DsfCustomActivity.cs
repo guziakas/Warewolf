@@ -30,6 +30,7 @@ using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 using WarewolfParserInterop;
+using Dev2.Data.TO;
 // ReSharper disable UnusedMember.Global
 
 // ReSharper disable CheckNamespace
@@ -507,6 +508,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return (from item in FieldsCollection
                     where !string.IsNullOrEmpty(item.FieldName) && item.FieldName.Contains("[[")
                     select new DsfForEachItem { Name = item.FieldValue, Value = item.FieldName }).ToList();
+        }
+
+        public override List<string> GetOutputs()
+        {
+            throw new NotImplementedException();
         }
 
         #endregion
