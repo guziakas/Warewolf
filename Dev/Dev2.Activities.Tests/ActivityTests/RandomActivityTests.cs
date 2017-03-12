@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -411,6 +411,24 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(From, act.From);
             Assert.AreEqual(To, act.To);
             Assert.AreEqual(Length, act.Length);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfRandomActivity_GetOutputs")]
+        public void DsfRandomActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string From = "[[Numeric(1).num]]";
+            const string To = "Up";
+            const string Result = "[[res]]";
+            const string Length = "2";
+            var act = new DsfRandomActivity { From = From, To = To, Length = Length, Result = Result };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]

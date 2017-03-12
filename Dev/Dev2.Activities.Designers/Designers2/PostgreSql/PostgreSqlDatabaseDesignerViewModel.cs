@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +24,7 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.Database;
 using Dev2.Communication;
@@ -31,8 +32,6 @@ using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-
-// ReSharper disable UnusedMember.Local
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -50,19 +49,13 @@ namespace Dev2.Activities.Designers2.PostgreSql
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
-
-        public PostgreSqlDatabaseDesignerViewModel(ModelItem modelItem)
+        public PostgreSqlDatabaseDesignerViewModel(ModelItem modelItem, IAsyncWorker worker)
             : base(modelItem)
         {
+            _worker = worker;
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             var server = shellViewModel.ActiveServer;
             var model = CustomContainer.CreateInstance<IDbServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
@@ -70,6 +63,7 @@ namespace Dev2.Activities.Designers2.PostgreSql
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_PostgreSQL;
         }
 
         // ReSharper disable once ConvertPropertyToExpressionBody
@@ -171,10 +165,11 @@ namespace Dev2.Activities.Designers2.PostgreSql
             UpdateWorstError();
         }
 
-        public PostgreSqlDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model)
+        public PostgreSqlDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model, IAsyncWorker worker)
             : base(modelItem)
         {
             Model = model;
+            _worker = worker;
             SetupCommonProperties();
         }
 
@@ -235,7 +230,7 @@ namespace Dev2.Activities.Designers2.PostgreSql
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -301,6 +296,7 @@ namespace Dev2.Activities.Designers2.PostgreSql
         DependencyProperty.Register("WorstError", typeof(ErrorType), typeof(PostgreSqlDatabaseDesignerViewModel), new PropertyMetadata(ErrorType.None));
 
         bool _generateOutputsVisible;
+        private IAsyncWorker _worker;
 
         public DelegateCommand TestInputCommand { get; set; }
 
@@ -329,10 +325,7 @@ namespace Dev2.Activities.Designers2.PostgreSql
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -352,7 +345,7 @@ namespace Dev2.Activities.Designers2.PostgreSql
                         }
                 };
                 regions.Add(SourceRegion);
-                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion)
+                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion,_worker)
                 {
                     SourceChangedAction = () =>
                         {
@@ -448,20 +441,7 @@ namespace Dev2.Activities.Designers2.PostgreSql
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }
@@ -506,21 +486,6 @@ namespace Dev2.Activities.Designers2.PostgreSql
             if (!string.IsNullOrWhiteSpace(outputFieldName))
             {
                 DisplayName = displayName + outputFieldName;
-            }
-        }
-
-        private static void GetValue(string s, List<IServiceInput> dt)
-        {
-            var exp = WarewolfDataEvaluationCommon.parseLanguageExpressionWithoutUpdate(s);            
-            if (exp.IsScalarExpression)
-            {
-
-                dt.Add(new ServiceInput(s, ""));
-            }
-            if (exp.IsRecordSetExpression)
-            {
-
-                dt.Add(new ServiceInput(s, ""));
             }
         }
 

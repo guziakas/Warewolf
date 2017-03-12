@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -45,7 +45,7 @@ namespace Dev2.Runtime.WebServer.Hubs
     {
         static readonly ConcurrentDictionary<Guid, StringBuilder> MessageCache = new ConcurrentDictionary<Guid, StringBuilder>();
         readonly Dev2JsonSerializer _serializer = new Dev2JsonSerializer();
-
+        static readonly Dictionary<Guid, string>  ResourceAffectedMessagesCache = new Dictionary<Guid, string>();
         public EsbHub()
         {
         }
@@ -169,16 +169,41 @@ namespace Dev2.Runtime.WebServer.Hubs
             CompileMessageRepo.Instance.AllMessages.Subscribe(OnCompilerMessageReceived);
         }
 
-        public void SendResourcesAffectedMemo(Guid resourceId, IList<ICompileMessageTO> messages)
+        void SendResourcesAffectedMemo(Guid resourceId, IList<ICompileMessageTO> messages)
         {
+            
             var msgs = new CompileMessageList { Dependants = new List<string>() };
             messages.ToList().ForEach(s => msgs.Dependants.Add(s.ServiceName));
             msgs.MessageList = messages;
             msgs.ServiceID = resourceId;
             var serializedMemo = _serializer.Serialize(msgs);
-            var hubCallerConnectionContext = Clients;
+            if (!ResourceAffectedMessagesCache.ContainsKey(resourceId))
+            {
+                ResourceAffectedMessagesCache.Add(resourceId, serializedMemo);
+            }
+        }
 
-            hubCallerConnectionContext.All.ReceiveResourcesAffectedMemo(serializedMemo);
+        public async Task<string> FetchResourcesAffectedMemo(Guid resourceId)
+        {
+            try
+            {
+                string value;
+                if (ResourceAffectedMessagesCache.TryGetValue(resourceId, out value))
+                {
+                    var task = new Task<string>(() => value);
+                    ResourceAffectedMessagesCache.Remove(resourceId);
+                    task.Start();
+                    return await task;
+                }
+            }
+            catch (Exception e)
+            {
+                // ReSharper disable InvokeAsExtensionMethod
+                Dev2Logger.Error(this, e);
+                // ReSharper restore InvokeAsExtensionMethod
+            }
+
+            return null;
         }
 
         public void SendDebugState(DebugState debugState)
@@ -320,7 +345,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                             user = Context.User.Identity.Name;
                             userPrinciple = Context.User;
                             Thread.CurrentPrincipal = userPrinciple;
-                            Dev2Logger.Debug("Execute Command Invoked For [ " + user + " ] For Service [ " + request.ServiceName + " ]");
+                            Dev2Logger.Debug("Execute Command Invoked For [ " + user + " : "+userPrinciple?.Identity?.AuthenticationType+" : "+userPrinciple?.Identity?.IsAuthenticated+" ] For Service [ " + request.ServiceName + " ]");
                         }
                         StringBuilder processRequest = null;
                         Common.Utilities.PerformActionInsideImpersonatedContext(userPrinciple, () => { processRequest = internalServiceRequestHandler.ProcessRequest(request, workspaceId, dataListId, Context.ConnectionId); });

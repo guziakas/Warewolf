@@ -6,8 +6,8 @@ Feature: SubworkflowExecution
 	 
 Background: Setup for subworkflow execution
 			Given Debug events are reset
-			And All environments disconnected
 			And Debug states are cleared
+
 
 Scenario: Workflow with an assign and remote workflow
 	Given I have a workflow "TestAssignWithRemoteWF"
@@ -61,7 +61,7 @@ Scenario: Executing Workflow Service and Decision tool expected bubling out erro
 	  | [[myrec(1).set]] =    Bart Simpson: I WILL NOT INSTIGATE REVOLUTION |
 	  | [[thehero(1).pushups]] = All of them.                                |
 	  | [[thehero(1).name]] =   Chuck Norris                                 |
-	
+
 Scenario: Error from workflow service is expected to buble out
 	  Given I have a workflow "TestAssignWithRemoteOutputsErrors"
 	  And "TestAssignWithRemoteOutputsErrors" contains an Assign "AssignData" as
@@ -169,6 +169,7 @@ Scenario: Plugin connector backward Compatiblity
 	When "PluginMigration" is executed
 	Then the workflow execution has "NO" error
 
+@UsingRemoteResources
 Scenario: Executing WF on a remote server 
          Given I have a workflow "Testing - TestRemoteTools"
          And "Testing - TestRemoteTools" contains "TestRemoteTools" from server "Remote Connection Integration" with mapping as
@@ -286,3 +287,14 @@ Scenario: Error not bubbling up error message
 	And the "ErrorBubbleUp" in Workflow "Wolf-1212_2" debug outputs as
 	  |                   |
 	  | [[Result]] = Pass |
+
+Scenario: Rabbit MQ Test
+	  Given I have a workflow "RabbitMQ Tester WF"
+	  And "RabbitMQ Tester WF" contains "RabbitMQTest" from server "localhost" with mapping as
+      | Input to Service | From Variable | Output from Service | To Variable |
+	  |                  |               | result              | [[result]]  |
+	  When "RabbitMQ Tester WF" is executed
+	Then the workflow execution has "NO" error
+	  And the "RabbitMQTest" in Workflow "RabbitMQ Tester WF" debug outputs as
+	  |                   |
+	  | [[result]] = Pass |

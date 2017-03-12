@@ -1,8 +1,8 @@
+using System;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
 using Dev2.Common.Interfaces.WebServices;
-using System;
 using System.Collections.Generic;
 using System.Data;
 
@@ -48,14 +48,10 @@ namespace Dev2.Common.Interfaces
     public interface IStudioUpdateManager : IStudioUpdateManagerSave, IStudioUpdateManagerTest
     {
         string TestConnection(IWcfServerSource wcfServerSource);
-        event Action<IWebServiceSource> WebServiceSourceSaved;
-        event ItemSaved ItemSaved;
-        event ServerSaved ServerSaved;
-        void FireItemSaved(bool forcedRefresh);
-        void FireServerSaved();
-        event Action<IDbSource> DatabaseServiceSourceSaved;
-        event Action<IPluginSource> PluginServiceSourceSaved;
-        event Action<IEmailServiceSource> EmailServiceSourceSaved;
+        Action<Guid> ServerSaved { get; set; }
+        void FireServerSaved(Guid savedServerID);
+
+        void Deploy(List<Guid> resourceIDsToDeploy, bool deployTests, IConnection destinationEnvironment);
     }
 
     public delegate void ItemSaved(bool refresh);

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Windows;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.DropBox2016.Download;
@@ -48,6 +49,8 @@ namespace Dev2.Activities.Designers.Tests.DropBox2016.Download
             dropBoxDownloadViewModel.Validate();
             //------------Execute Test---------------------------
             Assert.IsNotNull(dropBoxDownloadViewModel);
+            Assert.IsFalse(dropBoxDownloadViewModel.ShowLarge);
+            Assert.AreEqual(dropBoxDownloadViewModel.ThumbVisibility, Visibility.Collapsed);
             //------------Assert Results-------------------------
             Assert.IsInstanceOfType(dropBoxDownloadViewModel, typeof(ActivityDesignerViewModel));
         }
@@ -147,14 +150,16 @@ namespace Dev2.Activities.Designers.Tests.DropBox2016.Download
             var agg = new Mock<IEventAggregator>();
             var model = CreateModelItem();
             var mockShellViewModel = new Mock<IShellViewModel>();
-            mockShellViewModel.Setup(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<IServer>()));
+            var serverMock = new Mock<IServer>();
+            mockShellViewModel.Setup(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IServer>()));
+            mockShellViewModel.Setup(viewModel => viewModel.ActiveServer).Returns(() => serverMock.Object);
             CustomContainer.Register(mockShellViewModel.Object);
             //------------Setup for test--------------------------
             var downloadViewModel = new DropBoxDownloadViewModel(model, TestResourceCatalog.LazySourceManager.Value) { SelectedSource = new DropBoxSource() };
             downloadViewModel.EditDropboxSourceCommand.Execute(null);
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
-            mockShellViewModel.Verify(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<IServer>()));
+            mockShellViewModel.Verify(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IServer>()));
             CustomContainer.DeRegister<IShellViewModel>();
         }
 

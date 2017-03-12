@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Settings.Scheduler;
 using Dev2.Studio.Core.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -191,6 +191,7 @@ namespace Dev2.Core.Tests.Settings
     internal class ScheduledResourceForTest : IScheduledResource
     {
         bool _isNewItem;
+        private bool _isDirty;
 
         #region Implementation of IScheduledResource
 
@@ -202,7 +203,17 @@ namespace Dev2.Core.Tests.Settings
         /// <summary>
         /// Property to check if the scheduled resouce is saved
         /// </summary>
-        public bool IsDirty { get; set; }
+        public bool IsDirty
+        {
+            get
+            {
+                return _isDirty;
+            }
+            set
+            {
+                _isDirty = value;
+            }
+        }
         /// <summary>
         ///     Schedule Name
         /// </summary>
@@ -258,6 +269,19 @@ namespace Dev2.Core.Tests.Settings
             }
         }
         public string NameForDisplay { get; private set; }
+
+        public void SetItem(IScheduledResource item)
+        {
+        }
+
+        #endregion
+
+        #region Implementation of IEquatable<IScheduledResource>
+
+        public bool Equals(IScheduledResource other)
+        {
+            return !IsDirty;
+        }
 
         #endregion
     }

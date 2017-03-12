@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,6 +19,8 @@ using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Workspaces;
 using Dev2.Studio.Core;
+// ReSharper disable CheckNamespace
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace Dev2.Workspaces
 {
@@ -70,7 +72,6 @@ namespace Dev2.Workspaces
         {
         }
 
-        // BUG 9492 - 2013.06.08 - TWR : added constructor - use for testing only!
         public WorkspaceItemRepository(string repositoryPath)
         {
             _repositoryPath = repositoryPath;
@@ -85,7 +86,6 @@ namespace Dev2.Workspaces
 
         #region RepositoryPath
 
-        // BUG 9492 - 2013.06.08 - TWR : made public and non-static
         string _repositoryPath;
         public string RepositoryPath
         {
@@ -211,7 +211,6 @@ namespace Dev2.Workspaces
 
         public ExecuteMessage UpdateWorkspaceItem(IContextualResourceModel resource, bool isLocalSave)
         {
-            // BUG 9492 - 2013.06.08 - TWR : added null check
             if(resource == null)
             {
                 throw new ArgumentNullException("resource");
@@ -248,7 +247,6 @@ namespace Dev2.Workspaces
 
         public void Remove(IContextualResourceModel resourceModel)
         {
-            // BUG 9492 - 2013.06.08 - TWR : added null check
             if(resourceModel == null)
             {
                 return;
@@ -261,6 +259,16 @@ namespace Dev2.Workspaces
 
             WorkspaceItems.Remove(itemToRemove);
             Write();
+            resourceModel.Environment.ResourceRepository.DeleteResourceFromWorkspaceAsync(resourceModel);
+        }
+
+        public void ClearWorkspaceItems(IContextualResourceModel resourceModel)
+        {
+            if (resourceModel == null)
+            {
+                return;
+            }
+            WorkspaceItems.Clear();
             resourceModel.Environment.ResourceRepository.DeleteResourceFromWorkspace(resourceModel);
         }
 

@@ -9,9 +9,23 @@ namespace Dev2.Common.Interfaces.Core
 {
     public class ExchangeSourceDefinition : IExchangeSource, IEquatable<ExchangeSourceDefinition>
     {
+        public ExchangeSourceDefinition(IExchange db)
+        {
+            AutoDiscoverUrl = db.AutoDiscoverUrl;
+            Id = db.ResourceID;
+            Password = db.Password;
+            UserName = db.UserName;
+            Path = "";
+            Timeout = db.Timeout;
+            ResourceName = db.ResourceName;
+        }
+
+        public ExchangeSourceDefinition()
+        {
+        }
+
         public Guid ResourceID { get; set; }
         public string AutoDiscoverUrl { get; set; }
-        public string Name { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
         public enSourceType Type { get; set; }

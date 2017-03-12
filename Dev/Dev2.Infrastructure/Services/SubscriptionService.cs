@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -57,7 +57,7 @@ namespace Dev2.Services
 
         public virtual void Subscribe(Func<TEvent, bool> filter, Action<TEvent> onNext)
         {
-            var events = filter == null ? _events : (_events != null ? _events.Where(filter) : null);
+            var events = filter == null ? _events : _events?.Where(filter);
             if(events != null)
             {
                 var subscription = events.Subscribe(onNext);

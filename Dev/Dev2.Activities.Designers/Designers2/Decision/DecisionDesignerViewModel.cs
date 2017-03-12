@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -68,6 +68,7 @@ namespace Dev2.Activities.Designers2.Decision
                 DisplayName = "Decision";
                 DisplayText = DisplayName;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Flow_Decision;
         }
 
         void CollectionCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -210,7 +211,7 @@ namespace Dev2.Activities.Designers2.Decision
         {
             var val = new Dev2DecisionStack { TheStack = new List<Dev2Decision>() };
             var value = valuecoll.Select(a => a as DecisionTO);
-            foreach (var decisionTo in value.Where(a => !a.IsEmpty()))
+            foreach (var decisionTo in value.Where(a => { return a != null && !a.IsEmpty(); }))
             {
                 var dev2Decision = new Dev2Decision { Col1 = decisionTo.MatchValue };
                 if (!string.IsNullOrEmpty(decisionTo.SearchCriteria))

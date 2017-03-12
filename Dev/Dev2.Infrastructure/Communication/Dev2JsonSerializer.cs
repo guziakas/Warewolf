@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,12 +30,16 @@ namespace Dev2.Communication
         readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects
             };
         readonly JsonSerializerSettings _deSerializerSettings = new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.Auto,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameHandling = TypeNameHandling.Auto,                
+                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
             };
         public string Serialize<T>(T message)
         {
@@ -61,9 +65,16 @@ namespace Dev2.Communication
 
             using(StringWriter sw = new StringWriter(result))
             {
-                var jsonSerializer = new JsonSerializer { TypeNameHandling = _serializerSettings.TypeNameHandling, TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat };
-                using(var jsonTextWriter = new JsonTextWriter(sw))
+                var jsonSerializer = new JsonSerializer
                 {
+                    TypeNameHandling = _serializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };                
+                using (var jsonTextWriter = new JsonTextWriter(sw))
+                {
+                    
                     jsonSerializer.Serialize(jsonTextWriter, obj);
                     jsonTextWriter.Flush();
                     jsonTextWriter.Close();
@@ -77,7 +88,13 @@ namespace Dev2.Communication
         {
             if(message != null && message.Length > 0)
             {
-                JsonSerializer serializer = new JsonSerializer { TypeNameHandling = _deSerializerSettings.TypeNameHandling, TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat };
+                JsonSerializer serializer = new JsonSerializer
+                {
+                    TypeNameHandling = _deSerializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };
                 using(MemoryStream ms = new MemoryStream(message.Length))
                 {
                     // now load the stream ;)
@@ -133,7 +150,13 @@ namespace Dev2.Communication
         {
             using (streamWriter)
             {
-                var jsonSerializer = new JsonSerializer { TypeNameHandling = _serializerSettings.TypeNameHandling, TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat };
+                var jsonSerializer = new JsonSerializer
+                {
+                    TypeNameHandling = _serializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };
                 using (var jsonTextWriter = new JsonTextWriter(streamWriter))
                 {
                     jsonSerializer.Serialize(jsonTextWriter, obj);
@@ -147,7 +170,13 @@ namespace Dev2.Communication
         {
             using (streamWriter)
             {
-                var jsonSerializer = new JsonSerializer { TypeNameHandling = _serializerSettings.TypeNameHandling, TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat };
+                var jsonSerializer = new JsonSerializer
+                {
+                    TypeNameHandling = _serializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };
                 using (var reader = new JsonTextReader(streamWriter))
                 {
                     var result = jsonSerializer.Deserialize<T>(reader);

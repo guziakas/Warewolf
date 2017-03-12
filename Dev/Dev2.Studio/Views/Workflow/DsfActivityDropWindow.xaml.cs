@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,6 +12,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Dev2.Common.Interfaces;
 using Dev2.Dialogs;
 using Warewolf.Studio.Core;
 
@@ -40,6 +41,15 @@ namespace Dev2.Studio.Views.Workflow
         {
             if (e.ChangedButton == MouseButton.Left)
                 DragMove();
+        }
+
+        private void DsfActivityDropWindow_OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
+            {
+                var mainViewModel = CustomContainer.Get<IShellViewModel>();
+                mainViewModel?.ResetMainView();
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -638,7 +638,7 @@ namespace Dev2.Core.Tests
             workSurfaceContextViewModel.Handle(new SaveResourceMessage(mockResourceModel.Object, false, false));
             //------------Assert---------------------------------
             mockWorkSurfaceViewModel.Verify(m => m.BindToModel(), Times.Once());
-            mockRepository.Verify(m => m.Save(It.IsAny<IResourceModel>()), Times.Once());
+            mockRepository.Verify(m => m.SaveToServer(It.IsAny<IResourceModel>()), Times.Once());
         }
 
 
@@ -675,7 +675,7 @@ namespace Dev2.Core.Tests
             //------------Execute Test---------------------------
             workSurfaceContextViewModel.Handle(new SaveResourceMessage(mockResourceModel.Object, false, false));
             //------------Assert---------------------------------
-            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Saving", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false));
+            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Saving", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false));
         }
 
 
@@ -761,6 +761,7 @@ namespace Dev2.Core.Tests
             //------------Assert---------------------------------
             Assert.IsTrue(called);
         }
+     
 
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
@@ -932,24 +933,10 @@ namespace Dev2.Core.Tests
         [TestCategory("WorkSurfaceContextViewModel_DebugCommand")]
         public void WorkSurfaceContextViewModel_DebugCommand_UserHasNoContributePermissions_SaveIsNotInvoked()
         {
-            Verify_DebugCommand_SaveIsInvoked(Permissions.Execute, 0);
-        }
-
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("WorkSurfaceContextViewModel_DebugCommand")]
-        public void WorkSurfaceContextViewModel_DebugCommand_UserHasContributePermissions_SaveIsInvoked()
-        {
-
-            Verify_DebugCommand_SaveIsInvoked(Permissions.Contribute, 1);
-        }
-
-        void Verify_DebugCommand_SaveIsInvoked(Permissions userPermissions, int saveHitCount)
-        {
             //------------Setup for test--------------------------
             CustomContainer.Register(new Mock<IWindowManager>().Object);
-            var expected = saveHitCount;
-            var workSurfaceContextViewModel = CreateWorkSurfaceContextViewModel(userPermissions);
+            var expected = 0;
+            var workSurfaceContextViewModel = CreateWorkSurfaceContextViewModel(Permissions.Execute);
 
             var resourceRepo = new Mock<IResourceRepository>();
             resourceRepo.Setup(r => r.Save(It.IsAny<IResourceModel>())).Verifiable();
@@ -966,8 +953,68 @@ namespace Dev2.Core.Tests
             workSurfaceContextViewModel.DebugCommand.Execute(null);
             resourceRepo.Verify(r => r.Save(It.IsAny<IResourceModel>()), Times.Exactly(expected));
 
-            expected += saveHitCount;
+            expected += 0;
 
+            workSurfaceContextViewModel.QuickDebugCommand.Execute(null);
+            resourceRepo.Verify(r => r.Save(It.IsAny<IResourceModel>()), Times.Exactly(expected));
+        }
+
+        [TestMethod]
+        [Owner("Trevor Williams-Ros")]
+        [TestCategory("WorkSurfaceContextViewModel_DebugCommand")]
+        public void WorkSurfaceContextViewModel_DebugCommand_UserHasContributePermissions_SaveIsInvoked()
+        {
+            //------------Setup for test--------------------------
+            CustomContainer.Register(new Mock<IWindowManager>().Object);
+            var expected = 1;
+            var workSurfaceContextViewModel = CreateWorkSurfaceContextViewModel(Permissions.Contribute);
+
+            var resourceRepo = new Mock<IResourceRepository>();
+            resourceRepo.Setup(r => r.Save(It.IsAny<IResourceModel>())).Verifiable();
+
+            var environmentModel = Mock.Get(workSurfaceContextViewModel.ContextualResourceModel.Environment);
+            var mockConnection = new Mock<IEnvironmentConnection>();
+            mockConnection.Setup(connection => connection.IsConnected).Returns(true);
+            environmentModel.Setup(model => model.Connection).Returns(mockConnection.Object);
+            environmentModel.Setup(model => model.ResourceRepository).Returns(resourceRepo.Object);
+
+
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            workSurfaceContextViewModel.DebugCommand.Execute(null);
+            resourceRepo.Verify(r => r.Save(It.IsAny<IResourceModel>()), Times.Exactly(expected));
+        }
+
+        [TestMethod]
+        [Owner("Trevor Williams-Ros")]
+        [TestCategory("WorkSurfaceContextViewModel_DebugCommand")]
+        public void WorkSurfaceContextViewModel_DebugCommand_UserHasContributePermissions_WfChanged_SaveIsInvokedAgain()
+        {
+            //------------Setup for test--------------------------
+            CustomContainer.Register(new Mock<IWindowManager>().Object);
+            var expected = 1;
+            var workSurfaceContextViewModel = CreateWorkSurfaceContextViewModel(Permissions.Contribute);
+            
+            var resourceRepo = new Mock<IResourceRepository>();
+            resourceRepo.Setup(r => r.Save(It.IsAny<IResourceModel>())).Verifiable();
+
+            var environmentModel = Mock.Get(workSurfaceContextViewModel.ContextualResourceModel.Environment);
+            var mockConnection = new Mock<IEnvironmentConnection>();
+            mockConnection.Setup(connection => connection.IsConnected).Returns(true);
+            environmentModel.Setup(model => model.Connection).Returns(mockConnection.Object);
+            environmentModel.Setup(model => model.ResourceRepository).Returns(resourceRepo.Object);
+
+
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            workSurfaceContextViewModel.DebugCommand.Execute(null);
+            resourceRepo.Verify(r => r.Save(It.IsAny<IResourceModel>()), Times.Exactly(expected));
+
+            expected += 1;
+            workSurfaceContextViewModel.ContextualResourceModel.IsWorkflowSaved = false;
+            var designSurface = workSurfaceContextViewModel.WorkSurfaceViewModel as WorkflowDesignerViewModelMock;
+            Assert.IsNotNull(designSurface);
+            designSurface.FireWorkflowChanged();
             workSurfaceContextViewModel.QuickDebugCommand.Execute(null);
             resourceRepo.Verify(r => r.Save(It.IsAny<IResourceModel>()), Times.Exactly(expected));
         }
@@ -1003,7 +1050,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             workSurfaceContextViewModel.QuickDebug();
 
-            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Debugging", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false));
+            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Debugging", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false));
 
         }
 
@@ -1013,6 +1060,8 @@ namespace Dev2.Core.Tests
 
     public class WorkSurfaceViewModelTest : IWorkSurfaceViewModel, IWorkflowDesignerViewModel
     {
+        private bool _workspaceSave;
+
         #region Implementation of IHaveDisplayName
 
         public string DisplayName { get; set; }
@@ -1035,22 +1084,10 @@ namespace Dev2.Core.Tests
 
         public void Deactivate(bool close)
         {
-            if(Activated != null)
-            {
-                Activated(this, null);
-            }
-            if(AttemptingDeactivation != null)
-            {
-                AttemptingDeactivation(null, null);
-            }
-            if(Deactivated != null)
-            {
-                Deactivated(null, null);
-            }
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(null, null);
-            }
+            Activated?.Invoke(this, null);
+            AttemptingDeactivation?.Invoke(null, null);
+            Deactivated?.Invoke(null, null);
+            PropertyChanged?.Invoke(null, null);
         }
 
         public event EventHandler<DeactivationEventArgs> AttemptingDeactivation;
@@ -1093,6 +1130,7 @@ namespace Dev2.Core.Tests
         #region Implementation of IWorkSurfaceViewModel
 
         public WorkSurfaceContext WorkSurfaceContext { get; set; }
+        public bool PreventSelection { get; set; }
         public string IconPath { get; set; }
 
         #endregion
@@ -1127,6 +1165,8 @@ namespace Dev2.Core.Tests
             get { throw new NotImplementedException(); }
         }
         public Action<ModelItem> ItemSelectedAction { get; set; }
+        public bool IsTestView { get; set; }
+        public ModelItem SelectedItem { get; set; }
 
         public void UpdateWorkflowLink(string newLink)
         {
@@ -1148,6 +1188,11 @@ namespace Dev2.Core.Tests
         }
 
         public void AddMissingWithNoPopUpAndFindUnusedDataListItems()
+        {
+            throw new NotImplementedException();
+        }
+
+        public ModelItem GetModelItem(Guid workSurfaceMappingId, Guid parentID)
         {
             throw new NotImplementedException();
         }
@@ -1175,6 +1220,7 @@ namespace Dev2.Core.Tests
             {
                 var ax = new Mock<IContextualResourceModel>();
                 var env = new Mock<IEnvironmentModel>();
+                _workspaceSave = true;
                 env.Setup(a => a.IsConnected).Returns(true);
                 ax.Setup(a => a.Environment).Returns(env.Object);
                 ax.Setup(a => a.UserPermissions).Returns(Permissions.Administrator);
@@ -1185,5 +1231,17 @@ namespace Dev2.Core.Tests
                 throw new NotImplementedException();
             }
         }
+
+        #region Implementation of IWorkflowDesignerViewModel
+
+        public bool WorkspaceSave => _workspaceSave;
+
+        #region Implementation of IWorkflowDesignerViewModel
+
+        public System.Action WorkflowChanged { get; set; }
+
+        #endregion
+
+        #endregion
     }
 }

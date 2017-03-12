@@ -33,7 +33,6 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         public ConcurrentDictionary<Guid, object> WorkspaceLocks { get; } = new ConcurrentDictionary<Guid, object>();
         public List<DuplicateResource> DuplicateResources { get; set; }
         readonly object _loadLock = new object();
-        readonly object _workspaceLock = new object();
         private readonly FileWrapper _dev2FileWrapper;
         readonly IPerformanceCounter _perfCounter;
 
@@ -153,9 +152,16 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         {
             var workspaceResources = GetResources(workspaceID);
             var resources = workspaceResources.FindAll(r => r.ResourceType == sourceType.ToString());
-            if (sourceType == enSourceType.MySqlDatabase || sourceType == enSourceType.Oracle || sourceType == enSourceType.PostgreSQL || sourceType == enSourceType.SqlDatabase)
+            if (sourceType == enSourceType.MySqlDatabase || sourceType == enSourceType.Oracle || sourceType == enSourceType.PostgreSQL || sourceType == enSourceType.SqlDatabase || sourceType==enSourceType.ODBC)
             {
-                resources = workspaceResources.FindAll(r => r.ResourceType.ToUpper() == "DbSource".ToUpper());
+                var oldResources = workspaceResources.FindAll(r => r.ResourceType.ToUpper() == "DbSource".ToUpper());
+                foreach (var oldResource in oldResources)
+                {
+                    if (!resources.Exists(resource => resource.ResourceID == oldResource.ResourceID))
+                    {
+                        resources.Add(oldResource);
+                    }
+                }
             }
             Dictionary<enSourceType, Func<IEnumerable>> commands = new Dictionary<enSourceType, Func<IEnumerable>>
             {
@@ -165,6 +171,7 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                 { enSourceType.MySqlDatabase, ()=>BuildSourceList<DbSource>(resources) },
                 { enSourceType.PostgreSQL, ()=>BuildSourceList<DbSource>(resources) },
                 { enSourceType.Oracle, ()=>BuildSourceList<DbSource>(resources) },
+                { enSourceType.ODBC, ()=>BuildSourceList<DbSource>(resources) },
                 { enSourceType.PluginSource, ()=>BuildSourceList<PluginSource>(resources) },
                 { enSourceType.WebSource, ()=>BuildSourceList<WebSource>(resources) },
                 { enSourceType.OauthSource, ()=>BuildSourceList<DropBoxSource>(resources) },
@@ -253,7 +260,17 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             var dependants = new List<Guid>();
             resources.ForEach(resource =>
             {
-                if (resource.Dependencies == null) return;
+                if (resource.Dependencies == null)
+                {
+                    if(resource.IsSource || resource.IsServer)
+                    {
+                        resource = new Resource(resource.ToXml());
+                    }
+                }
+                if (resource.Dependencies == null)
+                {
+                    return;
+                }
                 resource.Dependencies.ForEach(tree =>
                 {
                     if (tree.ResourceID == resourceId)
@@ -333,29 +350,30 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         
         public IResource GetResource(Guid workspaceID, string resourceName, string resourceType = "Unknown", string version = null)
         {
+            if (string.IsNullOrEmpty(resourceName))
+            {
+                throw new ArgumentNullException(nameof(resourceName));
+            }
+            var resourceNameToSearchFor = resourceName.Replace("/", "\\");
+            var resourcePath = resourceNameToSearchFor;
+            var endOfResourcePath = resourceNameToSearchFor.LastIndexOf('\\');
+            if (endOfResourcePath >= 0)
+            {
+                resourceNameToSearchFor = resourceNameToSearchFor.Substring(endOfResourcePath + 1);
+            }
             while (true)
             {
-                if (string.IsNullOrEmpty(resourceName))
-                {
-                    throw new ArgumentNullException(nameof(resourceName));
-                }
-                var resourceNameToSearchFor = resourceName.Replace("/", "\\");
-                var resourcePath = resourceNameToSearchFor;
-                var endOfResourcePath = resourceNameToSearchFor.LastIndexOf('\\');
-                if (endOfResourcePath >= 0)
-                {
-                    resourceNameToSearchFor = resourceNameToSearchFor.Substring(endOfResourcePath + 1);
-                }
                 var resources = GetResources(workspaceID);
                 if (resources != null)
                 {
-                    var foundResource = resources.FirstOrDefault(r =>
+                    var id = workspaceID;
+                    var foundResource = resources.AsParallel().FirstOrDefault(r =>
                     {
                         if (r == null)
                         {
                             return false;
                         }
-                        return string.Equals(r.GetResourcePath(workspaceID) ?? "", resourcePath, StringComparison.InvariantCultureIgnoreCase) && string.Equals(r.ResourceName, resourceNameToSearchFor, StringComparison.InvariantCultureIgnoreCase) && (resourceType == "Unknown" || r.ResourceType == resourceType.ToString());
+                        return string.Equals(r.GetResourcePath(id) ?? "", resourcePath, StringComparison.InvariantCultureIgnoreCase) && string.Equals(r.ResourceName, resourceNameToSearchFor, StringComparison.InvariantCultureIgnoreCase) && (resourceType == "Unknown" || r.ResourceType == resourceType.ToString());
                     });
                     if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
                     {
@@ -374,20 +392,17 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             IResource foundResource = null;
             try
             {
-                //lock (_workspaceLock)
+                List<IResource> resources;
+                if(_workspaceResources.TryGetValue(workspaceID, out resources))
                 {
-                    List<IResource> resources;
-                    if (_workspaceResources.TryGetValue(workspaceID, out resources))
-                    {
-                        foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                    }
+                    foundResource = resources.AsParallel().FirstOrDefault(resource => resource.ResourceID == resourceID);
+                }
 
-                    if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+                if(foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+                {
+                    if(_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
                     {
-                        if (_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
-                        {
-                            foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                        }
+                        foundResource = resources.AsParallel().FirstOrDefault(resource => resource.ResourceID == resourceID);
                     }
                 }
             }
@@ -405,21 +420,17 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         public StringBuilder GetResourceContents(Guid workspaceID, Guid resourceID)
         {
             IResource foundResource = null;
-
-            //lock (_workspaceLock)
+            List<IResource> resources;
+            if(_workspaceResources.TryGetValue(workspaceID, out resources))
             {
-                List<IResource> resources;
-                if (_workspaceResources.TryGetValue(workspaceID, out resources))
+                foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
+            }
+
+            if(foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+            {
+                if(_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
                 {
                     foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                }
-
-                if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
-                {
-                    if (_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
-                    {
-                        foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                    }
                 }
             }
             return GetResourceContents(foundResource);
@@ -504,6 +515,8 @@ namespace Dev2.Runtime.ResourceCatalogImpl
 
         private static T GetResource<T>(StringBuilder resourceContents) where T : Resource, new()
         {
+            if (resourceContents == null)
+                return default(T);
             var elm = resourceContents.ToXElement();
             object[] args = { elm };
             return (T)Activator.CreateInstance(typeof(T), args);

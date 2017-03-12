@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -145,21 +145,21 @@ namespace Warewolf.Core
             unchecked
             {
                 // ReSharper disable NonReadonlyFieldInGetHashCode
-                int hashCode = Name != null ? Name.GetHashCode() : 0;
+                int hashCode = Name?.GetHashCode() ?? 0;
 
-                hashCode = (hashCode * 397) ^ (Path != null ? Path.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Source != null ? Source.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Path?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Source?.GetHashCode() ?? 0);
 
                 if (OutputMappings != null)
                 {
-                    hashCode = OutputMappings.Aggregate(hashCode, (a, b) => a * 397 ^ (b != null ? b.GetHashCode() : 0));
+                    hashCode = OutputMappings.Aggregate(hashCode, (a, b) => a * 397 ^ (b?.GetHashCode() ?? 0));
                 }
-                hashCode = (hashCode * 397) ^ (QueryString != null ? QueryString.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (QueryString?.GetHashCode() ?? 0);
                 if (Headers != null)
                 {
                     hashCode = Headers.Aggregate(hashCode, (current, nameValue) => (current * 397) ^ (nameValue != null ? nameValue.GetHashCode() : 0));
                 }
-                hashCode = (hashCode * 397) ^ (PostData != null ? PostData.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (PostData?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ Method.GetHashCode();
                 return hashCode;
                 // ReSharper restore NonReadonlyFieldInGetHashCode

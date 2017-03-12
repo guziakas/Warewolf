@@ -1,7 +1,6 @@
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Util;
 using Dev2.Validation;
@@ -10,6 +9,8 @@ using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Dev2.Data.TO;
+using Dev2.Data.Util;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
@@ -19,8 +20,7 @@ namespace Dev2.Activities
 {
     public abstract class DsfBaseActivity : DsfActivityAbstract<string>
     {
-        private string _result;
-        public new abstract string DisplayName { get; set; }
+        private List<string> _executionResult;
 
         #region Get Debug Inputs/Outputs
 
@@ -53,11 +53,17 @@ namespace Dev2.Activities
             ExecuteTool(dataObject, 0);
         }
 
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> {Result};
+        }
+
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
             ErrorResultTO allErrors = new ErrorResultTO();
             ErrorResultTO errors = new ErrorResultTO();
-            //Guid executionId = DataListExecutionID.Get(context);
+            _executionResult = new List<string>();
             allErrors.MergeErrors(errors);
             InitializeDebug(dataObject);
             // Process if no errors
@@ -71,24 +77,37 @@ namespace Dev2.Activities
                 {
                     var attributes = (Inputs[])propertyInfo.GetCustomAttributes(typeof(Inputs), false);
                     var variableValue = propertyInfo.GetValue(this) as string;
-                    if (dataObject.IsDebugMode())
+                    if (!string.IsNullOrEmpty(variableValue))
                     {
-                        AddDebugInputItem(new DebugEvalResult(variableValue, attributes[0].UserVisibleName, dataObject.Environment, update));
+                        if (dataObject.IsDebugMode())
+                        {
+                            AddDebugInputItem(new DebugEvalResult(variableValue, attributes[0].UserVisibleName, dataObject.Environment, update));
+                        }
+
+                        var dtItr = CreateDataListEvaluateIterator(variableValue, dataObject.Environment, update);
+                        colItr.AddVariableToIterateOn(dtItr);
+                        iteratorPropertyDictionary.Add(propertyInfo.Name, dtItr);
                     }
-                    var dtItr = CreateDataListEvaluateIterator(variableValue, dataObject.Environment, update);
-                    colItr.AddVariableToIterateOn(dtItr);
-                    iteratorPropertyDictionary.Add(propertyInfo.Name, dtItr);
                 }
-                while (colItr.HasMoreData())
+                if (colItr.FieldCount <= 0)
                 {
-                    var evaluatedValues = new Dictionary<string, string>();
-                    foreach (var dev2DataListEvaluateIterator in iteratorPropertyDictionary)
-                    {
-                        var binaryDataListItem = colItr.FetchNextValue(dev2DataListEvaluateIterator.Value);
-                        evaluatedValues.Add(dev2DataListEvaluateIterator.Key, binaryDataListItem);
-                    }
-                    _result = PerformExecution(evaluatedValues);
+                    var evaluatedValues = new Dictionary<string, string>();                    
+                    _executionResult = PerformExecution(evaluatedValues);
                     AssignResult(dataObject, update);
+                }
+                else
+                {
+                    while (colItr.HasMoreData())
+                    {
+                        var evaluatedValues = new Dictionary<string, string>();
+                        foreach (var dev2DataListEvaluateIterator in iteratorPropertyDictionary)
+                        {
+                            var binaryDataListItem = colItr.FetchNextValue(dev2DataListEvaluateIterator.Value);
+                            evaluatedValues.Add(dev2DataListEvaluateIterator.Key, binaryDataListItem);
+                        }
+                        _executionResult = PerformExecution(evaluatedValues);
+                        AssignResult(dataObject, update);
+                    }
                 }
 
                 if (dataObject.IsDebugMode() && !allErrors.HasErrors() && !string.IsNullOrWhiteSpace(Result))
@@ -113,10 +132,7 @@ namespace Dev2.Activities
                     DisplayAndWriteError(DisplayName, allErrors);
                     var errorList = allErrors.MakeDataListReady();
                     dataObject.Environment.AddError(errorList);
-                    if (DisplayName.ToUpper().Contains("Dropbox".ToUpper()))
-                        dataObject.Environment.Assign(Result, GlobalConstants.DropBoxFailure, update);
-                    else
-                        dataObject.Environment.Assign(Result, null, update);
+                    dataObject.Environment.Assign(Result, DisplayName.ToUpper().Contains("Dropbox".ToUpper()) ? GlobalConstants.DropBoxFailure : null, update);
                 }
                 if (dataObject.IsDebugMode())
                 {
@@ -130,11 +146,19 @@ namespace Dev2.Activities
         {
             if (!string.IsNullOrEmpty(Result))
             {
-                dataObject.Environment.Assign(Result, _result, update);
+                if (DataListUtil.IsValueScalar(Result))
+                {
+                    dataObject.Environment.Assign(Result, _executionResult.Last(), update);
+                }
+                foreach(var res in _executionResult)
+                {
+                    dataObject.Environment.Assign(Result,res, update);
+                }
+                
             }
         }
 
-        protected abstract string PerformExecution(Dictionary<string, string> evaluatedValues);
+        protected abstract List<string> PerformExecution(Dictionary<string, string> evaluatedValues);
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -150,13 +174,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

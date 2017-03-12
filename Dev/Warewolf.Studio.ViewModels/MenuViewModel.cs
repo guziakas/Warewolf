@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,9 +42,6 @@ namespace Warewolf.Studio.ViewModels
             _viewModel = mainViewModel;
             _isOverLock = false;
             NewServiceCommand = _viewModel.NewServiceCommand;
-            NewDatabaseSourceCommand = _viewModel.NewDatabaseSourceCommand;
-            NewPluginSourceCommand = _viewModel.NewPluginSourceCommand;
-            NewWebSourceCommand = _viewModel.NewWebSourceCommand;
             DeployCommand = _viewModel.DeployCommand;
             SaveCommand = _viewModel.SaveCommand;
             OpenSchedulerCommand = _viewModel.SchedulerCommand;
@@ -57,7 +54,7 @@ namespace Warewolf.Studio.ViewModels
             CheckForNewVersionCommand = new DelegateCommand(_viewModel.DisplayDialogForNewVersion);
             SupportCommand = new DelegateCommand(() =>
             {
-                Process.Start(Resources.Languages.Core.WarewolfHelpURL);
+                Process.Start(Resources.Languages.HelpText.WarewolfHelpURL);
             });
 
             LockCommand = new DelegateCommand(Lock);
@@ -101,9 +98,6 @@ namespace Warewolf.Studio.ViewModels
         public ICommand SupportCommand { get; set; }
         public ICommand DeployCommand { get; set; }
         public ICommand NewServiceCommand { get; set; }
-        public ICommand NewDatabaseSourceCommand { get; set; }
-        public ICommand NewPluginSourceCommand { get; set; }
-        public ICommand NewWebSourceCommand { get; set; }
         public ICommand SaveCommand
         {
             get
@@ -150,15 +144,10 @@ namespace Warewolf.Studio.ViewModels
             OnPropertyChanged(() => NewLabel);
             OnPropertyChanged(() => SaveLabel);
             OnPropertyChanged(() => DeployLabel);
-            OnPropertyChanged(() => DatabaseLabel);
-            OnPropertyChanged(() => DLLLabel);
-            OnPropertyChanged(() => WebLabel);
             OnPropertyChanged(() => TaskLabel);
             OnPropertyChanged(() => DebugLabel);
             OnPropertyChanged(() => SettingsLabel);
             OnPropertyChanged(() => SupportLabel);
-            OnPropertyChanged(() => ForumsLabel);
-            OnPropertyChanged(() => ToursLabel);
             OnPropertyChanged(() => NewVersionLabel);
             OnPropertyChanged(() => LockLabel);
             OnPropertyChanged(() => ButtonWidth);
@@ -289,33 +278,6 @@ namespace Warewolf.Studio.ViewModels
                 return string.Empty;
             }
         }
-        public string DatabaseLabel
-        {
-            get
-            {
-                if (ButtonWidth == 125)
-                    return Resources.Languages.Core.MenuDialogDatabaseLabel;
-                return string.Empty;
-            }
-        }
-        public string DLLLabel
-        {
-            get
-            {
-                if (ButtonWidth == 125)
-                    return Resources.Languages.Core.MenuDialogDLLLabel;
-                return string.Empty;
-            }
-        }
-        public string WebLabel
-        {
-            get
-            {
-                if (ButtonWidth == 125)
-                    return Resources.Languages.Core.MenuDialogWebLabel;
-                return string.Empty;
-            }
-        }
         public string TaskLabel
         {
             get
@@ -359,24 +321,6 @@ namespace Warewolf.Studio.ViewModels
             {
                 if (ButtonWidth == 125)
                     return Resources.Languages.Core.MenuDialogSupportLabel;
-                return string.Empty;
-            }
-        }
-        public string ForumsLabel
-        {
-            get
-            {
-                if (ButtonWidth == 125)
-                    return Resources.Languages.Core.MenuDialogForumsLabel;
-                return string.Empty;
-            }
-        }
-        public string ToursLabel
-        {
-            get
-            {
-                if (ButtonWidth == 125)
-                    return Resources.Languages.Core.MenuDialogToursLabel;
                 return string.Empty;
             }
         }

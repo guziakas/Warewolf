@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -67,7 +67,7 @@ namespace Dev2.Common.DateAndTime
             IDateTimeResultTO dateTimeResultTO;
 
             //2013.05.06: Ashley Lewis - Bug 9300 - trim should allow null input format
-            dateTimeTO.InputFormat = dateTimeTO.InputFormat != null ? dateTimeTO.InputFormat.Trim() : null;
+            dateTimeTO.InputFormat = dateTimeTO.InputFormat?.Trim();
 
             //2013.02.12: Ashley Lewis - Bug 8725, Task 8840 - Added trim to data
             if (dateTimeParser.TryParseDateTime(dateTimeTO.DateTime.Trim(), dateTimeTO.InputFormat, out dateTimeResultTO,

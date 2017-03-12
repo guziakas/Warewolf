@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +23,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList = null, string defaultFieldName = "")
         {
-            if(outputDescription == null || outputDescription.DataSourceShapes == null || outputDescription.DataSourceShapes.Count == 0)
+            if(outputDescription?.DataSourceShapes == null || outputDescription.DataSourceShapes.Count == 0)
             {
                 throw new Exception(ErrorResource.ErrorRetrievingShapeFromServiceOutput);
             }

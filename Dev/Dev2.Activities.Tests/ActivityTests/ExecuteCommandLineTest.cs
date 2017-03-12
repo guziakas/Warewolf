@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -45,6 +45,20 @@ namespace Dev2.Tests.Activities.ActivityTests
             activity.CommandFileName = randomString;
             //------------Assert Results-------------------------
             Assert.AreEqual(randomString, activity.CommandFileName);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfExecuteCommandLineActivity_GetOutputs")]
+        public void DsfExecuteCommandLineActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfExecuteCommandLineActivity { CommandResult = "[[Bob]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[Bob]]", outputs[0]);
         }
 
         static string GetRandomString()

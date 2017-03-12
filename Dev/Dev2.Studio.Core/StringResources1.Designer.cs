@@ -70,6 +70,15 @@ namespace Dev2.Studio.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Closing Service Test Window from Taskbar handle exception. .
+        /// </summary>
+        public static string CloseTestViewHandledException {
+            get {
+                return ResourceManager.GetString("CloseTestViewHandledException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Critical Error.
         /// </summary>
         public static string CritErrorTitle {
@@ -142,7 +151,7 @@ namespace Dev2.Studio.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Delete Error.
+        ///   Looks up a localized string similar to Error Deleting - {0}.
         /// </summary>
         public static string Delete_Error_Title {
             get {

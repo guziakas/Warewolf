@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -96,7 +96,7 @@ namespace Dev2.Session
                 to.BinaryDataList.Create(to.XmlData, to.DataList);
             }
 
-            if (tmp != null) tmp.CleanUp();
+            tmp?.CleanUp();
             return to;
         }
 
@@ -216,7 +216,7 @@ namespace Dev2.Session
                                 // now push back into the Dictionary
                                 foreach (SaveDebugTO dto in settings)
                                 {
-                                    if (dto.ServiceName.Length > 0)
+                                    if (!string.IsNullOrEmpty(dto.ServiceName))
                                     {
                                         var tmp = new DebugTO();
                                         tmp.CopyFromSaveDebugTO(dto);

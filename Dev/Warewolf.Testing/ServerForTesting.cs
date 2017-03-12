@@ -191,6 +191,11 @@ namespace Warewolf.Testing
             return null;
         }
 
+        public IList<IServer> GetAllServerConnections()
+        {
+            return null;
+        }
+
         public IExplorerRepository ExplorerRepository
         {
             get
@@ -271,6 +276,17 @@ namespace Warewolf.Testing
         }
 
         public string GetServerInformationalVersion()
+        {
+            throw new NotImplementedException();
+        }
+        
+
+        public Dictionary<string, string> GetServerInformation()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IServer FetchServer(Guid savedServerID)
         {
             throw new NotImplementedException();
         }

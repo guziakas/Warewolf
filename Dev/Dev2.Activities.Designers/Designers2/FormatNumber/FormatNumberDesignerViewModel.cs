@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,7 +27,7 @@ namespace Dev2.Activities.Designers2.FormatNumber
             RoundingTypes = new List<string>(Dev2EnumConverter.ConvertEnumsTypeToStringList<enRoundingType>());
             SelectedRoundingType = string.IsNullOrEmpty(RoundingType) ? RoundingTypes[0] : RoundingType;
             AddTitleBarLargeToggle();
-           
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Format_Number;
         }
 
         public List<string> RoundingTypes { get; set; }
@@ -73,10 +73,7 @@ namespace Dev2.Activities.Designers2.FormatNumber
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

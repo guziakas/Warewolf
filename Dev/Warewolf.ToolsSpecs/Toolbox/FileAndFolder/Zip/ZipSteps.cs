@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,6 @@
 
 using System;
 using System.Activities.Statements;
-using Dev2.Common;
 using TechTalk.SpecFlow;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Tools.Specs.BaseTypes;
@@ -80,9 +79,9 @@ namespace Dev2.Activities.Specs.Toolbox.FileAndFolder.Zip
                 // CI
                 scenarioContext.Add("activity", zip);
             }
-            catch(Exception e)
+            catch(Exception)
             {
-                Dev2Logger.Debug("Error Setting Up Zip",e);
+                //
             }
         }
     }

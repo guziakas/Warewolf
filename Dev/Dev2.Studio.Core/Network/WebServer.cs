@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
+// ReSharper disable InconsistentNaming
 
 // ReSharper disable CheckNamespace
 namespace Dev2.Studio.Core.Network
@@ -36,7 +37,7 @@ namespace Dev2.Studio.Core.Network
     {
         public static void Send(IContextualResourceModel resourceModel, string payload, IAsyncWorker asyncWorker)
         {
-            if (resourceModel == null || resourceModel.Environment == null || !resourceModel.Environment.IsConnected)
+            if (resourceModel?.Environment == null || !resourceModel.Environment.IsConnected)
             {
                 return;
             }
@@ -48,7 +49,14 @@ namespace Dev2.Studio.Core.Network
             }
             asyncWorker.Start(() =>
             {
-                var controller = new CommunicationController { ServiceName = string.IsNullOrEmpty(resourceModel.Category) ? resourceModel.ResourceName : resourceModel.Category };
+                var controller = new CommunicationController
+                {
+                    ServiceName = string.IsNullOrEmpty(resourceModel.Category) ? resourceModel.ResourceName : resourceModel.Category,
+                    ServicePayload =
+                    {
+                        ResourceID = resourceModel.ID
+                    },
+                };
                 controller.AddPayloadArgument("DebugPayload", payload);
                 controller.ExecuteCommand<string>(clientContext, clientContext.WorkspaceID);
             }, () => { });
@@ -64,7 +72,7 @@ namespace Dev2.Studio.Core.Network
             }
         }
 
-        public static void SendErrorOpenInBrowser(List<string> exceptionList, string description, string url)
+        public static void SendErrorOpenInBrowser(IEnumerable<string> exceptionList, string description, string url)
         {
             ServicePointManager.ServerCertificateValidationCallback = (senderX, certificate, chain, sslPolicyErrors) => true;
             const string PayloadFormat = "\"header\":{0},\"description\":{1},\"type\":3,\"category\":27";

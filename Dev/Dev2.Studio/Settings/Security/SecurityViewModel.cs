@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,6 +33,7 @@ using Warewolf.Studio.Core.Popup;
 using Warewolf.Studio.Resources.Languages;
 using Warewolf.Studio.ViewModels;
 
+
 namespace Dev2.Settings.Security
 {
     public class SecurityViewModel : SettingsItemViewModel, IHelpSource, IUpdatesHelp
@@ -44,6 +45,7 @@ namespace Dev2.Settings.Security
         bool _isUpdatingHelpText;
         private static IDomain _domain;
 
+        // ReSharper disable once UnusedMember.Global
         public SecurityViewModel()
         {
             
@@ -461,12 +463,12 @@ namespace Dev2.Settings.Security
                 {
                     case HelpType.Server:
                         IsResourceHelpVisible = false;
-                        HelpText = Core.SettingsSecurityServerHelpWindowsGroup;
+                        HelpText = Warewolf.Studio.Resources.Languages.HelpText.SettingsSecurityServerHelpWindowsGroup;
                         break;
 
                     case HelpType.Resource:
                         IsServerHelpVisible = false;
-                        HelpText = Core.SettingsSecurityResourceHelpResource;
+                        HelpText = Warewolf.Studio.Resources.Languages.HelpText.SettingsSecurityResourceHelpResource;
                         break;
                 }
             }
@@ -648,6 +650,11 @@ namespace Dev2.Settings.Security
                 {
                     serverPermissionCompare = false;
                 }
+                if (!serverPermissionCompare) continue;
+                if (ServerPermissions[i].IsDeleted != serverPermissions[i].IsDeleted)
+                {
+                    serverPermissionCompare = false;
+                }
             }
             return serverPermissionCompare;
         }
@@ -700,6 +707,11 @@ namespace Dev2.Settings.Security
                 }
                 if (!resourcePermissionCompare) continue;
                 if (ResourcePermissions[i].Contribute != resourcePermissions[i].Contribute)
+                {
+                    resourcePermissionCompare = false;
+                }
+                if (!resourcePermissionCompare) continue;
+                if (ResourcePermissions[i].IsDeleted != resourcePermissions[i].IsDeleted)
                 {
                     resourcePermissionCompare = false;
                 }

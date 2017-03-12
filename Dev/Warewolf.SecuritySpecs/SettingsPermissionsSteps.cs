@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using Dev2.Activities.Specs.Scheduler;
 using Dev2.Network;
@@ -222,6 +221,20 @@ namespace Dev2.Activities.Specs.Permissions
             FeatureContext.Current["currentEnvironment"] = reconnectModel;
         }
 
+        IEnvironmentModel LoadResources()
+        {
+            var environmentModel = FeatureContext.Current.Get<IEnvironmentModel>("currentEnvironment");
+            EnsureEnvironmentConnected(environmentModel);
+            if (environmentModel.IsConnected)
+            {
+                if (!environmentModel.HasLoadedResources)
+                {
+                    environmentModel.ForceLoadResources();
+                }
+            }
+            return environmentModel;
+        }
+
         [Then(@"resources should have ""(.*)""")]
         public void ThenResourcesShouldHave(string resourcePerms)
         {
@@ -237,28 +250,10 @@ namespace Dev2.Activities.Specs.Permissions
                 }
             }
             var resourceModels = environmentModel.ResourceRepository.All();
-            var totalNumberOfResources = resourceModels.Count;
             var allMatch = resourceModels.Count(model => model.UserPermissions == resourcePermissions);
-            Assert.IsTrue(totalNumberOfResources - allMatch <= 1); //This is to cater for the scenerios where we specify a resource permission
-        }
-
-        IEnvironmentModel LoadResources()
-        {
-            var environmentModel = FeatureContext.Current.Get<IEnvironmentModel>("currentEnvironment");
-            EnsureEnvironmentConnected(environmentModel);
-            if (environmentModel.IsConnected)
-            {
-                if (!environmentModel.HasLoadedResources)
-                {
-                    environmentModel.ForceLoadResources();
-                }
-            }
-            //            var resourceModels = environmentModel.ResourceRepository.All();
-            //            foreach (var resourceModel in resourceModels)
-            //            {
-            //                resourceModel.UserPermissions = environmentModel.AuthorizationService.GetResourcePermissions(resourceModel.ID);
-            //            }
-            return environmentModel;
+            var totalNumberOfResources = resourceModels.Count;
+            var totalNumberOfResourcesWithoutMatch = totalNumberOfResources - allMatch;
+            Assert.IsTrue(totalNumberOfResourcesWithoutMatch <= 1, "Total number of resources with " + resourcePermissions + " permission is " + allMatch + ". There are " + totalNumberOfResources + " resources in total. Therefore " + totalNumberOfResourcesWithoutMatch + " total resources do not have that permission.");
         }
 
         [Then(@"resources should not have ""(.*)""")]
@@ -278,7 +273,8 @@ namespace Dev2.Activities.Specs.Permissions
             var resourceModels = environmentModel.ResourceRepository.All();
             var allMatch = resourceModels.Count(model => model.UserPermissions == resourcePermissions);
             var totalNumberOfResources = resourceModels.Count;
-            Assert.IsTrue(totalNumberOfResources - allMatch <= 1);
+            var totalNumberOfResourcesWithoutMatch = totalNumberOfResources - allMatch;
+            Assert.IsTrue(totalNumberOfResourcesWithoutMatch <= 1, "Total number of resources with " + resourcePermissions + " permission is " + allMatch + ". There are " + totalNumberOfResources + " resources in total. Therefore " + totalNumberOfResourcesWithoutMatch + " total resources do not have that permission.");
         }
 
         [Given(@"Resource ""(.*)"" has rights ""(.*)"" for ""(.*)""")]
@@ -305,7 +301,8 @@ namespace Dev2.Activities.Specs.Permissions
             settings.Security.WindowsGroupPermissions.RemoveAll(permission => permission.ResourceID == resourceModel.ID);
             var windowsGroupPermission = new WindowsGroupPermission { WindowsGroup = groupName, ResourceID = resourceModel.ID, ResourceName = resourceName, IsServer = false, Permissions = resourcePermissions };
             settings.Security.WindowsGroupPermissions.Add(windowsGroupPermission);
-            resourceRepository.WriteSettings(environmentModel, settings);
+            var SettingsWriteResult = resourceRepository.WriteSettings(environmentModel, settings);
+            Assert.IsFalse(SettingsWriteResult.HasError, "Cannot setup for security spec.\n Error writing initial resource permissions settings to localhost server.\n" + SettingsWriteResult.Message);
         }
 
         [Then(@"""(.*)"" should have ""(.*)""")]
@@ -355,6 +352,14 @@ namespace Dev2.Activities.Specs.Permissions
 
             }
             currentEnvironment?.Disconnect();
+        }
+
+        [Given(@"I have a server ""(.*)""")]
+        public void GivenIHaveAServer(string serverName)
+        {
+            AppSettings.LocalHost = string.Format("http://{0}:3142", Environment.MachineName.ToLowerInvariant());
+            var environmentModel = EnvironmentRepository.Instance.Source;
+            scenarioContext.Add("environment", environmentModel);
         }
     }
 }

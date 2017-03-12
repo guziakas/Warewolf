@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,7 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Communication;
 using Dev2.Data;
 using Dev2.Data.ServiceModel;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Runtime.Hosting;
@@ -95,7 +95,6 @@ namespace Dev2.Runtime.ESB.Execution
 
             errors = new ErrorResultTO();
 
-            // get data in a format we can send ;)
             Dev2Logger.Debug("Creating DataList fragment for remote execute");
             var dataListFragment = ExecutionEnvironmentUtils.GetXmlInputFromEnvironment(DataObject, DataObject.RemoteInvokeResultShape.ToString(), update);
 
@@ -110,7 +109,6 @@ namespace Dev2.Runtime.ESB.Execution
 
             try
             {
-                // Invoke Remote WF Here ;)
                 result = ExecutePostRequest(connection, serviceName, dataListFragment);
                 IList<IDebugState> msg = DataObject.IsDebug ? FetchRemoteDebugItems(connection) : new List<IDebugState>();
                 DataObject.RemoteDebugItems = msg; // set them so they can be acted upon
@@ -123,7 +121,7 @@ namespace Dev2.Runtime.ESB.Execution
             }
 
             // Create tmpDL
-            ExecutionEnvironmentUtils.UpdateEnvironmentFromOutputPayload(DataObject, result.ToStringBuilder(), DataObject.RemoteInvokeResultShape.ToString(), update);
+            ExecutionEnvironmentUtils.UpdateEnvironmentFromOutputPayload(DataObject, result.ToStringBuilder(), DataObject.RemoteInvokeResultShape.ToString());
             Dev2Logger.Info($"Completed Remote Execution. Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}");
 
             return Guid.Empty;
@@ -345,7 +343,7 @@ namespace Dev2.Runtime.ESB.Execution
             }
             try
             {
-                var returnData = ExecuteGetRequest(connection, "FindResourceService", $"ResourceType={"TypeWorkflowService"}&ResourceName={serviceName}&ResourceId={serviceId}", isDebugMode);
+                var returnData = ExecuteGetRequest(connection, "FindResourceService", $"ResourceType=TypeWorkflowService&ResourceName={serviceName}&ResourceId={serviceId}", isDebugMode);
                 if (!string.IsNullOrEmpty(returnData))
                 {
                     Dev2JsonSerializer serializer = new Dev2JsonSerializer();

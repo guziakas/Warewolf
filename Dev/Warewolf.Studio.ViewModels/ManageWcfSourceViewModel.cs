@@ -37,13 +37,17 @@ namespace Warewolf.Studio.ViewModels
             _requestServiceNameViewModel = requestServiceNameViewModel;
         }
 
-        public ManageWcfSourceViewModel(IWcfSourceModel updateManager, IEventAggregator aggregator, IWcfServerSource source, IAsyncWorker asyncWorker, IEnvironmentModel environment)
+        public ManageWcfSourceViewModel(IWcfSourceModel updateManager, IEventAggregator aggregator, IWcfServerSource wcfSource, IAsyncWorker asyncWorker, IEnvironmentModel environment)
             : this(updateManager, aggregator, asyncWorker, environment)
         {
-            VerifyArgument.IsNotNull("source", source);
-            _wcfServerSource = source;
-            SetupHeaderTextFromExisting();
-            FromModel(source);
+            VerifyArgument.IsNotNull("source", wcfSource);
+            asyncWorker.Start(() => updateManager.FetchSource(wcfSource.Id), source =>
+            {
+                _wcfServerSource = source;
+                _wcfServerSource.Path = wcfSource.Path;
+                SetupHeaderTextFromExisting();
+                FromModel(source);
+            });
         }
 
         public ManageWcfSourceViewModel(IWcfSourceModel updateManager, IEventAggregator aggregator, IAsyncWorker asyncWorker, IEnvironmentModel environment)
@@ -55,7 +59,7 @@ namespace Warewolf.Studio.ViewModels
             AsyncWorker = asyncWorker;
             _environment = environment;
             _updateManager = updateManager;
-            _endPointUrl = String.Empty;
+            _endPointUrl = string.Empty;
 
             HeaderText = Resources.Languages.Core.WcfServiceNewHeaderLabel;
             Header = Resources.Languages.Core.WcfServiceNewHeaderLabel;
@@ -164,7 +168,8 @@ namespace Warewolf.Studio.ViewModels
                                 TestFailed = true;
                                 TestPassed = false;
                                 Testing = false;
-                                TestMessage = t.Exception != null ? t.Exception.Message : "Failed";
+
+                                TestMessage = GetExceptionMessage(t.Exception);
                                 break;
                             }
                         case TaskStatus.RanToCompletion:
@@ -258,7 +263,7 @@ namespace Warewolf.Studio.ViewModels
                 EndpointUrl = EndpointUrl,
                 ResourceType = "WcfSource",
                 Type = enSourceType.WcfSource,
-                Id = _wcfServerSource == null ? Guid.NewGuid() : _wcfServerSource.Id
+                Id = _wcfServerSource?.Id ?? Guid.NewGuid()
             };
         }
 
@@ -308,6 +313,8 @@ namespace Warewolf.Studio.ViewModels
                     src.Name = RequestServiceNameViewModel.ResourceName.Name;
                     src.Path = RequestServiceNameViewModel.ResourceName.Path ?? RequestServiceNameViewModel.ResourceName.Name;
                     Save(src);
+                    if (RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                        AfterSave(RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                     Item = src;
                     _wcfServerSource = src;
                     ResourceName = _wcfServerSource.Name;
@@ -342,8 +349,8 @@ namespace Warewolf.Studio.ViewModels
                     ResourceName = Name,
                     Name = Name,
                     ResourceType = "WcfSource",
-                    ResourceID = _wcfServerSource == null ? Guid.NewGuid() : _wcfServerSource.Id,
-                    Id = _wcfServerSource == null ? Guid.NewGuid() : _wcfServerSource.Id
+                    ResourceID = _wcfServerSource?.Id ?? Guid.NewGuid(),
+                    Id = _wcfServerSource?.Id ?? Guid.NewGuid()
                 };
             // ReSharper disable once RedundantIfElseBlock
             else
@@ -358,7 +365,7 @@ namespace Warewolf.Studio.ViewModels
         public override void FromModel(IWcfServerSource service)
         {
             ResourceName = service.Name;
-            EndpointUrl = service.EndpointUrl;
+            EndpointUrl = service.EndpointUrl;            
         }
 
         public override bool CanSave()
@@ -369,10 +376,7 @@ namespace Warewolf.Studio.ViewModels
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public void Save(IWcfServerSource source)

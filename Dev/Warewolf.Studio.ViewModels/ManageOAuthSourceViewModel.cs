@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
 using System.Windows.Input;
+using Dev2.Common.Interfaces.Threading;
 using Warewolf.Studio.Core;
 
 namespace Warewolf.Studio.ViewModels
@@ -40,11 +41,11 @@ namespace Warewolf.Studio.ViewModels
         {
             if (updateManager == null)
             {
-                throw new ArgumentNullException("updateManager");
+                throw new ArgumentNullException(nameof(updateManager));
             }
             if (requestServiceNameViewModel == null)
             {
-                throw new ArgumentNullException("requestServiceNameViewModel");
+                throw new ArgumentNullException(nameof(requestServiceNameViewModel));
             }
             _updateManager = updateManager;
             RequestServiceNameViewModel = requestServiceNameViewModel;
@@ -59,28 +60,34 @@ namespace Warewolf.Studio.ViewModels
             SetupCommands();
         }
 
-        public ManageOAuthSourceViewModel(IManageOAuthSourceModel updateManager, IOAuthSource oAuthSource)
+        public ManageOAuthSourceViewModel(IManageOAuthSourceModel updateManager, IOAuthSource oAuthSource,IAsyncWorker asyncWorker)
             : base("OAuth")
         {
             if (updateManager == null)
             {
-                throw new ArgumentNullException("updateManager");
+                throw new ArgumentNullException(nameof(updateManager));
             }
             if (oAuthSource == null)
             {
-                throw new ArgumentNullException("oAuthSource");
+                throw new ArgumentNullException(nameof(oAuthSource));
             }
-            _oAuthSource = oAuthSource;
             _updateManager = updateManager;
             Types = new List<string>
             {
                 "Dropbox"
             };
-            // ReSharper disable once VirtualMemberCallInContructor
-            FromModel(oAuthSource);
-            SetupHeaderTextFromExisting();
-            SetupCommands();
-            SetupAuthorizeUri();
+
+
+            asyncWorker.Start(() => updateManager.FetchSource(oAuthSource.ResourceID), source =>
+            {
+                _oAuthSource = source;
+                _oAuthSource.ResourcePath = oAuthSource.ResourcePath;
+                // ReSharper disable once VirtualMemberCallInContructor
+                FromModel(_oAuthSource);
+                SetupHeaderTextFromExisting();
+                SetupCommands();
+                SetupAuthorizeUri();
+            });
         }
 
         private void SetupCommands()
@@ -102,7 +109,7 @@ namespace Warewolf.Studio.ViewModels
 
         public override bool CanSave()
         {
-            return TestPassed && !String.IsNullOrEmpty(AccessToken);
+            return TestPassed && !string.IsNullOrEmpty(AccessToken);
         }
 
         private bool CanTest()
@@ -355,10 +362,7 @@ namespace Warewolf.Studio.ViewModels
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void Save()
@@ -407,15 +411,17 @@ namespace Warewolf.Studio.ViewModels
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                    var res = requestServiceNameViewModel.ShowSaveDialog();
 
                     if (res == MessageBoxResult.OK)
                     {
                         var src = ToSource();
-                        src.ResourceName = RequestServiceNameViewModel.Result.ResourceName.Name;
-                        src.ResourcePath = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                        src.ResourceName = requestServiceNameViewModel.ResourceName.Name;
+                        src.ResourcePath = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(src);
-
+                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ResourceID);
                         _oAuthSource = src;
                         Path = _oAuthSource.ResourcePath;
                         SetupHeaderTextFromExisting();
@@ -467,7 +473,7 @@ namespace Warewolf.Studio.ViewModels
                 {
                     AppKey = AppKey,
                     AccessToken = AccessToken,
-                    ResourceID = _oAuthSource == null ? Guid.NewGuid() : _oAuthSource.ResourceID
+                    ResourceID = _oAuthSource?.ResourceID ?? Guid.NewGuid()
                 }
             ;
             // ReSharper disable once RedundantIfElseBlock

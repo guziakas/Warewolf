@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -591,7 +591,7 @@ namespace Dev2.Studio.Dock
                     else
                     {
                         var sourceView = model.WorkSurfaceViewModel as IStudioTab;
-                        if (sourceView != null && sourceView.IsDirty)
+                        if (sourceView != null)
                         {
                             CloseCurrent(e, model);
                         }
@@ -641,6 +641,8 @@ namespace Dev2.Studio.Dock
                     var item = pane.Content as WorkflowDesignerViewModel;
                     if (item?.ResourceModel != null)
                         WorkspaceItemRepository.Instance.Remove(item.ResourceModel);
+                    item?.RemoveUnsavedWorkflowName(item.DisplayName);
+
                 }
             }
         }

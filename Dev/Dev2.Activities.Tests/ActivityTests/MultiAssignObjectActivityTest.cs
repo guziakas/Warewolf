@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -45,6 +45,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             GetScalarValueFromEnvironment(result.Environment, "@test.value1", out actual, out error);
 
             Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfMultiAssignObjectActivity_GetOutputs")]
+        public void DsfMultiAssignObjectActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var fieldCollection = new ObservableCollection<AssignObjectDTO>();
+            fieldCollection.Add(new AssignObjectDTO("[[@test.value1]]", "somevalue", fieldCollection.Count));
+            var act = new DsfMultiAssignObjectActivity { OutputMapping = null, FieldsCollection = fieldCollection };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[@test.value1]]", outputs[0]);
         }
 
         [TestMethod]

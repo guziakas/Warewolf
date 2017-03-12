@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -84,7 +84,6 @@ namespace Dev2.Common.Common
 
             // remove the darn header ;)
             sb = sb.CleanEncodingHeaderForXmlSave();
-
             if (!File.Exists(fileName))
             {
                 using (File.Create(fileName))
@@ -139,7 +138,7 @@ namespace Dev2.Common.Common
 
         public static bool IsNullOrEmpty(this StringBuilder sb)
         {
-            return sb == null || string.IsNullOrEmpty(sb.ToString());
+            return string.IsNullOrEmpty(sb?.ToString());
         }
 
         public static StringBuilder ToStringBuilder(this string str)
@@ -426,7 +425,7 @@ namespace Dev2.Common.Common
         public static string AttributeSafe(this XElement elem, string name, bool returnsNull = false)
         {
             XAttribute attr = elem.Attribute(name);
-            if (attr == null || string.IsNullOrEmpty(attr.Value))
+            if (string.IsNullOrEmpty(attr?.Value))
             {
                 return returnsNull ? null : string.Empty;
             }
@@ -442,25 +441,25 @@ namespace Dev2.Common.Common
         public static string ElementSafe(this XElement elem, string name)
         {
             XElement child = elem.Element(name);
-            return child == null ? string.Empty : child.Value;
+            return child?.Value ?? string.Empty;
         }
 
         public static string ElementStringSafe(this XElement elem, string name)
         {
             XElement child = elem.Element(name);
-            return child == null ? string.Empty : child.ToString();
+            return child?.ToString() ?? string.Empty;
         }
-
+        /// <summary>
+        /// https://referencesource.microsoft.com/#System/compmod/system/collections/objectmodel/observablecollection.cs,cfaa9abd8b214ecb
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="enumerable"></param>
+        /// <returns></returns>
         public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> enumerable)
         {
             if (enumerable == null)
                 return new ObservableCollection<T>();
-
-            var col = new ObservableCollection<T>();
-            foreach (T cur in enumerable)
-            {
-                col.Add(cur);
-            }
+            var col = new ObservableCollection<T>(enumerable);
             return col;
         }
 

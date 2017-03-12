@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Common;
@@ -60,7 +59,7 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                 Dev2Logger.Error(err);
                 return ResourceCatalogResultBuilder.CreateFailResult($"{ErrorResource.FailedToRenameResource} '{resourceID}' to '{newName}'");
             }
-            return ResourceCatalogResultBuilder.CreateSuccessResult($"{"Renamed Resource"} '{resourceID}' to '{newName}'");
+            return ResourceCatalogResultBuilder.CreateSuccessResult($"Renamed Resource \'{resourceID}\' to \'{newName}\'");
         }
 
         public ResourceCatalogResult RenameCategory(Guid workspaceID, string oldCategory, string newCategory)
@@ -76,7 +75,7 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             catch (Exception err)
             {
                 Dev2Logger.Error("Rename Category error", err);
-                return ResourceCatalogResultBuilder.CreateFailResult($"<CompilerMessage>{"Failed to Category"} from '{oldCategory}' to '{newCategory}'</CompilerMessage>");
+                return ResourceCatalogResultBuilder.CreateFailResult($"<CompilerMessage>Failed to Category from \'{oldCategory}\' to \'{newCategory}\'</CompilerMessage>");
             }
         }
 
@@ -107,31 +106,27 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                     }
                 }
 
-                var failureResult = ResourceCatalogResultBuilder.CreateFailResult($"<CompilerMessage>{"Failed to Category"} from '{oldCategory}' to '{newCategory}'</CompilerMessage>");
-                var successResult = ResourceCatalogResultBuilder.CreateSuccessResult($"<CompilerMessage>{"Updated Category"} from '{oldCategory}' to '{newCategory}'</CompilerMessage>");
+                var failureResult = ResourceCatalogResultBuilder.CreateFailResult($"<CompilerMessage>Failed to Category from \'{oldCategory}\' to \'{newCategory}\'</CompilerMessage>");
+                var successResult = ResourceCatalogResultBuilder.CreateSuccessResult($"<CompilerMessage>Updated Category from \'{oldCategory}\' to \'{newCategory}\'</CompilerMessage>");
 
                 return hasError ? failureResult : successResult;
             }
             catch (Exception err)
             {
                 Dev2Logger.Error("Rename Category error", err);
-                return ResourceCatalogResultBuilder.CreateFailResult($"<CompilerMessage>{"Failed to Category"} from '{oldCategory}' to '{newCategory}'</CompilerMessage>");
+                return ResourceCatalogResultBuilder.CreateFailResult($"<CompilerMessage>Failed to Category from \'{oldCategory}\' to \'{newCategory}\'</CompilerMessage>");
             }
         }
         ResourceCatalogResult UpdateResourcePath(Guid workspaceID, IResource resource, string oldCategory, string newCategory)
         {
-            var resourceContents = _resourceCatalog.GetResourceContents(workspaceID, resource.ResourceID);
-            var oldPath = oldCategory; // + ResourceName
-            var cat = oldCategory.Replace("\\", "\\\\");
-            var newPath = Regex.Replace(oldPath, cat, newCategory, RegexOptions.IgnoreCase);
-            var resourceElement = resourceContents.ToXElement();
-            var contents = resourceElement.ToStringBuilder();
-            var resourceCatalogResult = ((ResourceCatalog)_resourceCatalog).SaveImpl(workspaceID, resource, contents, false, newPath);
-            if (resourceCatalogResult.Status != ExecStatus.Success)
+            var oldPath = resource.GetSavePath();
+            var newPath = newCategory;
+            if (!string.IsNullOrEmpty(oldPath))
             {
-                // set error
+                newPath = oldPath.Replace(oldCategory, newCategory);
             }
-            return resourceCatalogResult;
+            ((ResourceCatalog)_resourceCatalog).SetResourceFilePath(workspaceID, resource, ref newPath);
+            return new ResourceCatalogResult {Status = ExecStatus.Success};
         }
         ResourceCatalogResult UpdateResourceName(Guid workspaceID, IResource resource, string newName, string resourcePath)
         {

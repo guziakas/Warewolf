@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -198,15 +198,14 @@ namespace Dev2.Sql.Tests
             //------------Setup for test--------------------------
             var factory = new Mock<IDbFactory>();
             var mockCommand = new Mock<IDbCommand>();
-            var mockReader = new Mock<IDataReader>();
-            mockCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(mockReader.Object);
+            var mockReader = new Mock<IDataAdapter>();
             var somethingAdded = false;
             factory.Setup(a => a.CreateCommand(It.IsAny<IDbConnection>(), CommandType.Text, GlobalConstants.SchemaQuery)).Returns(mockCommand.Object);
             DataTable dt = new DataTable();
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
-            factory.Setup(a => a.CreateTable(mockReader.Object, LoadOption.OverwriteChanges)).Returns(dt);
+            factory.Setup(a => a.CreateTable(It.IsAny<IDataAdapter>(), LoadOption.OverwriteChanges)).Returns(dt);
             var conn = new Mock<IDbConnection>();
             conn.Setup(a => a.State).Returns(ConnectionState.Open);
             var sqlServer = new SqlServer(factory.Object);
@@ -242,7 +241,7 @@ namespace Dev2.Sql.Tests
             var mockCommand = new Mock<IDbCommand>();
             var mockReader = new Mock<IDataReader>();
             var queue = new Queue<DataTable>();
-
+            
             mockCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(mockReader.Object);
             mockCommand.Setup(a => a.CommandText).Returns("Dave.Bob");
 
@@ -262,7 +261,7 @@ namespace Dev2.Sql.Tests
 
             queue.Enqueue(new DataTable()); // no params
 
-            factory.Setup(a => a.CreateTable(mockReader.Object, LoadOption.OverwriteChanges)).Returns(queue.Dequeue);
+            factory.Setup(a => a.CreateTable(It.IsAny<IDataAdapter>(), LoadOption.OverwriteChanges)).Returns(queue.Dequeue);
             var conn = new Mock<IDbConnection>();
             conn.Setup(a => a.State).Returns(ConnectionState.Open);
             var sqlServer = new SqlServer(factory.Object);
@@ -304,10 +303,8 @@ namespace Dev2.Sql.Tests
             //------------Setup for test--------------------------
             var factory = new Mock<IDbFactory>();
             var mockCommand = new Mock<IDbCommand>();
-            var mockReader = new Mock<IDataReader>();
             var queue = new Queue<DataTable>();
 
-            mockCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(mockReader.Object);
             mockCommand.Setup(a => a.CommandText).Returns("Dave.Bob");
 
             var helpTextCommand = new Mock<IDbCommand>();
@@ -326,7 +323,7 @@ namespace Dev2.Sql.Tests
 
             queue.Enqueue(new DataTable()); // no params
 
-            factory.Setup(a => a.CreateTable(mockReader.Object, LoadOption.OverwriteChanges)).Returns(queue.Dequeue);
+            factory.Setup(a => a.CreateTable(It.IsAny<IDataAdapter>(), LoadOption.OverwriteChanges)).Returns(queue.Dequeue);
             var conn = new Mock<IDbConnection>();
             conn.Setup(a => a.State).Returns(ConnectionState.Open);
             var sqlServer = new SqlServer(factory.Object);
@@ -362,7 +359,7 @@ namespace Dev2.Sql.Tests
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SqlServer_FetchStoredProcedures")]
 // ReSharper disable InconsistentNaming
-        public void SqlServer_FetchStoredProcedures_TableValuesProcFuncReturnsSPs()
+        public void SqlServer_FetchStoredProcedures_TableValuesProcFunc_NotReturned()
 // ReSharper restore InconsistentNaming
         {
             //------------Setup for test--------------------------
@@ -385,12 +382,12 @@ namespace Dev2.Sql.Tests
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
-            dt.Rows.Add(new object[] { "Bob", "SQL_TABLE_VALUED_FUNCTION", "Dave" });
+            dt.Rows.Add("Bob", "SQL_TABLE_VALUED_FUNCTION", "Dave");
             queue.Enqueue(dt);
 
             queue.Enqueue(new DataTable()); // no params
 
-            factory.Setup(a => a.CreateTable(mockReader.Object, LoadOption.OverwriteChanges)).Returns(queue.Dequeue);
+            factory.Setup(a => a.CreateTable(It.IsAny<IDataAdapter>(), LoadOption.OverwriteChanges)).Returns(queue.Dequeue);
             var conn = new Mock<IDbConnection>();
             conn.Setup(a => a.State).Returns(ConnectionState.Open);
             var sqlServer = new SqlServer(factory.Object);
@@ -406,11 +403,12 @@ namespace Dev2.Sql.Tests
                 Func<IDbCommand, List<IDbDataParameter>, string, string, bool> funcProcessor = (command, list, arg3, a) =>
                 {
                     Assert.AreEqual("select * from Dave.Bob()",a);
-                    funcAdded = true; return true;
+                    funcAdded = true;
+                    return true;
                 };
 
                 sqlServer.FetchStoredProcedures(procProcessor, funcProcessor);
-                Assert.IsTrue(funcAdded);
+                Assert.IsFalse(funcAdded);
                 Assert.IsFalse(somethingAdded);
 
 
@@ -541,7 +539,7 @@ namespace Dev2.Sql.Tests
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SqlServer_FetchStoredProcedures")]
 // ReSharper disable InconsistentNaming
-        public void SqlServer_FetchStoredProcedures_TableValuesProcWithParamsFuncReturnsSPs()
+        public void SqlServer_FetchStoredProcedures_TableValuesProcWithParamsFunc_NotReturned()
 // ReSharper restore InconsistentNaming
         {
             //------------Setup for test--------------------------
@@ -565,17 +563,17 @@ namespace Dev2.Sql.Tests
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
-            dt.Rows.Add(new object[] { "Bob", "SQL_TABLE_VALUED_FUNCTION", "Dave" });
+            dt.Rows.Add("Bob", "SQL_TABLE_VALUED_FUNCTION", "Dave");
             queue.Enqueue(dt);
 
             var dtParams = new DataTable();
             dtParams.Columns.Add("PARAMETER_NAME");
             dtParams.Columns.Add("DATA_TYPE");
             dtParams.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
-            dtParams.Rows.Add(new object[] { "@moo", SqlDbType.VarChar, 25 });
+            dtParams.Rows.Add("@moo", SqlDbType.VarChar, 25);
             queue.Enqueue(dtParams); // no params
 
-            factory.Setup(a => a.CreateTable(It.IsAny<IDataReader>(), It.IsAny<LoadOption>())).Returns(queue.Dequeue);
+            factory.Setup(a => a.CreateTable(It.IsAny<IDataAdapter>(), It.IsAny<LoadOption>())).Returns(queue.Dequeue);
             var conn = new Mock<IDbConnection>();
             conn.Setup(a => a.State).Returns(ConnectionState.Open);
             var sqlServer = new SqlServer(factory.Object);
@@ -591,13 +589,14 @@ namespace Dev2.Sql.Tests
                 Func<IDbCommand, List<IDbDataParameter>, string, string, bool> funcProcessor = (command, list, arg3, a) =>
                 {
                     Assert.AreEqual("select * from Dave.Bob(@moo)", a);
-                    funcAdded = true; return true;
+                    funcAdded = true;
+                    return true;
                 };
 
                 sqlServer.FetchStoredProcedures(procProcessor, funcProcessor);
-                Assert.IsTrue(funcAdded);
+                Assert.IsFalse(funcAdded);
                 Assert.IsFalse(somethingAdded);
-                param.Verify(a=>a.Add(It.IsAny<object>()),Times.Once());
+                param.Verify(a=>a.Add(It.IsAny<object>()),Times.Never);
 
 
                 //------------Assert Results-------------------------
@@ -737,7 +736,7 @@ namespace Dev2.Sql.Tests
 
 
                 sqlServer.FetchDataTable(mockCommand.Object);
-                factory.Verify(a=>a.CreateTable(It.IsAny<IDataReader>(),LoadOption.OverwriteChanges));
+                factory.Verify(a=>a.CreateTable(It.IsAny<IDataAdapter>(),LoadOption.OverwriteChanges));
                
 
 

@@ -21,7 +21,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Warewolf.UIBindingTests\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -104,6 +104,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="ComPluginSource.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -134,7 +138,7 @@
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.UIBindingTests.Core\Warewolf.UIBindingTests.Core.csproj">
       <Project>{cb0f5535-5e1d-41f9-a23c-f59fdc816b75}</Project>
-      <Name>Warewolf.AcceptanceTesting.Core</Name>
+      <Name>Warewolf.UIBindingTests.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Core\Warewolf.Core.csproj">
       <Project>{8fd23ce0-02bb-48e1-a914-ba467938ce78}</Project>

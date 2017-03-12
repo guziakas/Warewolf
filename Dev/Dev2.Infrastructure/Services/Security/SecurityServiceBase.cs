@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Dev2.Common;
 
 namespace Dev2.Services.Security
 {
@@ -89,7 +88,6 @@ namespace Dev2.Services.Security
             LogStart();
             _permissionsLock.EnterWriteLock();
             var previousPermissions = _permissions.ToList();
-            Dev2Logger.Error(previousPermissions);
             List<WindowsGroupPermission> newPermissions;
             try
             {

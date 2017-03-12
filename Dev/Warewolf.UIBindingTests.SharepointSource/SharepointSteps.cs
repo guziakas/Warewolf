@@ -15,12 +15,15 @@ using Warewolf.Studio.Core.Infragistics_Prism_Region_Adapter;
 using Warewolf.Studio.ServerProxyLayer;
 using Warewolf.Studio.ViewModels;
 using Warewolf.Studio.Views;
+// ReSharper disable RedundantAssignment
 
 namespace Warewolf.UIBindingTests.SharepointSource
 {
     [Binding]
     public class SharepointSteps
     {
+        string unableToContactServerTestFailedValueDoesNotFallWithinTheExpectedRange = "Unable to contact Server : Test Failed: Value does not fall within the expected range.";
+
         [BeforeFeature("SharepointSource")]
         public static void SetupForSystem()
         {
@@ -32,7 +35,7 @@ namespace Warewolf.UIBindingTests.SharepointSource
             var mockEnvironmentModel = new Mock<Dev2.Studio.Core.Interfaces.IEnvironmentModel>();
             var task = new Task<IRequestServiceNameViewModel>(() => mockRequestServiceNameViewModel.Object);
             task.Start();
-            var manageSharepointServerSourceViewModel = new SharepointServerSourceViewModel(mockStudioUpdateManager.Object,task ,mockEventAggregator.Object,new SynchronousAsyncWorker(),mockEnvironmentModel.Object);
+            var manageSharepointServerSourceViewModel = new SharepointServerSourceViewModel(mockStudioUpdateManager.Object, task, mockEventAggregator.Object, new SynchronousAsyncWorker(), mockEnvironmentModel.Object);
             manageSharepointServerSource.DataContext = manageSharepointServerSourceViewModel;
             Utils.ShowTheViewForTesting(manageSharepointServerSource);
             FeatureContext.Current.Add(Utils.ViewNameKey, manageSharepointServerSource);
@@ -57,7 +60,7 @@ namespace Warewolf.UIBindingTests.SharepointSource
         {
             var manageSharepointServerSource = ScenarioContext.Current.Get<SharepointServerSource>(Utils.ViewNameKey);
             Assert.IsNotNull(manageSharepointServerSource);
-            Assert.IsNotNull(manageSharepointServerSource.DataContext); 
+            Assert.IsNotNull(manageSharepointServerSource.DataContext);
         }
 
         [Then(@"""(.*)"" tab is opened")]
@@ -92,7 +95,7 @@ namespace Warewolf.UIBindingTests.SharepointSource
         [Given(@"""(.*)"" is ""(.*)""")]
         public void ThenIs(string controlName, string enabledString)
         {
-            Utils.CheckControlEnabled(controlName, enabledString, ScenarioContext.Current.Get<ICheckControlEnabledView>(Utils.ViewNameKey));
+            Utils.CheckControlEnabled(controlName, enabledString, ScenarioContext.Current.Get<ICheckControlEnabledView>(Utils.ViewNameKey), Utils.ViewNameKey);
         }
 
         [Then(@"I Select Authentication Type as ""(.*)""")]
@@ -133,6 +136,17 @@ namespace Warewolf.UIBindingTests.SharepointSource
             Assert.AreEqual(expectedVisibility, databaseDropDownVisibility);
         }
 
+        [When(@"the error message is ""(.*)""")]
+        public void WhenTheErrorMessageIs(string errorMessage)
+        {
+            errorMessage = "Exception: " + unableToContactServerTestFailedValueDoesNotFallWithinTheExpectedRange +
+                           Environment.NewLine + Environment.NewLine + "Inner Exception: " +
+                           unableToContactServerTestFailedValueDoesNotFallWithinTheExpectedRange;
+
+            var viewModel = ScenarioContext.Current.Get<SharepointServerSourceViewModel>("viewModel");
+            Assert.AreEqual(errorMessage, viewModel.TestMessage);
+        }
+
         [When(@"Test Connecton is ""(.*)""")]
         public void WhenTestConnectonIs(string successString)
         {
@@ -151,9 +165,9 @@ namespace Warewolf.UIBindingTests.SharepointSource
             }
             else
             {
-                mockUpdateManager.Setup(manager => manager.TestConnection(It.IsAny<ISharepointServerSource>()))
-                    .Throws(new WarewolfTestException("Server not found", null));
 
+                mockUpdateManager.Setup(manager => manager.TestConnection(It.IsAny<ISharepointServerSource>()))
+                    .Throws(new WarewolfTestException(unableToContactServerTestFailedValueDoesNotFallWithinTheExpectedRange, new Exception(unableToContactServerTestFailedValueDoesNotFallWithinTheExpectedRange)));
             }
             var manageSharepointServerSource = ScenarioContext.Current.Get<SharepointServerSource>(Utils.ViewNameKey);
             manageSharepointServerSource.PerformTestConnection();
@@ -272,6 +286,7 @@ namespace Warewolf.UIBindingTests.SharepointSource
         {
             var manageSharepointServerSource = ScenarioContext.Current.Get<SharepointServerSource>(Utils.ViewNameKey);
             var mockStudioUpdateManager = new Mock<ISharePointSourceModel>();
+
             mockStudioUpdateManager.Setup(model => model.ServerName).Returns("localhost");
             var mockEventAggregator = new Mock<IEventAggregator>();
             var mockExecutor = new Mock<Dev2.Studio.Core.Interfaces.IEnvironmentModel>();
@@ -284,6 +299,8 @@ namespace Warewolf.UIBindingTests.SharepointSource
                 UserName = "IntegrationTester",
                 Password = "I73573r0"
             };
+            mockStudioUpdateManager.Setup(model => model.FetchSource(It.IsAny<Guid>()))
+                .Returns(sharePointServiceSourceDefinition);
             var manageSharepointServerSourceViewModel = new SharepointServerSourceViewModel(mockStudioUpdateManager.Object, mockEventAggregator.Object, sharePointServiceSourceDefinition, new SynchronousAsyncWorker(), mockExecutor.Object);
             manageSharepointServerSource.DataContext = manageSharepointServerSourceViewModel;
             ScenarioContext.Current.Remove("viewModel");

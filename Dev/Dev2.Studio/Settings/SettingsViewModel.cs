@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,7 @@ using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Common.Interfaces.Threading;
-
+using Dev2.Communication;
 using Dev2.Instrumentation;
 using Dev2.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -59,6 +59,7 @@ namespace Dev2.Settings
         private Func<IServer, IEnvironmentModel> _toEnvironmentModel;
         private PerfcounterViewModel _perfmonViewModel;
         private string _displayName;
+        private Data.Settings.Settings _backedUpSettings;
 
         public SettingsViewModel()
             : this(EventPublishers.Aggregator, new PopupController(), new AsyncWorker(), (IWin32Window)System.Windows.Application.Current.MainWindow,CustomContainer.Get<IShellViewModel>().ActiveServer, null)
@@ -69,7 +70,7 @@ namespace Dev2.Settings
             : base(eventPublisher)
         {
             Server = server;
-            server.NetworkStateChanged += ServerNetworkStateChanged;
+            Server.NetworkStateChanged += ServerNetworkStateChanged;
             Settings = new Data.Settings.Settings();
             VerifyArgument.IsNotNull("popupController", popupController);
             _popupController = popupController;
@@ -88,6 +89,14 @@ namespace Dev2.Settings
             LoadSettings();
             DisplayName = "Settings - " + Server.ResourceName;
         }
+
+        protected override void OnDispose()
+        {
+            Server.NetworkStateChanged -= ServerNetworkStateChanged;
+            base.OnDispose();
+        }
+
+
 
         public override string DisplayName
         {
@@ -133,7 +142,7 @@ namespace Dev2.Settings
 
         void CreateEnvironmentFromServer(IServer server)
         {
-            if (server != null && server.UpdateRepository != null)
+            if (server?.UpdateRepository != null)
             {
                 //server.UpdateRepository.ItemSaved += Refresh;
             }
@@ -150,9 +159,9 @@ namespace Dev2.Settings
             set
             {
                 _currentEnvironment = value;
-                if(CurrentEnvironment.IsConnected &&_currentEnvironment.AuthorizationService != null  )
+                if(CurrentEnvironment.IsConnected  )
                 {
-                    _currentEnvironment.AuthorizationService.IsAuthorized(AuthorizationContext.Administrator, null);
+                    _currentEnvironment.AuthorizationService?.IsAuthorized(AuthorizationContext.Administrator, null);
                 }
             }
         }
@@ -228,6 +237,12 @@ namespace Dev2.Settings
                 SetDisplayName();
                 SaveCommand.RaiseCanExecuteChanged();
             }
+        }
+
+        public void CloseView()
+        {
+            Server.NetworkStateChanged -= ServerNetworkStateChanged;
+            Server = null;
         }
 
         public bool IsLoading
@@ -347,7 +362,7 @@ namespace Dev2.Settings
             switch(propertyName)
             {
                 case "ShowLogging":
-                    if (Settings == null || Settings.Logging == null)
+                    if (Settings?.Logging == null)
                     {
                         ShowLogging = false;
                         ShowSecurity = true;
@@ -435,7 +450,6 @@ namespace Dev2.Settings
         protected virtual PerfcounterViewModel CreatePerfmonViewModel()
         {
             var perfcounterViewModel = new PerfcounterViewModel(Settings.PerfCounters, CurrentEnvironment);
-            perfcounterViewModel.SetItem(perfcounterViewModel);
             return perfcounterViewModel;
         }
 
@@ -647,7 +661,8 @@ namespace Dev2.Settings
             {
                 ShowError("Network Error", string.Format(GlobalConstants.NetworkCommunicationErrorTextFormat, "ReadSettings"));
             }
-
+            var serializer = new Dev2JsonSerializer();
+            _backedUpSettings = serializer.Deserialize<Data.Settings.Settings>(payload?.ToString());
             return payload;
         }
 

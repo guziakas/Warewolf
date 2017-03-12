@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -354,14 +354,11 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             var jObject = data as JObject;
 
             JToken returnVal = null;
-            if (jObject != null)
-            {
-                JProperty property = jObject.Property(pathSegment.ActualSegment);
+            JProperty property = jObject?.Property(pathSegment.ActualSegment);
 
-                if (property != null)
-                {
-                    returnVal = property.Value;
-                }
+            if (property != null)
+            {
+                returnVal = property.Value;
             }
 
             return returnVal;
@@ -372,14 +369,11 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             var jObject = data as JObject;
 
             IEnumerable returnVal = null;
-            if (jObject != null)
-            {
-                JProperty property = jObject.Property(pathSegment.ActualSegment);
+            JProperty property = jObject?.Property(pathSegment.ActualSegment);
 
-                if (property != null && property.IsEnumerable())
-                {
-                    returnVal = property.Value as JArray;
-                }
+            if (property != null && property.IsEnumerable())
+            {
+                returnVal = property.Value as JArray;
             }
 
             var jArray = data as JArray;

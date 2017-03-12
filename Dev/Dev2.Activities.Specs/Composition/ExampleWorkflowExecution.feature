@@ -6,7 +6,6 @@ Feature: ExampleWorkflowExecution
 	 
 Background: Setup for example workflow execution
 			Given Debug events are reset
-			And All environments disconnected
 			And Debug states are cleared
 
 Scenario: Example Executing Utility - Format Number example workflow
@@ -112,8 +111,7 @@ Scenario: Example Executing Utility - Gather System Information example workflow
 	 | 13 | [[Region]] =        | Region              |
 	 | 14 | [[UserRoles]] =     | User Roles          |
 	 | 15 | [[UserName]] =      | User Name           |
-	 | 16 | [[Domain]] =        | Domain              |
-	 | 17 | [[Agents]] =        | Warewolf Agents     |
+	 | 16 | [[Domain]] =        | Domain              |	 
 	 And the "Gather System Information (17)" in Workflow "Utility - System Information" debug outputs as    
 	   | #  |                               |
 	   | 1  | [[DateTime]]      =    String |
@@ -131,8 +129,7 @@ Scenario: Example Executing Utility - Gather System Information example workflow
 	   | 13 | [[Region]]        =    String |
 	   | 14 | [[UserRoles]]     =    String |
 	   | 15 | [[UserName]]      =    String |
-	   | 16 | [[Domain]]        =    String |
-	   | 17 | [[Agents]]        =    String |
+	   | 16 | [[Domain]]        =    String |	   
 
 
 Scenario: Example Executing Utility - Web Request example workflow
@@ -141,16 +138,16 @@ Scenario: Example Executing Utility - Web Request example workflow
 	  | Input to Service | From Variable | Output from Service | To Variable      |
 	  When "Utility - Web Request Test" is executed
 	  Then the workflow execution has "NO" error
-	  And the "Web Request(1)" in WorkFlow "Utility - Web Request" debug inputs as
-	  | URL                     | Header |
-	  | https://www.google.com/ |        |
-	  And the "Web Request(1)" in Workflow "Utility - Web Request" debug outputs as    
+	  And the "Web Request 1" in WorkFlow "Utility - Web Request" debug inputs as
+	  | URL                  | Header | Time Out Seconds |
+	  | https://warewolf.io/ |        | 100              |
+	  And the "Web Request 1" in Workflow "Utility - Web Request" debug outputs as    
 	  |                         |
-	  | [[GoogleHome]] = String |
-	  And the "Web Request(2)" in WorkFlow "Utility - Web Request" debug inputs as
-	  | URL                                                                                            | Header |
-	  | http://maps.googleapis.com/maps/api/geocode/xml?address=[[BartsAddress]]&sensor=false = String |        |
-	  And the "Web Request(2)" in Workflow "Utility - Web Request" debug outputs as    
+	  | [[WarewolfHome]] = String |
+	  And the "Web Request 2" in WorkFlow "Utility - Web Request" debug inputs as
+	  | URL                                                                                            | Header |Time Out Seconds |
+	  | http://maps.googleapis.com/maps/api/geocode/xml?address=[[BartsAddress]]&sensor=false = String |        |100              |
+	  And the "Web Request 2" in Workflow "Utility - Web Request" debug outputs as    
 	  |                             |
 	  | [[GecodedAddress]] = String |
 
@@ -254,20 +251,20 @@ Scenario: Example Executing Data - Data Merge example workflow
 	   
 Scenario: Example Executing Data - Find Index example workflow
 	  Given I have a workflow "Utility - Find Index Test"
-	  And "Utility - Find Index Test" contains "Utility - Find Index" from server "localhost" with mapping as
+	  And "Utility - Find Index Test" contains "Data - Find Index" from server "localhost" with mapping as
 	  | Input to Service | From Variable | Output from Service | To Variable     |
 	  When "Utility - Find Index Test" is executed
 	  Then the workflow execution has "NO" error
-	  And the "Find Index1" in WorkFlow "Utility - Find Index" debug inputs as
+	  And the "Find Index1" in WorkFlow "Data - Find Index" debug inputs as
 	  | In Field | Index            | Characters | Direction     |
 	  | abc      | First Occurrence | b          | Left to Right |
-	  And the "Find Index1" in Workflow "Utility - Find Index" debug outputs as  
+	  And the "Find Index1" in Workflow "Data - Find Index" debug outputs as  
 	  |                  |
 	  | [[WhereIsB]] = 2 |
-	  And the "Find Index2" in WorkFlow "Utility - Find Index" debug inputs as
+	  And the "Find Index2" in WorkFlow "Data - Find Index" debug inputs as
 	  | In Field           | Index           | Characters | Direction     |
 	  | abcbdefghibjklmnop | All Occurrences | b          | Left to Right |
-	  And the "Find Index2" in Workflow "Utility - Find Index" debug outputs as  
+	  And the "Find Index2" in Workflow "Data - Find Index" debug outputs as  
 	  |                            |
 	  | [[WhereAreTheBs]] = 2,4,11 |
 
@@ -576,6 +573,9 @@ Scenario: Example Executing Control Flow - Switch example workflow
 	  | Input to Service | From Variable | Output from Service | To Variable     |
 	  When "Control Flow - Switch Test" is executed
 	  Then the workflow execution has "NO" error
+	  And the "Switch" in Workflow "Control Flow - Switch" debug outputs as
+	  |   |
+	  | 4 |
 
 Scenario: Example Executing Scripting - Script example workflow
   Given I have a workflow "Scripting - Script Test"

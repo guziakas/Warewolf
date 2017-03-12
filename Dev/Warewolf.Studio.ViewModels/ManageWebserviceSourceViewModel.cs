@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -66,10 +66,10 @@ namespace Warewolf.Studio.ViewModels
             _updateManager = updateManager;
             _warewolfserverName = updateManager.ServerName;
             _authenticationType = AuthenticationType.Anonymous;
-            _hostName = String.Empty;
-            _defaultQuery = String.Empty;
-            _userName = String.Empty;
-            _password = String.Empty;
+            _hostName = string.Empty;
+            _defaultQuery = string.Empty;
+            _userName = string.Empty;
+            _password = string.Empty;
             HeaderText = Resources.Languages.Core.WebserviceNewHeaderLabel;
             Header = Resources.Languages.Core.WebserviceNewHeaderLabel;
             TestCommand = new DelegateCommand(TestConnection, CanTest);
@@ -110,10 +110,17 @@ namespace Warewolf.Studio.ViewModels
             : this(updateManager, aggregator, asyncWorker, executor)
         {
             VerifyArgument.IsNotNull("webServiceSource", webServiceSource);
-            _webServiceSource = webServiceSource;
             _warewolfserverName = updateManager.ServerName;
-            SetupHeaderTextFromExisting();
-            FromModel(webServiceSource);
+            AsyncWorker.Start(() => updateManager.FetchSource(webServiceSource.Id), source =>
+            {
+                _webServiceSource = source;
+                _webServiceSource.Path = webServiceSource.Path;
+                // ReSharper disable once VirtualMemberCallInContructor
+                FromModel(_webServiceSource);
+                Item = ToSource();
+                SetupHeaderTextFromExisting();
+            });
+
         }
 
         public ManageWebserviceSourceViewModel() : base("WebSource")
@@ -168,13 +175,13 @@ namespace Warewolf.Studio.ViewModels
         {
             if (Testing)
                 return false;
-            if (String.IsNullOrEmpty(HostName))
+            if (string.IsNullOrEmpty(HostName))
             {
                 return false;
             }
             if (AuthenticationType == AuthenticationType.User)
             {
-                return !String.IsNullOrEmpty(UserName) && !String.IsNullOrEmpty(Password);
+                return !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password);
             }
             return true;
         }
@@ -182,10 +189,7 @@ namespace Warewolf.Studio.ViewModels
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void FromModel(IWebServiceSource webServiceSource)
@@ -196,6 +200,7 @@ namespace Warewolf.Studio.ViewModels
             DefaultQuery = webServiceSource.DefaultQuery;
             HostName = webServiceSource.HostName;
             Password = webServiceSource.Password;
+            SelectedGuid = webServiceSource.Id;            
         }
 
         public override string Name
@@ -237,6 +242,8 @@ namespace Warewolf.Studio.ViewModels
                     var src = ToSource();
                     src.Path = RequestServiceNameViewModel.ResourceName.Path ?? RequestServiceNameViewModel.ResourceName.Name;
                     Save(src);
+                    if (RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                        AfterSave(RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                     Item = src;
                     _webServiceSource = src;
                     SetupHeaderTextFromExisting();
@@ -278,20 +285,22 @@ namespace Warewolf.Studio.ViewModels
                 TestFailed = true;
                 TestPassed = false;
                 Testing = false;
-                TestMessage = exception != null ? exception.Message : "Failed";
+                TestMessage = GetExceptionMessage(exception);
             });
-
-
         }
 
         void SetupProgressSpinner()
         {
-            Dispatcher.CurrentDispatcher.Invoke(() =>
+
+            if (Application.Current != null && Application.Current.Dispatcher != null)
             {
-                Testing = true;
-                TestFailed = false;
-                TestPassed = false;
-            });
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Testing = true;
+                    TestFailed = false;
+                    TestPassed = false;
+                }), DispatcherPriority.Background);
+            }
             _updateManager.TestConnection(ToNewSource());
         }
 
@@ -306,7 +315,7 @@ namespace Warewolf.Studio.ViewModels
                 UserName = UserName,
                 Name = ResourceName,
                 DefaultQuery = DefaultQuery,
-                Id = _webServiceSource == null ? Guid.NewGuid() : _webServiceSource.Id
+                Id = _webServiceSource?.Id ?? Guid.NewGuid()
             };
         }
 
@@ -321,7 +330,7 @@ namespace Warewolf.Studio.ViewModels
                     UserName = UserName,
                     DefaultQuery = DefaultQuery,
                     Name = ResourceName,
-                    Id = _webServiceSource == null ?  SelectedGuid : _webServiceSource.Id
+                    Id = _webServiceSource?.Id ?? SelectedGuid
                 }
             ;
             // ReSharper disable once RedundantIfElseBlock
@@ -564,12 +573,11 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        public bool IsEmpty => String.IsNullOrEmpty(HostName) && AuthenticationType == AuthenticationType.Anonymous && String.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(Password);
+        public bool IsEmpty => string.IsNullOrEmpty(HostName) && AuthenticationType == AuthenticationType.Anonymous && string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(Password);
 
         protected override void OnDispose()
         {
-            if (RequestServiceNameViewModel != null) 
-                RequestServiceNameViewModel.Dispose();
+            RequestServiceNameViewModel?.Dispose();
             Dispose(true);
         }
         // Dispose(bool disposing) executes in two distinct scenarios.
@@ -589,7 +597,7 @@ namespace Warewolf.Studio.ViewModels
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    if (_token != null) _token.Dispose();
+                    _token?.Dispose();
                 }
 
                 // Dispose unmanaged resources.

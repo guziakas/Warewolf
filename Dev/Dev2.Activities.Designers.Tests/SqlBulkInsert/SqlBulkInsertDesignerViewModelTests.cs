@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -577,7 +577,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
             var eventPublisher = new Mock<IEventAggregator>();
             var mockShellViewModel = new Mock<IShellViewModel>();
-            mockShellViewModel.Setup(model => model.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>()));
+            mockShellViewModel.Setup(model => model.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IServer>()));
             CustomContainer.Register(mockShellViewModel.Object);
             var resourceModel = new Mock<IResourceModel>();
 
@@ -586,7 +586,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             //------------Execute Test---------------------------
             viewModel.EditDatabaseCommand.Execute(null);
             //------------Assert Results-------------------------
-            mockShellViewModel.Verify(model => model.OpenResource(It.IsAny<Guid>(),It.IsAny<Guid>()));
+            mockShellViewModel.Verify(model => model.OpenResource(It.IsAny<Guid>(),It.IsAny<Guid>(), It.IsAny<IServer>()));
         }
 
         [TestMethod]
@@ -609,7 +609,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             var eventPublisher = new Mock<IEventAggregator>();
 
             var mockShellViewModel = new Mock<IShellViewModel>();
-            mockShellViewModel.Setup(model => model.NewDatabaseSource(It.IsAny<string>()));
+            mockShellViewModel.Setup(model => model.NewSqlServerSource(It.IsAny<string>()));
             var shellViewModel = mockShellViewModel.Object;
             CustomContainer.Register(shellViewModel);
 
@@ -625,7 +625,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
 
             //------------Assert Results-------------------------
-            mockShellViewModel.Verify(model => model.NewDatabaseSource(It.IsAny<string>()));
+            mockShellViewModel.Verify(model => model.NewSqlServerSource(It.IsAny<string>()));
         }
 
         [TestMethod]
@@ -835,10 +835,10 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(viewModel.IsDatabaseSelected, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "A database must be selected.") == null);
-            Assert.AreEqual(viewModel.IsTableSelected, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "A table must be selected.") == null);
-            Assert.AreEqual(isBatchSizeValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Batch size must be a number greater than or equal to zero.") == null);
-            Assert.AreEqual(isTimeoutValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Timeout must be a number greater than or equal to zero.") == null);
+            Assert.AreEqual(viewModel.IsDatabaseSelected, viewModel.Errors?.FirstOrDefault(e => e.Message == "A database must be selected.") == null);
+            Assert.AreEqual(viewModel.IsTableSelected, viewModel.Errors?.FirstOrDefault(e => e.Message == "A table must be selected.") == null);
+            Assert.AreEqual(isBatchSizeValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Batch size must be a number greater than or equal to zero.") == null);
+            Assert.AreEqual(isTimeoutValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Timeout must be a number greater than or equal to zero.") == null);
         }
 
         [TestMethod]
@@ -1004,10 +1004,10 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(isInputMappingsValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Input Mapping To Field '" + toField + "' Invalid region detected: A close ]] without a related open [[") == null);
-            Assert.AreEqual(isBatchSizeValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Batch Size Invalid region detected: A close ]] without a related open [[") == null);
-            Assert.AreEqual(isTimeoutValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Timeout Invalid region detected: A close ]] without a related open [[") == null);
-            Assert.AreEqual(isResultValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Result Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isInputMappingsValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Input Mapping To Field '" + toField + "' Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isBatchSizeValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Batch Size Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isTimeoutValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Timeout Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isResultValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Result Invalid region detected: A close ]] without a related open [[") == null);
         }
 
         [TestMethod]
@@ -1153,7 +1153,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
         static TestSqlBulkInsertDesignerViewModel CreateViewModel(ModelItem modelItem, Dictionary<DbSource, DbTableList> sources, IEventAggregator eventAggregator, IResourceModel resourceModel, bool configureFindSingle = false, string columnListErrors = "")
         {
-            var sourceDefs = sources == null ? null : sources.Select(s => s.Key.ToXml().ToString());
+            var sourceDefs = sources?.Select(s => s.Key.ToXml().ToString());
 
             var envModel = new Mock<IEnvironmentModel>();
             envModel.Setup(e => e.Connection.WorkspaceID).Returns(Guid.NewGuid());

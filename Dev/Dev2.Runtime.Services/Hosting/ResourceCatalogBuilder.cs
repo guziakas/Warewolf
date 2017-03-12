@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -111,6 +111,7 @@ namespace Dev2.Runtime.Hosting
                 IList<Type> allTypes = new List<Type>();
                 var connectionTypeName = typeof(Connection).Name;
                 var dropBoxSourceName = typeof(DropBoxSource).Name;
+                var sharepointSourceName = typeof(SharepointSource).Name;
                 var dbType = typeof(DbSource).Name;
                 try
                 {
@@ -137,10 +138,10 @@ namespace Dev2.Runtime.Hosting
                     {
                         Dev2Logger.Error("Resource [ " + currentItem.FilePath + " ] caused " + e.Message);
                     }
+                                      
+                    StringBuilder result = xml?.ToStringBuilder();
 
-                    StringBuilder result = xml.ToStringBuilder();
-
-                    var isValid = xml != null && HostSecurityProvider.Instance.VerifyXml(result);
+                    var isValid = result!=null && HostSecurityProvider.Instance.VerifyXml(result);
                     if (isValid)
                     {
                         //TODO: Remove this after V1 is released. All will be updated.
@@ -166,6 +167,11 @@ namespace Dev2.Runtime.Hosting
                         {
                             xml.SetAttributeValue("Type", dropBoxSourceName);
                             typeName = dropBoxSourceName;
+                        }
+                        if (typeName == "SharepointServerSource")
+                        {
+                            xml.SetAttributeValue("Type", sharepointSourceName);
+                            typeName = sharepointSourceName;
                         }
                         #endregion
 
@@ -195,7 +201,6 @@ namespace Dev2.Runtime.Hosting
 
                                     StringBuilder updateXml = a.ToStringBuilder();
                                     var signedXml = HostSecurityProvider.Instance.SignXml(updateXml);
-
                                     signedXml.WriteToFile(currentItem.FilePath, Encoding.UTF8, fileManager);
                                     tx.Complete();
                                 }

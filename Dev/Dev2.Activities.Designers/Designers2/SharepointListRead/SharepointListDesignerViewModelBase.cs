@@ -270,10 +270,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
             if (!IsSharepointServerSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -288,10 +285,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
                         Lists.Add(listTo);
                     }
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -329,10 +323,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
                         SharepointServers.Add(sharepointSource);
                     }
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -357,7 +348,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         static string GetListName(SharepointListTo table)
         {
-            return table == null ? null : table.FullName;
+            return table?.FullName;
         }
 
         protected void OnSharepointServerChanged()
@@ -411,10 +402,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
         {
             if (!IsListSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -450,10 +438,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
                     }
                     ListItems = ReadListItems;
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -497,7 +482,10 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         void EditSharepointSource()
         {
-            CustomContainer.Get<IShellViewModel>().OpenResource(SelectedSharepointServer.ResourceID, CustomContainer.Get<IShellViewModel>().ActiveServer);
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var activeServer = shellViewModel.ActiveServer;
+            if (activeServer != null)
+                shellViewModel.OpenResource(SelectedSharepointServer.ResourceID,activeServer.EnvironmentID, activeServer);
         }
 
 
@@ -545,3 +533,11 @@ namespace Dev2.Activities.Designers2.SharepointListRead
         }
     }
 }
+
+
+
+
+
+
+
+

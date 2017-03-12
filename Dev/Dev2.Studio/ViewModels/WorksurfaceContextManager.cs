@@ -26,7 +26,6 @@ using Dev2.Settings;
 using Dev2.Settings.Scheduler;
 using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers;
 using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Factories;
 using Dev2.Studio.Core.Helpers;
@@ -55,8 +54,13 @@ namespace Dev2.Studio.ViewModels
     public interface IWorksurfaceContextManager
     {
         void Handle(RemoveResourceAndCloseTabMessage message);
-        void EditServer(IServerSource selectedServer);
-        void EditResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
+        void Handle(NewTestFromDebugMessage message, IWorkSurfaceKey workSurfaceKey = null);
+        void EditServer(IServerSource selectedServer, IServer activeServer);
+        void EditSqlServerResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
+        void EditMySqlResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
+        void EditPostgreSqlResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
+        void EditOracleResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
+        void EditOdbcResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
         void EditResource(IPluginSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
         void EditResource(IComPluginSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
         void EditResource(IWebServiceSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
@@ -65,8 +69,12 @@ namespace Dev2.Studio.ViewModels
         void EditResource(IRabbitMQServiceSourceDefinition selectedSource, IWorkSurfaceKey workSurfaceKey = null);
         void EditResource(IWcfServerSource selectedSource, IWorkSurfaceKey workSurfaceKey = null);
         void NewService(string resourcePath);
-        void NewDatabaseSource(string resourcePath);
-        void DuplicateResource(IExplorerItemViewModel explorerItemViewModel);
+        void NewSqlServerSource(string resourcePath);
+        void NewMySqlSource(string resourcePath);
+        void NewPostgreSqlSource(string resourcePath);
+        void NewOracleSource(string resourcePath);
+        void NewOdbcSource(string resourcePath);
+        bool DuplicateResource(IExplorerItemViewModel explorerItemViewModel);
         void NewWebSource(string resourcePath);
         void NewPluginSource(string resourcePath);
         void NewComPluginSource(string resourcePath);
@@ -82,7 +90,12 @@ namespace Dev2.Studio.ViewModels
         void AddWorkSurfaceContext(IContextualResourceModel resourceModel);
         void ShowDependencies(bool dependsOnMe, IContextualResourceModel model, IServer server);
         void DisplayResourceWizard(IContextualResourceModel resourceModel);
-        void EditDbSource(IContextualResourceModel resourceModel);
+        void DisplayResourceWizard(IWorkSurfaceContextViewModel contextViewModel);
+        void EditSqlServerSource(IContextualResourceModel resourceModel);
+        void EditMySqlSource(IContextualResourceModel resourceModel);
+        void EditPostgreSqlSource(IContextualResourceModel resourceModel);
+        void EditOracleSource(IContextualResourceModel resourceModel);
+        void EditOdbcSource(IContextualResourceModel resourceModel);
         void EditPluginSource(IContextualResourceModel resourceModel);
         void EditComPluginSource(IContextualResourceModel resourceModel);
         void EditWebSource(IContextualResourceModel resourceModel);
@@ -98,28 +111,22 @@ namespace Dev2.Studio.ViewModels
         Task<IRequestServiceNameViewModel> GetSaveViewModel(string resourcePath, string header, IExplorerItemViewModel explorerItemViewModel = null);
         void AddReverseDependencyVisualizerWorkSurface(IContextualResourceModel resource);
         void AddSettingsWorkSurface();
-
         void AddSchedulerWorkSurface();
         void CreateNewScheduleWorkSurface(IContextualResourceModel resourceModel);
 
         void AddWorkspaceItem(IContextualResourceModel model);
-
         void DeleteContext(IContextualResourceModel model);
-
-        T ActivateOrCreateUniqueWorkSurface<T>(WorkSurfaceContext context)
-            where T : IWorkSurfaceViewModel;
-
+        T ActivateOrCreateUniqueWorkSurface<T>(WorkSurfaceContext context) where T : IWorkSurfaceViewModel;
         WorkSurfaceContextViewModel FindWorkSurfaceContextViewModel(IContextualResourceModel resource);
-
         void AddWorkSurfaceContextImpl(IContextualResourceModel resourceModel, bool isLoadingWorkspace);
-
         void AddAndActivateWorkSurface(WorkSurfaceContextViewModel context);
-
         void AddWorkSurface(IWorkSurfaceObject obj);
-
         bool CloseWorkSurfaceContext(WorkSurfaceContextViewModel context, PaneClosingEventArgs e, bool dontPrompt = false);
         void ViewTestsForService(IContextualResourceModel resourceModel, IWorkSurfaceKey workSurfaceKey = null);
         void RunAllTestsForService(IContextualResourceModel resourceModel);
+        WorkSurfaceContextViewModel EditResource<T>(IWorkSurfaceKey workSurfaceKey, SourceViewModel<T> viewModel) where T : IEquatable<T>;
+
+        IWorkSurfaceKey TryGetOrCreateWorkSurfaceKey(IWorkSurfaceKey workSurfaceKey, WorkSurfaceContext workSurfaceContext, Guid resourceID);
     }
 
     public class WorksurfaceContextManager : IWorksurfaceContextManager
@@ -156,29 +163,67 @@ namespace Dev2.Studio.ViewModels
 
         }
 
+        public void Handle(NewTestFromDebugMessage message, IWorkSurfaceKey workSurfaceKey = null)
+        {
+            Dev2Logger.Debug(message.GetType().Name);
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.ServiceTestsViewer, message.ResourceID);
+            var found = FindWorkSurfaceContextViewModel(workSurfaceKey as WorkSurfaceKey);
+            if (found != null)
+            {
+                var vm = found.WorkSurfaceViewModel;
+                if (vm != null)
+                {
+                    var studioTestViewModel = vm as StudioTestViewModel;
+                    var serviceTestViewModel = studioTestViewModel?.ViewModel;
+                    serviceTestViewModel?.PrepopulateTestsUsingDebug(message.RootItems);
+                }
+                AddAndActivateWorkSurface(found);
+            }
+            else
+            {
+                var workflow = new WorkflowDesignerViewModel(message.ResourceModel);
+                var testViewModel = new ServiceTestViewModel(message.ResourceModel, new AsyncWorker(), _mainViewModel.EventPublisher, new ExternalProcessExecutor(), workflow, message);
+                var vm = new StudioTestViewModel(_mainViewModel.EventPublisher, testViewModel, _mainViewModel.PopupProvider, new ServiceTestView());
+                var key = workSurfaceKey as WorkSurfaceKey;
+                var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
+                AddAndActivateWorkSurface(workSurfaceContextViewModel);
+            }
+        }
+
         IServer ActiveServer => _mainViewModel.ActiveServer;
 
-        public void EditServer(IServerSource selectedServer)
+        public void EditServer(IServerSource selectedServer, IServer activeServer)
         {
-            var viewModel = new ManageNewServerViewModel(new ManageNewServerSourceModel(_mainViewModel.ActiveServer.UpdateRepository, _mainViewModel.ActiveServer.QueryProxy, @""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedServer, _mainViewModel.AsyncWorker, new ExternalProcessExecutor());
-            var vm = new SourceViewModel<IServerSource>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new ManageServerControl());
+            var environmentModel = EnvironmentRepository.Instance.Get(activeServer.EnvironmentID);
+            var viewModel = new ManageNewServerViewModel(new ManageNewServerSourceModel(activeServer.UpdateRepository, activeServer.QueryProxy, activeServer.DisplayName), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedServer, _mainViewModel.AsyncWorker, new ExternalProcessExecutor());
+            var vm = new SourceViewModel<IServerSource>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new ManageServerControl(), environmentModel);
 
             var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.ServerSource);
-            workSurfaceKey.EnvironmentID = ActiveServer.EnvironmentID;
+            workSurfaceKey.EnvironmentID = activeServer.EnvironmentID;
             workSurfaceKey.ResourceID = selectedServer.ID;
-            workSurfaceKey.ServerID = ActiveServer.ServerID;
+            workSurfaceKey.ServerID = activeServer.ServerID;
             var key = workSurfaceKey as WorkSurfaceKey;
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
 
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
-        public void EditResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
+        public WorkSurfaceContextViewModel EditResource<T>(IWorkSurfaceKey workSurfaceKey, SourceViewModel<T> viewModel) where T : IEquatable<T>
         {
-            var dbSourceViewModel = new ManageDatabaseSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
-            var vm = new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, dbSourceViewModel, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl());
+            var key = workSurfaceKey as WorkSurfaceKey;
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, viewModel);
+            OpeningWorkflowsHelper.AddWorkflow(key);
+            return workSurfaceContextViewModel;
+        }
 
-            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.DbSource, selectedSource.Id);
+        public void EditSqlServerResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
+        {
+            var dbSourceViewModel = new ManageSqlServerSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name)
+                    , new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()
+                    , selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, dbSourceViewModel, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment);
+
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.SqlServerSource, selectedSource.Id);
 
             var key = workSurfaceKey as WorkSurfaceKey;
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
@@ -186,7 +231,61 @@ namespace Dev2.Studio.ViewModels
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
-        private IWorkSurfaceKey TryGetOrCreateWorkSurfaceKey(IWorkSurfaceKey workSurfaceKey, WorkSurfaceContext workSurfaceContext, Guid resourceID)
+        public void EditMySqlResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
+        {
+            var dbSourceViewModel = new ManageMySqlSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, "")
+                , new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()
+                , selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, dbSourceViewModel, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment);
+
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.MySqlSource, selectedSource.Id);
+
+            var key = workSurfaceKey as WorkSurfaceKey;
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
+            OpeningWorkflowsHelper.AddWorkflow(key);
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+
+        public void EditPostgreSqlResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
+        {
+            var dbSourceViewModel = new ManagePostgreSqlSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, dbSourceViewModel, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment);
+
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.PostgreSqlSource, selectedSource.Id);
+
+            var key = workSurfaceKey as WorkSurfaceKey;
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
+            OpeningWorkflowsHelper.AddWorkflow(key);
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+
+        public void EditOracleResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
+        {
+            var dbSourceViewModel = new ManageOracleSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, "Oracle"), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, dbSourceViewModel, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment);
+
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.OracleSource, selectedSource.Id);
+
+            var key = workSurfaceKey as WorkSurfaceKey;
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
+            OpeningWorkflowsHelper.AddWorkflow(key);
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+
+        public void EditOdbcResource(IDbSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
+        {
+            var dbSourceViewModel = new ManageOdbcSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, dbSourceViewModel, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment);
+
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.OdbcSource, selectedSource.Id);
+
+            var key = workSurfaceKey as WorkSurfaceKey;
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
+            OpeningWorkflowsHelper.AddWorkflow(key);
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+
+        public IWorkSurfaceKey TryGetOrCreateWorkSurfaceKey(IWorkSurfaceKey workSurfaceKey, WorkSurfaceContext workSurfaceContext, Guid resourceID)
         {
             if (workSurfaceKey == null)
             {
@@ -202,7 +301,7 @@ namespace Dev2.Studio.ViewModels
         {
             var workflow = new WorkflowDesignerViewModel(resourceModel);
             var testViewModel = new ServiceTestViewModel(resourceModel, new AsyncWorker(), _mainViewModel.EventPublisher, new ExternalProcessExecutor(), workflow);
-            var vm = new StudioTestViewModel(_mainViewModel.EventPublisher,testViewModel,_mainViewModel.PopupProvider,new ServiceTestView());
+            var vm = new StudioTestViewModel(_mainViewModel.EventPublisher, testViewModel, _mainViewModel.PopupProvider, new ServiceTestView());
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.ServiceTestsViewer, resourceModel.ID);
             var key = workSurfaceKey as WorkSurfaceKey;
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
@@ -212,14 +311,16 @@ namespace Dev2.Studio.ViewModels
         public void RunAllTestsForService(IContextualResourceModel resourceModel)
         {
             var workflow = new WorkflowDesignerViewModel(resourceModel);
-            var testViewModel = new ServiceTestViewModel(resourceModel, new AsyncWorker(), _mainViewModel.EventPublisher, new ExternalProcessExecutor(), workflow);
-            testViewModel.RunAllTestsInBrowserCommand.Execute(null);
+            using (var testViewModel = new ServiceTestViewModel(resourceModel, new AsyncWorker(), _mainViewModel.EventPublisher, new ExternalProcessExecutor(), workflow))
+            {
+                testViewModel.RunAllTestsInBrowserCommand.Execute(null);
+            }
         }
-
+        
         public void EditResource(IPluginSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var pluginSourceViewModel = new ManagePluginSourceViewModel(new ManagePluginSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
-            var vm = new SourceViewModel<IPluginSource>(_mainViewModel.EventPublisher, pluginSourceViewModel, _mainViewModel.PopupProvider, new ManagePluginSourceControl());
+            var pluginSourceViewModel = new ManagePluginSourceViewModel(new ManagePluginSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IPluginSource>(_mainViewModel.EventPublisher, pluginSourceViewModel, _mainViewModel.PopupProvider, new ManagePluginSourceControl(), ActiveEnvironment);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.PluginSource, selectedSource.Id);
 
@@ -232,7 +333,7 @@ namespace Dev2.Studio.ViewModels
         public void EditResource(IComPluginSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
             var wcfSourceViewModel = new ManageComPluginSourceViewModel(new ManageComPluginSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
-            var vm = new SourceViewModel<IComPluginSource>(_mainViewModel.EventPublisher, wcfSourceViewModel, _mainViewModel.PopupProvider, new ManageComPluginSourceControl());
+            var vm = new SourceViewModel<IComPluginSource>(_mainViewModel.EventPublisher, wcfSourceViewModel, _mainViewModel.PopupProvider, new ManageComPluginSourceControl(), ActiveEnvironment);
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.ComPluginSource, selectedSource.Id);
             var key = workSurfaceKey as WorkSurfaceKey;
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, vm);
@@ -241,8 +342,8 @@ namespace Dev2.Studio.ViewModels
         }
         public void EditResource(IWebServiceSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var viewModel = new ManageWebserviceSourceViewModel(new ManageWebServiceSourceModel(ActiveServer.UpdateRepository, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker, new ExternalProcessExecutor());
-            var vm = new SourceViewModel<IWebServiceSource>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new ManageWebserviceSourceControl());
+            var viewModel = new ManageWebserviceSourceViewModel(new ManageWebServiceSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker, new ExternalProcessExecutor());
+            var vm = new SourceViewModel<IWebServiceSource>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new ManageWebserviceSourceControl(), ActiveEnvironment);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.WebSource, selectedSource.Id);
 
@@ -254,8 +355,8 @@ namespace Dev2.Studio.ViewModels
 
         public void EditResource(IEmailServiceSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var emailSourceViewModel = new ManageEmailSourceViewModel(new ManageEmailSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource);
-            var vm = new SourceViewModel<IEmailServiceSource>(_mainViewModel.EventPublisher, emailSourceViewModel, _mainViewModel.PopupProvider, new ManageEmailSourceControl());
+            var emailSourceViewModel = new ManageEmailSourceViewModel(new ManageEmailSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IEmailServiceSource>(_mainViewModel.EventPublisher, emailSourceViewModel, _mainViewModel.PopupProvider, new ManageEmailSourceControl(), ActiveEnvironment);
 
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.EmailSource, selectedSource.Id);
@@ -268,8 +369,8 @@ namespace Dev2.Studio.ViewModels
 
         public void EditResource(IExchangeSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var emailSourceViewModel = new ManageExchangeSourceViewModel(new ManageExchangeSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource);
-            var vm = new SourceViewModel<IExchangeSource>(_mainViewModel.EventPublisher, emailSourceViewModel, _mainViewModel.PopupProvider, new ManageExchangeSourceControl());
+            var emailSourceViewModel = new ManageExchangeSourceViewModel(new ManageExchangeSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IExchangeSource>(_mainViewModel.EventPublisher, emailSourceViewModel, _mainViewModel.PopupProvider, new ManageExchangeSourceControl(), ActiveEnvironment);
 
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.Exchange, selectedSource.ResourceID);
@@ -283,8 +384,8 @@ namespace Dev2.Studio.ViewModels
 
         public void EditResource(IRabbitMQServiceSourceDefinition selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var viewModel = new ManageRabbitMQSourceViewModel(new ManageRabbitMQSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, _mainViewModel), selectedSource);
-            var vm = new SourceViewModel<IRabbitMQServiceSourceDefinition>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new ManageRabbitMQSourceControl());
+            var viewModel = new ManageRabbitMQSourceViewModel(new ManageRabbitMQSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, _mainViewModel), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IRabbitMQServiceSourceDefinition>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new ManageRabbitMQSourceControl(), ActiveEnvironment);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.RabbitMQSource, selectedSource.ResourceID);
 
@@ -296,8 +397,8 @@ namespace Dev2.Studio.ViewModels
 
         public void EditResource(IWcfServerSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var wcfSourceViewModel = new ManageWcfSourceViewModel(new ManageWcfSourceModel(ActiveServer.UpdateRepository, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker, ActiveEnvironment);
-            var vm = new SourceViewModel<IWcfServerSource>(_mainViewModel.EventPublisher, wcfSourceViewModel, _mainViewModel.PopupProvider, new ManageWcfSourceControl());
+            var wcfSourceViewModel = new ManageWcfSourceViewModel(new ManageWcfSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker, ActiveEnvironment);
+            var vm = new SourceViewModel<IWcfServerSource>(_mainViewModel.EventPublisher, wcfSourceViewModel, _mainViewModel.PopupProvider, new ManageWcfSourceControl(), ActiveEnvironment);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.WcfSource, selectedSource.ResourceID);
 
@@ -316,19 +417,83 @@ namespace Dev2.Studio.ViewModels
             TempSave(ActiveEnvironment, resourcePath);
         }
 
-        public void NewDatabaseSource(string resourcePath)
+        public void NewSqlServerSource(string resourcePath)
         {
-            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.DatabaseSourceServerNewHeaderLabel);
-            var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.DbSource);
+            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.SqlServerSourceNewHeaderLabel);
+            var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.SqlServerSource);
             key.ServerID = ActiveServer.ServerID;
             // ReSharper disable once PossibleInvalidOperationException
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, new ManageDatabaseSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker) { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, new ManageSqlServerSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker)
+            {
+                SelectedGuid = key.ResourceID.Value
+            }
+            , _mainViewModel.PopupProvider
+                , new ManageDatabaseSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
-        public void DuplicateResource(IExplorerItemViewModel explorerItemViewModel)
+        public void NewMySqlSource(string resourcePath)
         {
-            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(explorerItemViewModel.ResourcePath, explorerItemViewModel.ResourceName, explorerItemViewModel);
-            var messageBoxResult = saveViewModel.Result.ShowSaveDialog();            
+            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.MySqlSourceNewHeaderLabel);
+            var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.MySqlSource);
+            key.ServerID = ActiveServer.ServerID;
+            // ReSharper disable once PossibleInvalidOperationException
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, new ManageMySqlSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker)
+            {
+                SelectedGuid = key.ResourceID.Value
+            }, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment));
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+        public void NewPostgreSqlSource(string resourcePath)
+        {
+            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.PostgreSqlSourceNewHeaderLabel);
+            var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.PostgreSqlSource);
+            key.ServerID = ActiveServer.ServerID;
+            // ReSharper disable once PossibleInvalidOperationException
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key,
+                new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, new ManagePostgreSqlSourceViewModel(
+                                                new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name)
+                                                , saveViewModel
+                                                , new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()
+                                                , _mainViewModel.AsyncWorker)
+                {
+                    SelectedGuid = key.ResourceID.Value
+                }
+                , _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment));
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+        public void NewOracleSource(string resourcePath)
+        {
+            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.OracleSourceNewHeaderLabel);
+            var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.OracleSource);
+            key.ServerID = ActiveServer.ServerID;
+            // ReSharper disable once PossibleInvalidOperationException
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, new ManageOracleSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name)
+                , saveViewModel
+                , new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()
+                , _mainViewModel.AsyncWorker)
+            {
+                SelectedGuid = key.ResourceID.Value
+            }, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment));
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+        public void NewOdbcSource(string resourcePath)
+        {
+            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.OdbcSourceNewHeaderLabel);
+            var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.OdbcSource);
+            key.ServerID = ActiveServer.ServerID;
+            // ReSharper disable once PossibleInvalidOperationException
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IDbSource>(_mainViewModel.EventPublisher, new ManageOdbcSourceViewModel(new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name)
+                , saveViewModel
+                , new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()
+                , _mainViewModel.AsyncWorker)
+            { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManageDatabaseSourceControl(), ActiveEnvironment));
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+        public bool DuplicateResource(IExplorerItemViewModel explorerItemViewModel)
+        {
+            Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(string.Empty, explorerItemViewModel.ResourceName, explorerItemViewModel);
+            var messageBoxResult = saveViewModel.Result.ShowSaveDialog();
+            return messageBoxResult == MessageBoxResult.OK;
         }
 
         public void NewWebSource(string resourcePath)
@@ -337,7 +502,7 @@ namespace Dev2.Studio.ViewModels
             var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.WebSource);
             key.ServerID = ActiveServer.ServerID;
             // ReSharper disable once PossibleInvalidOperationException
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IWebServiceSource>(_mainViewModel.EventPublisher, new ManageWebserviceSourceViewModel(new ManageWebServiceSourceModel(ActiveServer.UpdateRepository, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker, new ExternalProcessExecutor()) { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManageWebserviceSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IWebServiceSource>(_mainViewModel.EventPublisher, new ManageWebserviceSourceViewModel(new ManageWebServiceSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker, new ExternalProcessExecutor()) { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManageWebserviceSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
@@ -349,7 +514,7 @@ namespace Dev2.Studio.ViewModels
             // ReSharper disable once PossibleInvalidOperationException
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IPluginSource>(_mainViewModel.EventPublisher, new ManagePluginSourceViewModel(new ManagePluginSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name),
                 saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker)
-            { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManagePluginSourceControl()));
+            { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManagePluginSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
@@ -362,7 +527,7 @@ namespace Dev2.Studio.ViewModels
             // ReSharper disable once PossibleInvalidOperationException
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IComPluginSource>(_mainViewModel.EventPublisher, new ManageComPluginSourceViewModel(new ManageComPluginSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name),
                 saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker)
-            { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManageComPluginSourceControl()));
+            { SelectedGuid = key.ResourceID.Value }, _mainViewModel.PopupProvider, new ManageComPluginSourceControl(), ActiveEnvironment));
 
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
@@ -370,7 +535,7 @@ namespace Dev2.Studio.ViewModels
         public void NewWcfSource(string resourcePath)
         {
             Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.WcfServiceNewHeaderLabel);
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.WcfSource) as WorkSurfaceKey, new SourceViewModel<IWcfServerSource>(_mainViewModel.EventPublisher, new ManageWcfSourceViewModel(new ManageWcfSourceModel(ActiveServer.UpdateRepository, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker, ActiveEnvironment), _mainViewModel.PopupProvider, new ManageWcfSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.WcfSource) as WorkSurfaceKey, new SourceViewModel<IWcfServerSource>(_mainViewModel.EventPublisher, new ManageWcfSourceViewModel(new ManageWcfSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker, ActiveEnvironment), _mainViewModel.PopupProvider, new ManageWcfSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
@@ -380,21 +545,21 @@ namespace Dev2.Studio.ViewModels
             var key = (WorkSurfaceKey)WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.OAuthSource);
             key.ServerID = ActiveServer.ServerID;
 
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IOAuthSource>(_mainViewModel.EventPublisher, new ManageOAuthSourceViewModel(new ManageOAuthSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel), _mainViewModel.PopupProvider, new ManageOAuthSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IOAuthSource>(_mainViewModel.EventPublisher, new ManageOAuthSourceViewModel(new ManageOAuthSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel), _mainViewModel.PopupProvider, new ManageOAuthSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
         public void NewRabbitMQSource(string resourcePath)
         {
             Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.RabbitMQSourceNewHeaderLabel);
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.RabbitMQSource) as WorkSurfaceKey, new SourceViewModel<IRabbitMQServiceSourceDefinition>(_mainViewModel.EventPublisher, new ManageRabbitMQSourceViewModel(new ManageRabbitMQSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, _mainViewModel), saveViewModel), _mainViewModel.PopupProvider, new ManageRabbitMQSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.RabbitMQSource) as WorkSurfaceKey, new SourceViewModel<IRabbitMQServiceSourceDefinition>(_mainViewModel.EventPublisher, new ManageRabbitMQSourceViewModel(new ManageRabbitMQSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, _mainViewModel), saveViewModel), _mainViewModel.PopupProvider, new ManageRabbitMQSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
         public void NewSharepointSource(string resourcePath)
         {
             Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.SharePointServiceNewHeaderLabel);
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.SharepointServerSource) as WorkSurfaceKey, new SourceViewModel<ISharepointServerSource>(_mainViewModel.EventPublisher, new SharepointServerSourceViewModel(new SharepointServerSourceModel(ActiveServer.UpdateRepository, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker, ActiveEnvironment), _mainViewModel.PopupProvider, new SharepointServerSource()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.SharepointServerSource) as WorkSurfaceKey, new SourceViewModel<ISharepointServerSource>(_mainViewModel.EventPublisher, new SharepointServerSourceViewModel(new SharepointServerSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _mainViewModel.AsyncWorker, ActiveEnvironment), _mainViewModel.PopupProvider, new SharepointServerSource(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
@@ -411,7 +576,7 @@ namespace Dev2.Studio.ViewModels
 
         public void OpenVersion(Guid resourceId, IVersionInfo versionInfo)
         {
-            var workflowXaml = ActiveServer?.ProxyLayer?.GetVersion(versionInfo,resourceId);
+            var workflowXaml = ActiveServer?.ProxyLayer?.GetVersion(versionInfo, resourceId);
             if (workflowXaml != null)
             {
                 IResourceModel resourceModel =
@@ -456,7 +621,7 @@ namespace Dev2.Studio.ViewModels
         public void NewEmailSource(string resourcePath)
         {
             Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.EmailSourceNewHeaderLabel);
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.EmailSource) as WorkSurfaceKey, new SourceViewModel<IEmailServiceSource>(_mainViewModel.EventPublisher, new ManageEmailSourceViewModel(new ManageEmailSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()), _mainViewModel.PopupProvider, new ManageEmailSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.EmailSource) as WorkSurfaceKey, new SourceViewModel<IEmailServiceSource>(_mainViewModel.EventPublisher, new ManageEmailSourceViewModel(new ManageEmailSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()), _mainViewModel.PopupProvider, new ManageEmailSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
 
         }
@@ -464,7 +629,7 @@ namespace Dev2.Studio.ViewModels
         public void NewExchangeSource(string resourcePath)
         {
             Task<IRequestServiceNameViewModel> saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.EmailSourceNewHeaderLabel);
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.Exchange) as WorkSurfaceKey, new SourceViewModel<IExchangeSource>(_mainViewModel.EventPublisher, new ManageExchangeSourceViewModel(new ManageExchangeSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()), _mainViewModel.PopupProvider, new ManageExchangeSourceControl()));
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.Exchange) as WorkSurfaceKey, new SourceViewModel<IExchangeSource>(_mainViewModel.EventPublisher, new ManageExchangeSourceViewModel(new ManageExchangeSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveEnvironment.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator()), _mainViewModel.PopupProvider, new ManageExchangeSourceControl(), ActiveEnvironment));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
@@ -516,7 +681,7 @@ namespace Dev2.Studio.ViewModels
             var result = _mainViewModel.PopupProvider.Show(string.Format(StringResources.DialogBody_NotSaved, workflowVm.ResourceModel.ResourceName),
                 $"Save {workflowVm.ResourceModel.ResourceName}?",
                 MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Information, @"", false, false, true, false);
+                MessageBoxImage.Information, @"", false, false, true, false, false, false);
 
             switch (result)
             {
@@ -550,16 +715,18 @@ namespace Dev2.Studio.ViewModels
             }
         }
 
+
+        public void DisplayResourceWizard(IWorkSurfaceContextViewModel contextViewModel)
+        {
+            AddAndActivateWorkSurface(contextViewModel as WorkSurfaceContextViewModel);
+        }
+
+
         public void DisplayResourceWizard(IContextualResourceModel resourceModel)
         {
             if (resourceModel == null)
             {
                 return;
-            }
-
-            if (resourceModel.WorkflowXaml == null)
-            {
-                resourceModel.Environment.ResourceRepository.ReloadResource(resourceModel.ID, resourceModel.ResourceType, ResourceModelEqualityComparer.Current, true);
             }
 
             if (resourceModel.ServerResourceType == ResourceType.WorkflowService.ToString())
@@ -568,16 +735,22 @@ namespace Dev2.Studio.ViewModels
                 AddWorkSurfaceContext(resourceModel);
                 return;
             }
-
             switch (resourceModel.ServerResourceType)
             {
                 case "SqlDatabase":
+                    EditSqlServerSource(resourceModel);
+                    break;
                 case "ODBC":
+                    EditOdbcSource(resourceModel);
+                    break;
                 case "Oracle":
+                    EditOracleSource(resourceModel);
+                    break;
                 case "PostgreSQL":
+                    EditPostgreSqlSource(resourceModel);
+                    break;
                 case "MySqlDatabase":
-                case "DbSource":
-                    EditDbSource(resourceModel);
+                    EditMySqlSource(resourceModel);
                     break;
                 case "WebSource":
                     EditWebSource(resourceModel);
@@ -620,7 +793,22 @@ namespace Dev2.Studio.ViewModels
             }
         }
 
-        public void EditDbSource(IContextualResourceModel resourceModel)
+        public void EditSqlServerSource(IContextualResourceModel resourceModel)
+        {
+            var def = new DbSourceDefinition
+            {
+                Id = resourceModel.ID,
+                Path = resourceModel.GetSavePath(),
+                Name = resourceModel.ResourceName,
+            };
+            var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.SqlServerSource);
+            workSurfaceKey.EnvironmentID = resourceModel.Environment.ID;
+            workSurfaceKey.ResourceID = resourceModel.ID;
+            workSurfaceKey.ServerID = resourceModel.ServerID;
+            EditSqlServerResource(def, workSurfaceKey);
+        }
+
+        public void EditMySqlSource(IContextualResourceModel resourceModel)
         {
             var db = new DbSource(resourceModel.WorkflowXaml.ToXElement());
             var def = new DbSourceDefinition
@@ -635,11 +823,77 @@ namespace Dev2.Studio.ViewModels
                 Type = db.ServerType,
                 UserName = db.UserID
             };
-            var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.DbSource);
+            var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.MySqlSource);
             workSurfaceKey.EnvironmentID = resourceModel.Environment.ID;
             workSurfaceKey.ResourceID = resourceModel.ID;
             workSurfaceKey.ServerID = resourceModel.ServerID;
-            EditResource(def, workSurfaceKey);
+            EditMySqlResource(def, workSurfaceKey);
+        }
+
+        public void EditPostgreSqlSource(IContextualResourceModel resourceModel)
+        {
+            var db = new DbSource(resourceModel.WorkflowXaml.ToXElement());
+            var def = new DbSourceDefinition
+            {
+                AuthenticationType = db.AuthenticationType,
+                DbName = db.DatabaseName,
+                Id = db.ResourceID,
+                Path = resourceModel.GetSavePath(),
+                Name = db.ResourceName,
+                Password = db.Password,
+                ServerName = db.Server,
+                Type = db.ServerType,
+                UserName = db.UserID
+            };
+            var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.PostgreSqlSource);
+            workSurfaceKey.EnvironmentID = resourceModel.Environment.ID;
+            workSurfaceKey.ResourceID = resourceModel.ID;
+            workSurfaceKey.ServerID = resourceModel.ServerID;
+            EditPostgreSqlResource(def, workSurfaceKey);
+        }
+
+        public void EditOracleSource(IContextualResourceModel resourceModel)
+        {
+            var db = new DbSource(resourceModel.WorkflowXaml.ToXElement());
+            var def = new DbSourceDefinition
+            {
+                AuthenticationType = db.AuthenticationType,
+                DbName = db.DatabaseName,
+                Id = db.ResourceID,
+                Path = resourceModel.GetSavePath(),
+                Name = db.ResourceName,
+                Password = db.Password,
+                ServerName = db.Server,
+                Type = db.ServerType,
+                UserName = db.UserID
+            };
+            var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.OracleSource);
+            workSurfaceKey.EnvironmentID = resourceModel.Environment.ID;
+            workSurfaceKey.ResourceID = resourceModel.ID;
+            workSurfaceKey.ServerID = resourceModel.ServerID;
+            EditOracleResource(def, workSurfaceKey);
+        }
+
+        public void EditOdbcSource(IContextualResourceModel resourceModel)
+        {
+            var db = new DbSource(resourceModel.WorkflowXaml.ToXElement());
+            var def = new DbSourceDefinition
+            {
+                AuthenticationType = db.AuthenticationType,
+                DbName = db.DatabaseName,
+                Id = db.ResourceID,
+                Path = resourceModel.GetSavePath(),
+                Name = db.ResourceName,
+                Password = db.Password,
+                ServerName = db.Server,
+                Type = db.ServerType,
+                UserName = db.UserID
+            };
+            var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.OdbcSource);
+            workSurfaceKey.EnvironmentID = resourceModel.Environment.ID;
+            workSurfaceKey.ResourceID = resourceModel.ID;
+            workSurfaceKey.ServerID = resourceModel.ServerID;
+            EditOdbcResource(def, workSurfaceKey);
         }
 
         public void EditPluginSource(IContextualResourceModel resourceModel)
@@ -650,8 +904,19 @@ namespace Dev2.Studio.ViewModels
                 SelectedDll = new DllListing { FullName = db.AssemblyLocation, Name = db.AssemblyName, Children = new Collection<IFileListing>(), IsDirectory = false },
                 Id = db.ResourceID,
                 Path = resourceModel.GetSavePath(),
-                Name = db.ResourceName
+                Name = db.ResourceName,
+                ConfigFilePath = db.ConfigFilePath
             };
+            if (db.AssemblyLocation.EndsWith(".dll"))
+            {
+                def.FileSystemAssemblyName = db.AssemblyLocation;
+                def.GACAssemblyName = string.Empty;
+            }
+            else if (db.AssemblyLocation.StartsWith("GAC:"))
+            {
+                def.GACAssemblyName = db.AssemblyLocation;
+                def.FileSystemAssemblyName = string.Empty;
+            }
             var workSurfaceKey = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.PluginSource);
             workSurfaceKey.EnvironmentID = resourceModel.Environment.ID;
             workSurfaceKey.ResourceID = resourceModel.ID;
@@ -844,13 +1109,15 @@ namespace Dev2.Studio.ViewModels
                 Name = connection.ResourceName
             };
 
-            EditServer(selectedServer);
+            
+
+            EditServer(selectedServer, ActiveServer);
         }
 
         public void EditResource(IOAuthSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var oauthSourceViewModel = new ManageOAuthSourceViewModel(new ManageOAuthSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), selectedSource);
-            var vm = new SourceViewModel<IOAuthSource>(_mainViewModel.EventPublisher, oauthSourceViewModel, _mainViewModel.PopupProvider, new ManageOAuthSourceControl());
+            var oauthSourceViewModel = new ManageOAuthSourceViewModel(new ManageOAuthSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), selectedSource, _mainViewModel.AsyncWorker);
+            var vm = new SourceViewModel<IOAuthSource>(_mainViewModel.EventPublisher, oauthSourceViewModel, _mainViewModel.PopupProvider, new ManageOAuthSourceControl(), ActiveEnvironment);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.OAuthSource, selectedSource.ResourceID);
 
@@ -862,8 +1129,8 @@ namespace Dev2.Studio.ViewModels
 
         public void EditResource(ISharepointServerSource selectedSource, IWorkSurfaceKey workSurfaceKey = null)
         {
-            var viewModel = new SharepointServerSourceViewModel(new SharepointServerSourceModel(ActiveServer.UpdateRepository, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker, null);
-            var vm = new SourceViewModel<ISharepointServerSource>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new SharepointServerSource());
+            var viewModel = new SharepointServerSourceViewModel(new SharepointServerSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _mainViewModel.AsyncWorker, null);
+            var vm = new SourceViewModel<ISharepointServerSource>(_mainViewModel.EventPublisher, viewModel, _mainViewModel.PopupProvider, new SharepointServerSource(), ActiveEnvironment);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.SharepointServerSource, selectedSource.Id);
 
@@ -875,7 +1142,8 @@ namespace Dev2.Studio.ViewModels
 
         public async Task<IRequestServiceNameViewModel> GetSaveViewModel(string resourcePath, string header, IExplorerItemViewModel explorerItemViewModel = null)
         {
-            return await RequestServiceNameViewModel.CreateAsync(new EnvironmentViewModel(ActiveServer, _mainViewModel), resourcePath, header, explorerItemViewModel);
+            var environmentViewModel = _mainViewModel.ExplorerViewModel?.Environments.FirstOrDefault(model => model.Server.EnvironmentID == ActiveServer.EnvironmentID);
+            return await RequestServiceNameViewModel.CreateAsync(environmentViewModel, resourcePath, header, explorerItemViewModel);
         }
 
         public void AddReverseDependencyVisualizerWorkSurface(IContextualResourceModel resource)
@@ -891,7 +1159,7 @@ namespace Dev2.Studio.ViewModels
 
         public void AddSchedulerWorkSurface()
         {
-           ActivateOrCreateUniqueWorkSurface<SchedulerViewModel>(WorkSurfaceContext.Scheduler);
+            ActivateOrCreateUniqueWorkSurface<SchedulerViewModel>(WorkSurfaceContext.Scheduler);
         }
 
         public void CreateNewScheduleWorkSurface(IContextualResourceModel resourceModel)
@@ -905,13 +1173,13 @@ namespace Dev2.Studio.ViewModels
                     var workSurfaceViewModel = workSurfaceContextViewModel.WorkSurfaceViewModel;
                     if (workSurfaceViewModel != null)
                     {
-                        var findWorkSurfaceContextViewModel = (SchedulerViewModel) workSurfaceViewModel;
-                        
+                        var findWorkSurfaceContextViewModel = (SchedulerViewModel)workSurfaceViewModel;
+
                         if (findWorkSurfaceContextViewModel.IsDirty)
                         {
-                            _mainViewModel.PopupProvider.Show(Warewolf.Studio.Resources.Languages.Core.SchedulerUnsavedTaskMessage, 
-                                Warewolf.Studio.Resources.Languages.Core.SchedulerUnsavedTaskHeader, 
-                                MessageBoxButton.OK, MessageBoxImage.Error, null, false, true, false, false);
+                            _mainViewModel.PopupProvider.Show(Warewolf.Studio.Resources.Languages.Core.SchedulerUnsavedTaskMessage,
+                                Warewolf.Studio.Resources.Languages.Core.SchedulerUnsavedTaskHeader,
+                                MessageBoxButton.OK, MessageBoxImage.Error, null, false, true, false, false, false, false);
                             ActivateAndReturnWorkSurfaceIfPresent(key);
                         }
                         else
@@ -1047,8 +1315,8 @@ namespace Dev2.Studio.ViewModels
             }
 
             AddWorkspaceItem(resourceModel);
-            AddAndActivateWorkSurface(_getWorkSurfaceContextViewModel(resourceModel, _createDesigners) as WorkSurfaceContextViewModel);
-
+            var workSurfaceContextViewModel = _getWorkSurfaceContextViewModel(resourceModel, _createDesigners) as WorkSurfaceContextViewModel;
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
             OpeningWorkflowsHelper.RemoveWorkflow(workSurfaceKey);
             _mainViewModel.CanDebug = true;
         }
@@ -1108,6 +1376,7 @@ namespace Dev2.Studio.ViewModels
                         if (remove)
                         {
                             tab.Dispose();
+                            tab.CloseView();
                         }
                     }
                 }
@@ -1156,7 +1425,7 @@ namespace Dev2.Studio.ViewModels
                 {
                     var result = _mainViewModel.PopupProvider.Show(string.Format(StringResources.DialogBody_DisconnectedItemNotSaved, workflowVm.ResourceModel.ResourceName),
                         $"Save not allowed {workflowVm.ResourceModel.ResourceName}?",
-                        MessageBoxButton.OKCancel, MessageBoxImage.Information, "", false, false, true, false);
+                        MessageBoxButton.OKCancel, MessageBoxImage.Information, "", false, false, true, false, false, false);
 
                     switch (result)
                     {

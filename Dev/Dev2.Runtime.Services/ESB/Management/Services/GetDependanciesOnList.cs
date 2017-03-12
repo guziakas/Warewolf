@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -135,20 +135,17 @@ namespace Dev2.Runtime.ESB.Management.Services
         {
             List<string> results = new List<string>();
             var resource = ResourceCatalog.Instance.GetResource(workspaceId, resourceId);
-            
-            if(resource != null)
-            {
-                var dependencies = resource.Dependencies;
 
-                if(dependencies != null)
-                {
+            var dependencies = resource?.Dependencies;
+
+            if(dependencies != null)
+            {
 // ReSharper disable ImplicitlyCapturedClosure
-                    dependencies.ForEach(c =>
+                dependencies.ForEach(c =>
 // ReSharper restore ImplicitlyCapturedClosure
                     { results.Add(c.ResourceID != Guid.Empty ? c.ResourceID.ToString() : c.ResourceName); });
-                    dependencies.ToList().ForEach(c =>
-                                                  { results.AddRange(c.ResourceID != Guid.Empty ? FetchRecursiveDependancies(c.ResourceID, workspaceId) : FetchRecursiveDependancies(workspaceId, c.ResourceName)); });
-                }
+                dependencies.ToList().ForEach(c =>
+                    { results.AddRange(c.ResourceID != Guid.Empty ? FetchRecursiveDependancies(c.ResourceID, workspaceId) : FetchRecursiveDependancies(workspaceId, c.ResourceName)); });
             }
             return results;
         }

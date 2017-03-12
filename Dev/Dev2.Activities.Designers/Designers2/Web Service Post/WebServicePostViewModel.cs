@@ -38,15 +38,9 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
         public WebServicePostViewModel(ModelItem modelItem)
             : base(modelItem)
         {
@@ -57,6 +51,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
             _builder = new ServiceInputBuilder();
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_WebMethod_Post;
         }
         Guid UniqueID => GetProperty<Guid>();
 
@@ -185,7 +180,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -326,10 +321,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -464,20 +456,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }

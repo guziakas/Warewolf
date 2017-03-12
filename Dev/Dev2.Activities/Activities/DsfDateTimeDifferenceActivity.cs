@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,6 +21,7 @@ using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
@@ -35,7 +36,7 @@ using Warewolf.Storage;
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 // ReSharper restore CheckNamespace
 {
-    [ToolDescriptorInfo("Utility-DateTimeDifference", "Date Time Diff", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Date Time Diff_Tags")]
+    [ToolDescriptorInfo("Utility-DateTimeDifference", "Date Time Diff", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Date_Time_Diff")]
     public class DsfDateTimeDifferenceActivity : DsfActivityAbstract<string>, IDateTimeDiffTO
     {
 
@@ -93,6 +94,13 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion Ctor
+
+
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
 
         // ReSharper disable RedundantOverridenMember
         protected override void CacheMetadata(NativeActivityMetadata metadata)
@@ -315,13 +323,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

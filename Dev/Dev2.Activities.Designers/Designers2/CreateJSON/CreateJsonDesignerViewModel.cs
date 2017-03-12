@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,6 +31,7 @@ namespace Dev2.Activities.Designers2.CreateJSON
 
             dynamic mi = ModelItem;
             InitializeItems(mi.JsonMappings);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Create_JSON;
         }
 
         public override string CollectionName => "JsonMappings";
@@ -45,17 +46,14 @@ namespace Dev2.Activities.Designers2.CreateJSON
         protected override void DoCustomAction(string propertyName)
         {
             if (propertyName == "SourceName")
-            {                     
-                if (CurrentModelItem != null)
+            {
+                var dto = CurrentModelItem?.GetCurrentValue() as JsonMappingTo;
+                if (dto != null)
                 {
-                    var dto = CurrentModelItem.GetCurrentValue() as JsonMappingTo;
-                    if (dto != null)
+                    var destinationWithName = dto.GetDestinationWithName(dto.SourceName);
+                    if (String.IsNullOrEmpty(dto.DestinationName))
                     {
-                        var destinationWithName = dto.GetDestinationWithName(dto.SourceName);
-                        if (String.IsNullOrEmpty(dto.DestinationName))
-                        {
-                            CurrentModelItem.SetProperty("DestinationName", destinationWithName);
-                        }
+                        CurrentModelItem.SetProperty("DestinationName", destinationWithName);
                     }
                 }
             }
@@ -64,10 +62,7 @@ namespace Dev2.Activities.Designers2.CreateJSON
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion

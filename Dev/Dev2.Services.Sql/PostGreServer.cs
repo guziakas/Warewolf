@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using Warewolf.Resource.Errors;
+// ReSharper disable ReturnTypeCanBeEnumerable.Global
 
 namespace Dev2.Services.Sql
 {
@@ -18,7 +19,7 @@ namespace Dev2.Services.Sql
 
         private readonly IDbFactory _factory;
         private IDbCommand _command;
-        private NpgsqlConnection _connection;
+        private IDbConnection _connection;
         private IDbTransaction _transaction;
 
         public bool IsConnected
@@ -45,6 +46,11 @@ namespace Dev2.Services.Sql
             // ReSharper disable once LoopCanBePartlyConvertedToQuery
             foreach (DataRow row in proceduresDataTable.Rows)
             {
+                var type = row["proretset"];
+                if (type.ToString().ToUpperInvariant() == "FALSE")
+                {
+                    continue;
+                }
                 var fullProcedureName = row["Name"].ToString();
 
                 if (row["Db"].ToString() == dbName)
@@ -57,7 +63,7 @@ namespace Dev2.Services.Sql
                         {
                             List<IDbDataParameter> outParameters;
 
-                            var parameters = GetProcedureParameters(command, dbName, fullProcedureName, out outParameters);
+                            var parameters = GetProcedureParameters(command, fullProcedureName, out outParameters);
                             var helpText = FetchHelpTextContinueOnException(fullProcedureName, _connection);
 
                             procedureProcessor(command, parameters, outParameters, helpText, fullProcedureName);
@@ -108,7 +114,7 @@ namespace Dev2.Services.Sql
             NpgsqlDataReader reader = null;
 
             var result = new List<string>();
-            var cmd = new NpgsqlCommand("select datname from pg_database", _connection);
+            var cmd = new NpgsqlCommand("select datname from pg_database",  (NpgsqlConnection)_connection);
 
             try
             {
@@ -178,7 +184,7 @@ namespace Dev2.Services.Sql
                         try
                         {
                             List<IDbDataParameter> isOut;
-                            var parameters = GetProcedureParameters(command, dbName, fullProcedureName, out isOut);
+                            var parameters = GetProcedureParameters(command, fullProcedureName, out isOut);
                             var helpText = FetchHelpTextContinueOnException(fullProcedureName, _connection);
 
                             procedureProcessor(command, parameters, helpText, fullProcedureName);
@@ -253,13 +259,14 @@ namespace Dev2.Services.Sql
         #endregion Connect
 
         private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior,
-            Func<IDataReader, T> handler)
+            Func<IDataAdapter, T> handler)
         {
             try
             {
-                using (var reader = command.ExecuteReader(commandBehavior))
+                NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(command as NpgsqlCommand);
+                using (adapter)
                 {
-                    return handler(reader);
+                    return handler(adapter);
                 }
             }
             catch (DbException e)
@@ -269,13 +276,13 @@ namespace Dev2.Services.Sql
                     var exceptionDataTable = new DataTable("Error");
                     exceptionDataTable.Columns.Add("ErrorText");
                     exceptionDataTable.LoadDataRow(new object[] { e.Message }, true);
-                    return handler(new DataTableReader(exceptionDataTable));
+                    return handler(new NpgsqlDataAdapter());
                 }
                 throw;
             }
         }
 
-        public static void AddParameters(IDbCommand command, ICollection<IDbDataParameter> parameters)
+        private static void AddParameters(IDbCommand command, ICollection<IDbDataParameter> parameters)
         {
             command.Parameters.Clear();
             if (parameters != null && parameters.Count > 0)
@@ -289,8 +296,8 @@ namespace Dev2.Services.Sql
 
         private DataTable GetSchema(IDbConnection connection)
         {
-            const string commandText = GlobalConstants.SchemaQueryPostgreSql;
-            using (var command = _factory.CreateCommand(connection, CommandType.Text, commandText))
+            const string CommandText = GlobalConstants.SchemaQueryPostgreSql;
+            using (var command = _factory.CreateCommand(connection, CommandType.Text, CommandText))
             {
                 return FetchDataTable(command);
             }
@@ -304,12 +311,16 @@ namespace Dev2.Services.Sql
                     string.Format("SHOW CREATE PROCEDURE {0} ", objectName)))
             {
                 return ExecuteReader(command, CommandBehavior.SchemaOnly & CommandBehavior.KeyInfo,
-                    delegate (IDataReader reader)
+                    delegate (IDataAdapter reader)
                     {
                         var sb = new StringBuilder();
-                        while (reader.Read())
+                        DataSet ds = new DataSet(); //conn is opened by dataadapter
+                        reader.Fill(ds);
+                        var t = ds.Tables[0];
+                        var dataTableReader = t.CreateDataReader();
+                        while (dataTableReader.Read())
                         {
-                            var value = reader.GetValue(2);
+                            var value = dataTableReader.GetValue(2);
                             if (value != null)
                             {
                                 sb.Append(value);
@@ -320,17 +331,17 @@ namespace Dev2.Services.Sql
             }
         }
 
-        public List<NpgsqlParameter> GetProcedureOutParams(string fullProcedureName, string dbName)
+        public List<NpgsqlParameter> GetProcedureOutParams(string fullProcedureName)
         {
             using (var command = _factory.CreateCommand(_connection, CommandType.StoredProcedure, fullProcedureName))
             {
                 List<IDbDataParameter> isOut;
-                GetProcedureParameters(command, dbName, fullProcedureName, out isOut);
+                GetProcedureParameters(command, fullProcedureName, out isOut);
                 return isOut.Select(a => a as NpgsqlParameter).ToList();
             }
         }
 
-        public List<IDbDataParameter> GetProcedureParameters(IDbCommand command, string dbName, string procedureName, out List<IDbDataParameter> outParams)
+        private List<IDbDataParameter> GetProcedureParameters(IDbCommand command, string procedureName, out List<IDbDataParameter> outParams)
         {
             outParams = new List<IDbDataParameter>();
             var originalCommandText = command.CommandText;

@@ -24,7 +24,7 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities.DropBox2016.DownloadActivity
 {
-    [ToolDescriptorInfo("Dropbox", "Download", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Download_Tags")]
+    [ToolDescriptorInfo("Dropbox", "Download", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Download")]
     public class DsfDropBoxDownloadActivity : DsfBaseActivity
     {
         public DsfDropBoxDownloadActivity()
@@ -122,7 +122,7 @@ namespace Dev2.Activities.DropBox2016.DownloadActivity
         #endregion Overrides of DsfBaseActivity
 
         //All units used here has been unit tested seperately
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             IDropboxSingleExecutor<IDropboxResult> dropBoxDownLoad = new DropBoxDownLoad(evaluatedValues["ToPath"]);
             var dropboxSingleExecutor = GetDropboxSingleExecutor(dropBoxDownLoad);
@@ -141,14 +141,14 @@ namespace Dev2.Activities.DropBox2016.DownloadActivity
                         throw new Exception(ErrorResource.DropBoxDestinationFileAlreadyExist);
                     DropboxFile.WriteAllBytes(validFolder, bytes);
                 }
-                return GlobalConstants.DropBoxSucces;
+                return new List<string> { GlobalConstants.DropBoxSuccess };
             }
             var dropboxFailureResult = dropboxExecutionResult as DropboxFailureResult;
             if (dropboxFailureResult != null)
             {
                 Exception = dropboxFailureResult.GetException();
             }
-            var executionError = Exception.InnerException == null ? Exception.Message : Exception.InnerException.Message;
+            var executionError = Exception.InnerException?.Message ?? Exception.Message;
             if (executionError.Contains("not_file"))
             {
                 executionError = ErrorResource.DropBoxFilePathMissing;
@@ -172,11 +172,7 @@ namespace Dev2.Activities.DropBox2016.DownloadActivity
             return _debugInputs;
 
         }
-        #region Overrides of DsfActivity
 
-        public override string DisplayName { get; set; }
-
-        #endregion Overrides of DsfActivity
     }
 
         #endregion Overrides of DsfActivity

@@ -7,7 +7,6 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Services.Sql;
 using Oracle.ManagedDataAccess.Client;
-using Oracle.ManagedDataAccess.Types;
 // ReSharper disable NonLocalizedString
 // ReSharper disable ForCanBeConvertedToForeach
 // ReSharper disable ReturnTypeCanBeEnumerable.Global
@@ -19,7 +18,7 @@ namespace Dev2.Services.Sql
     {
         private readonly IDbFactory _factory;
         private IDbCommand _command;
-        private OracleConnection _connection;
+        private IDbConnection _connection;
         private IDbTransaction _transaction;
         private string _owner;
         private readonly bool _isTesting;
@@ -66,6 +65,12 @@ namespace Dev2.Services.Sql
 
             foreach (DataRow row in proceduresDataTable.Rows)
             {
+                var type = row["ROUTINE_TYPE"];
+                if (type.ToString().ToUpperInvariant() == "FUNCTION")
+                {
+                    continue;
+                }
+
                 string fullProcedureName = row["NAME"].ToString();
 
                 if (row["DB"].ToString().Equals(dbName, StringComparison.OrdinalIgnoreCase))
@@ -128,7 +133,7 @@ namespace Dev2.Services.Sql
             VerifyConnection();
             OracleDataReader reader = null;
             List<string> result = new List<string>();
-            OracleCommand cmd = new OracleCommand("SELECT DISTINCT(OWNER) AS DATABASE_NAME FROM DBA_SEGMENTS WHERE OWNER IN (SELECT USERNAME FROM DBA_USERS WHERE DEFAULT_TABLESPACE NOT IN ('SYSTEM','SYSAUX'))", _connection);
+            OracleCommand cmd = new OracleCommand("SELECT DISTINCT(OWNER) AS DATABASE_NAME FROM DBA_SEGMENTS WHERE OWNER IN (SELECT USERNAME FROM DBA_USERS WHERE DEFAULT_TABLESPACE NOT IN ('SYSTEM','SYSAUX'))", (OracleConnection)_connection);
             try
             {
                 if (!_isTesting)
@@ -284,7 +289,7 @@ namespace Dev2.Services.Sql
         {
             if (!_isTesting)
             {
-                _connection = (OracleConnection)_factory.CreateConnection(connectionString);
+                _connection = _factory.CreateConnection(connectionString);
 
                 VerifyArgument.IsNotNull("commandText", commandText);
                 if (commandText.ToLower().StartsWith("select "))
@@ -298,7 +303,7 @@ namespace Dev2.Services.Sql
             }
         }
         
-        private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataReader, T> handler)
+        private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
         {
             try
             {
@@ -328,17 +333,19 @@ namespace Dev2.Services.Sql
                     {
                         try
                         {
-                            using (OracleDataReader reader = ((OracleRefCursor)obj.Value).GetDataReader())
+                            var da = new OracleDataAdapter(command as OracleCommand);
+                            using (da)
                             {
-                                return handler(reader);
+                                return handler(da);
                             }
                         }
                         catch (Exception e)
                         {
-                            using (IDataReader reader = command.ExecuteReader(commandBehavior))
+                            var da = new OracleDataAdapter(command as OracleCommand);
+                            using (da)
                             {
                                 Console.WriteLine(e);
-                                return handler(reader);
+                                return handler(da);
                             }
                         }
                     }
@@ -347,13 +354,13 @@ namespace Dev2.Services.Sql
                         var table = new DataTable("SingleValues");
                         table.Columns.AddRange(singleOutParams.Select(parameter => new DataColumn(parameter.ParameterName)).ToArray());
                         table.LoadDataRow(singleOutParams.Select(parameter => parameter.Value).ToArray(), true);
-                        return handler(table.CreateDataReader()); 
+                        return handler(new OracleDataAdapter()); 
                     }                    
                 }
-
-                using (IDataReader reader = command.ExecuteReader(commandBehavior))
+                var oraDa = new OracleDataAdapter(command as OracleCommand);
+                using (oraDa)
                 {
-                    return handler(reader);
+                    return handler(oraDa);
                 }
 
             }
@@ -364,7 +371,7 @@ namespace Dev2.Services.Sql
                     var exceptionDataTable = new DataTable("Error");
                     exceptionDataTable.Columns.Add("ErrorText");
                     exceptionDataTable.LoadDataRow(new object[] { e.Message }, true);
-                    return handler(new DataTableReader(exceptionDataTable));
+                    return handler(new OracleDataAdapter());
                 }
                 throw;
             }
@@ -403,17 +410,21 @@ namespace Dev2.Services.Sql
         {
             using (IDbCommand command = _factory.CreateCommand(connection, CommandType.Text,
                 $"SELECT text FROM all_source WHERE name='{objectName}' ORDER BY line"))
-            {
+            {                
                 return ExecuteReader(command, CommandBehavior.SchemaOnly & CommandBehavior.KeyInfo, GetStringBuilder);
             }
         }
 
-        private string GetStringBuilder(IDataReader reader)
+        private string GetStringBuilder(IDataAdapter reader)
         {
             var sb = new StringBuilder();
-            while (reader.Read())
+            DataSet ds = new DataSet(); //conn is opened by dataadapter
+            reader.Fill(ds);
+            var t = ds.Tables[0];
+            var dataTableReader = t.CreateDataReader();
+            while (dataTableReader.Read())
             {
-                object value = reader.GetValue(0);
+                object value = dataTableReader.GetValue(0);
                 if (value != null)
                 {
                     sb.Append(value);
@@ -737,15 +748,9 @@ namespace Dev2.Services.Sql
                 if(disposing)
                 {
                     // Dispose managed resources.
-                    if(_transaction != null)
-                    {
-                        _transaction.Dispose();
-                    }
+                    _transaction?.Dispose();
 
-                    if(_command != null)
-                    {
-                        _command.Dispose();
-                    }
+                    _command?.Dispose();
 
                     if(_connection != null)
                     {

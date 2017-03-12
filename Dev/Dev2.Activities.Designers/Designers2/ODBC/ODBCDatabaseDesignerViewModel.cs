@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -54,15 +54,7 @@ namespace Dev2.Activities.Designers2.ODBC
         const string OutputDisplayName = " - Outputs";
         private string _commandText;
 
-        // ReSharper disable UnusedMember.Local
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
 
         public ODBCDatabaseDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
@@ -75,6 +67,7 @@ namespace Dev2.Activities.Designers2.ODBC
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_ODBC;
         }
 
         Guid UniqueID => GetProperty<Guid>();
@@ -241,7 +234,7 @@ namespace Dev2.Activities.Designers2.ODBC
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -350,10 +343,7 @@ namespace Dev2.Activities.Designers2.ODBC
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion

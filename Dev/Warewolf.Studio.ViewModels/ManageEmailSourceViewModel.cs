@@ -3,14 +3,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Dev2;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.SaveDialog;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Interfaces;
-using Microsoft.Practices.Prism.Commands;
+using Dev2.Runtime.Configuration.ViewModels.Base;
 using Microsoft.Practices.Prism.PubSubEvents;
 
 namespace Warewolf.Studio.ViewModels
@@ -49,23 +49,27 @@ namespace Warewolf.Studio.ViewModels
             RequestServiceNameViewModel = requestServiceNameViewModel;
             HeaderText = Resources.Languages.Core.EmailSourceNewHeaderLabel;
             Header = Resources.Languages.Core.EmailSourceNewHeaderLabel;
-            HostName = String.Empty;
-            UserName = String.Empty;
-            Password = String.Empty;
+            HostName = string.Empty;
+            UserName = string.Empty;
+            Password = string.Empty;
             EnableSend = false;
             EnableSslNo = true;
             Port = 25;
             Timeout = 10000;
         }
 
-        public ManageEmailSourceViewModel(IManageEmailSourceModel updateManager, IEventAggregator aggregator, IEmailServiceSource emailServiceSource)
+        public ManageEmailSourceViewModel(IManageEmailSourceModel updateManager, IEventAggregator aggregator, IEmailServiceSource emailServiceSource,IAsyncWorker asyncWorker)
             : this(updateManager, aggregator)
         {
             VerifyArgument.IsNotNull("emailServiceSource", emailServiceSource);
-            _emailServiceSource = emailServiceSource;
-            // ReSharper disable once VirtualMemberCallInContructor
-            FromModel(emailServiceSource);
-            SetupHeaderTextFromExisting();
+            asyncWorker.Start(() => updateManager.FetchSource(emailServiceSource.Id), source =>
+            {
+                _emailServiceSource = source;
+                _emailServiceSource.Path = emailServiceSource.Path;
+                // ReSharper disable once VirtualMemberCallInContructor
+                FromModel(_emailServiceSource);
+                SetupHeaderTextFromExisting();
+            });
         }
 
         ManageEmailSourceViewModel(IManageEmailSourceModel updateManager, IEventAggregator aggregator)
@@ -74,8 +78,8 @@ namespace Warewolf.Studio.ViewModels
             VerifyArgument.IsNotNull("updateManager", updateManager);
             VerifyArgument.IsNotNull("aggregator", aggregator);
             _updateManager = updateManager;
-            SendCommand = new DelegateCommand(TestConnection, CanTest);
-            OkCommand = new DelegateCommand(SaveConnection, CanSave);
+            SendCommand = new DelegateCommand(o=>TestConnection(), o=>CanTest());
+            OkCommand = new DelegateCommand(o=>SaveConnection(), o=>CanSave());
             Testing = false;
             _testPassed = false;
             _testFailed = false;
@@ -89,23 +93,26 @@ namespace Warewolf.Studio.ViewModels
 
         public override void FromModel(IEmailServiceSource emailServiceSource)
         {
-            HostName = emailServiceSource.HostName;
-            UserName = emailServiceSource.UserName;
-            Password = emailServiceSource.Password;
-            EnableSsl = emailServiceSource.EnableSsl;
-            if (EnableSsl)
+            if (emailServiceSource != null)
             {
-                EnableSslYes = EnableSsl;
+                HostName = emailServiceSource.HostName;
+                UserName = emailServiceSource.UserName;
+                Password = emailServiceSource.Password;
+                EnableSsl = emailServiceSource.EnableSsl;
+                if (EnableSsl)
+                {
+                    EnableSslYes = EnableSsl;
+                }
+                else
+                {
+                    EnableSslNo = true;
+                }
+                Port = emailServiceSource.Port;
+                Timeout = emailServiceSource.Timeout;
+                EmailFrom = emailServiceSource.EmailFrom;
+                EmailTo = emailServiceSource.EmailTo;
+                ResourceName = emailServiceSource.ResourceName;
             }
-            else
-            {
-                EnableSslNo = true;
-            }
-            Port = emailServiceSource.Port;
-            Timeout = emailServiceSource.Timeout;
-            EmailFrom = emailServiceSource.EmailFrom;
-            EmailTo = emailServiceSource.EmailTo;
-            ResourceName = emailServiceSource.ResourceName;
         }
 
         public override string Name
@@ -137,7 +144,7 @@ namespace Warewolf.Studio.ViewModels
         {
             if (Testing)
                 return false;
-            if (String.IsNullOrEmpty(HostName) && String.IsNullOrEmpty(UserName) && String.IsNullOrEmpty(Password))
+            if (string.IsNullOrEmpty(HostName) && string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(Password))
             {
                 return false;
             }
@@ -147,11 +154,7 @@ namespace Warewolf.Studio.ViewModels
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
-
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void Save()
@@ -168,7 +171,7 @@ namespace Warewolf.Studio.ViewModels
             set
             {
                 _resourceName = value;
-                if (!String.IsNullOrEmpty(value))
+                if (!string.IsNullOrEmpty(value))
                 {
                     SetupHeaderTextFromExisting();
                 }
@@ -183,14 +186,17 @@ namespace Warewolf.Studio.ViewModels
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                    var res = requestServiceNameViewModel.ShowSaveDialog();
 
                     if (res == MessageBoxResult.OK)
                     {
                         var src = ToSource();
-                        src.ResourceName = RequestServiceNameViewModel.Result.ResourceName.Name;
-                        src.Path = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                        src.ResourceName = requestServiceNameViewModel.ResourceName.Name;
+                        src.Path = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(src);
+                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                         Item = src;
                         _emailServiceSource = src;
                         ResourceName = _emailServiceSource.ResourceName;
@@ -226,7 +232,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _hostName)
                 {
                     _hostName = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => HostName);
                     OnPropertyChanged(() => Header);
@@ -247,7 +253,7 @@ namespace Warewolf.Studio.ViewModels
                 {
                     _userName = value;
                     EmailFrom = _userName;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => UserName);
                     OnPropertyChanged(() => Header);
@@ -267,7 +273,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _password)
                 {
                     _password = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => Password);
                     OnPropertyChanged(() => Header);
@@ -287,7 +293,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _enableSsl)
                 {
                     _enableSsl = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => EnableSsl);
                     OnPropertyChanged(() => Header);
@@ -345,7 +351,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _port)
                 {
                     _port = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     if (!_port.ToString().IsNumeric())
                     {
@@ -370,7 +376,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _timeout)
                 {
                     _timeout = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     if (!_timeout.ToString().IsNumeric())
                     {
@@ -395,7 +401,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _emailFrom)
                 {
                     _emailFrom = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     EnableSend = true;
                     if (!_emailFrom.IsEmail())
@@ -426,7 +432,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _emailTo)
                 {
                     _emailTo = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     EnableSend = true;
                     if (!_emailTo.IsEmail())
@@ -474,12 +480,9 @@ namespace Warewolf.Studio.ViewModels
         private void TestConnection()
         {
             _token = new CancellationTokenSource();
+            var t = new Task(SetupProgressSpinner, _token.Token);
 
-
-            var t = new Task(
-                SetupProgressSpinner, _token.Token);
-
-            t.ContinueWith(a => Dispatcher.CurrentDispatcher.Invoke(() =>
+            t.ContinueWith(a => Application.Current?.Dispatcher?.Invoke(() =>
             {
                 if (!_token.IsCancellationRequested)
                     switch (t.Status)
@@ -489,15 +492,15 @@ namespace Warewolf.Studio.ViewModels
                                 TestFailed = true;
                                 TestPassed = false;
                                 Testing = false;
-                                TestMessage = t.Exception != null ? t.Exception.Message : "Failed";
+                                TestMessage = GetExceptionMessage(t.Exception);
                                 break;
                             }
                         case TaskStatus.RanToCompletion:
                             {
                                 TestMessage = "Passed";
                                 TestFailed = false;
-                                TestPassed = true;
                                 Testing = false;
+                                TestPassed = true;
                                 break;
                             }
                     }
@@ -507,16 +510,15 @@ namespace Warewolf.Studio.ViewModels
 
         void SetupProgressSpinner()
         {
-            Dispatcher.CurrentDispatcher.Invoke(() =>
+            Application.Current?.Dispatcher?.Invoke(() =>
             {
                 Testing = true;
                 TestFailed = false;
                 TestPassed = false;
             });
-
             _updateManager.TestConnection(ToNewSource());
-
         }
+
         IEmailServiceSource ToNewSource()
         {
             return new EmailServiceSourceDefinition
@@ -529,7 +531,7 @@ namespace Warewolf.Studio.ViewModels
                 EnableSsl = EnableSsl,
                 EmailFrom = EmailFrom,
                 EmailTo = EmailTo,
-                Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.Id
+                Id = _emailServiceSource?.Id ?? Guid.NewGuid()
             };
         }
 
@@ -546,7 +548,7 @@ namespace Warewolf.Studio.ViewModels
                     EnableSsl = EnableSsl,
                     EmailFrom = EmailFrom,
                     EmailTo = EmailTo,
-                    Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.Id
+                    Id = _emailServiceSource?.Id ?? Guid.NewGuid()
                 }
             ;
             // ReSharper disable once RedundantIfElseBlock
@@ -582,7 +584,7 @@ namespace Warewolf.Studio.ViewModels
                     EnableSsl = EnableSsl,
                     EmailFrom = EmailFrom,
                     EmailTo = EmailTo,
-                    Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.Id
+                    Id = _emailServiceSource?.Id ?? Guid.NewGuid()
                 };
         }
 
@@ -660,7 +662,7 @@ namespace Warewolf.Studio.ViewModels
         {
             if (RequestServiceNameViewModel != null)
             {
-                if (RequestServiceNameViewModel.Result != null) RequestServiceNameViewModel.Result.Dispose();
+                RequestServiceNameViewModel.Result?.Dispose();
                 RequestServiceNameViewModel.Dispose();
             }
             Dispose(true);
@@ -683,7 +685,7 @@ namespace Warewolf.Studio.ViewModels
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    if (_token != null) _token.Dispose();
+                    _token?.Dispose();
                 }
 
                 // Dispose unmanaged resources.

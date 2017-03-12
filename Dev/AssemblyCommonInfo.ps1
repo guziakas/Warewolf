@@ -22,6 +22,7 @@ if ([string]::IsNullOrEmpty($GitCommitTimeString)) {
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     $GitCommitTime = $origin.AddSeconds($GitCommitTimeDouble)
 }
+$GitBranchName = git rev-parse --abbrev-ref HEAD
 if (-not "$CustomVersionString" -eq "") {
 	$FullVersionString = "$CustomVersionString"
 } else {
@@ -88,7 +89,9 @@ $Line2 = "[assembly: AssemblyCompany(""Warewolf"")]"
 $Line3 = "[assembly: AssemblyProduct(""Warewolf"")]"
 $Line4 = "[assembly: AssemblyCopyright(""Copyright Warewolf " + (Get-Date).year + """)]"
 $Line5 = "[assembly: AssemblyVersion(""" + $FullVersionString + """)]"
-$Line6 = "[assembly: AssemblyInformationalVersion(""" + $GitCommitTime + " " + $GitCommitID + """)]"
+$Line6 = "[assembly: AssemblyInformationalVersion(""" + $GitCommitTime + " " + $GitCommitID + " " + $GitBranchName + """)]"
+$Line7 = "[assembly: InternalsVisibleTo(""Dev2.Activities.Designers.Tests"")]"
+$Line8 = "[assembly: InternalsVisibleTo(""Warewolf.Studio.ViewModels.Tests"")]"
 Write-Host $Line1
 $Line1 | Out-File -LiteralPath $CSharpVersionFile -Encoding utf8 -Force
 Write-Host $Line2
@@ -113,7 +116,7 @@ $Line5 = "[<assembly: AssemblyCopyright(""Copyright Warewolf " + (Get-Date).year
 $Line6 = "[<assembly: AssemblyVersion(""" + $FullVersionString + """)>]"
 # Ashley: F# Compile thinks this is invalid for some reason
 #$Line7 = "[<assembly: AssemblyInformationalVersion(""" + $GitCommitTime + " " + $GitCommitID + """)>]"
-$Line8 = "do()"
+$Line7 = "do()"
 Write-Host $Line1
 $Line1 | Out-File -LiteralPath $FSharpVersionFile -Encoding utf8 -Force
 Write-Host $Line2
@@ -128,8 +131,6 @@ Write-Host $Line6
 $Line6 | Out-File -LiteralPath $FSharpVersionFile -Encoding utf8 -Append
 Write-Host $Line7
 $Line7 | Out-File -LiteralPath $FSharpVersionFile -Encoding utf8 -Append
-Write-Host $Line8
-$Line8 | Out-File -LiteralPath $FSharpVersionFile -Encoding utf8 -Append
 Write-Host F Sharp version file written to `"$FSharpVersionFile`".
 
 Write-Host Version written successfully! For more info about this script see: http://warewolf.io/ESB-blog/artefact-sharing-efficient-ci/

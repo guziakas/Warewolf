@@ -2,20 +2,25 @@ using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Utils;
-using Dev2.Communication;
 using Dev2.Data.Util;
+using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.Activities.Utils;
+using Microsoft.Practices.Prism;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedMember.Global
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -28,31 +33,45 @@ namespace Dev2.Activities.Designers2.Core
         public OutputsRegion(ModelItem modelItem, bool isObjectOutputUsed = false)
         {
             ToolRegionName = "OutputsRegion";
+            Dependants = new List<IToolRegion>();
             _modelItem = modelItem;
+            var serviceOutputMappings = _modelItem.GetProperty<ICollection<IServiceOutputMapping>>("Outputs");
             if (_modelItem.GetProperty("Outputs") == null||_modelItem.GetProperty<IList<IServiceOutputMapping>>("Outputs").Count ==0)
             {
-                var current = _modelItem.GetProperty<ICollection<IServiceOutputMapping>>("Outputs");
+                var current = serviceOutputMappings;
                 if(current == null)
                 {
                     IsEnabled = false;
                 }
-                var outputs = new ObservableCollection<IServiceOutputMapping>(current ?? new List<IServiceOutputMapping>());
+                var outputMappings = current ?? new List<IServiceOutputMapping>();
+                var outputs = new ObservableCollection<IServiceOutputMapping>();
                 outputs.CollectionChanged += OutputsCollectionChanged;
+                outputs.AddRange(outputMappings);
                 Outputs = outputs;
             }
             else
             {
                 IsEnabled = true;
-                var outputs = new ObservableCollection<IServiceOutputMapping>(_modelItem.GetProperty<ICollection<IServiceOutputMapping>>("Outputs"));
+                var outputs = new ObservableCollection<IServiceOutputMapping>();
                 outputs.CollectionChanged += OutputsCollectionChanged;
+                outputs.AddRange(serviceOutputMappings);
                 Outputs = outputs;
             }
+           
             IsObject = _modelItem.GetProperty<bool>("IsObject");
             ObjectResult = _modelItem.GetProperty<string>("ObjectResult");
             ObjectName = _modelItem.GetProperty<string>("ObjectName");
             IsObjectOutputUsed = isObjectOutputUsed;
+            if (!IsObject)
+            {
+                IsOutputsEmptyRows = Outputs.Count == 0;
+            }
+            else
+            {
+                IsOutputsEmptyRows = !string.IsNullOrWhiteSpace(ObjectResult);
+            }
             _shellViewModel = CustomContainer.Get<IShellViewModel>();
-            
+          
         }
 
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
@@ -63,13 +82,46 @@ namespace Dev2.Activities.Designers2.Core
             _shellViewModel = CustomContainer.Get<IShellViewModel>();
         }
 
-        void OutputsCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        void OutputsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            _modelItem.SetProperty("Outputs", _outputs.ToList());
             // ReSharper disable ExplicitCallerInfoArgument
             OnPropertyChanged("IsOutputsEmptyRows");
+            AddItemPropertyChangeEvent(e);
+            RemoveItemPropertyChangeEvent(e);
             // ReSharper restore ExplicitCallerInfoArgument
         }
+
+
+        private void AddItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        {
+            if (args.NewItems == null) return;
+            foreach (INotifyPropertyChanged item in args.NewItems)
+            {
+                if (item != null)
+                {
+                    item.PropertyChanged += ItemPropertyChanged;
+                }
+            }
+        }
+
+        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            _modelItem.SetProperty("Outputs", _outputs.ToList());
+        }
+
+        private void RemoveItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        {
+            if (args.OldItems == null) return;
+            foreach (INotifyPropertyChanged item in args.OldItems)
+            {
+                if (item != null)
+                {
+                    item.PropertyChanged -= ItemPropertyChanged;
+                }
+            }
+        }
+
+
         private bool _outputMappingEnabled;
         private string _recordsetName;
         private IOutputDescription _description;
@@ -80,6 +132,7 @@ namespace Dev2.Activities.Designers2.Core
         private string _objectResult;
         private bool _isObjectOutputUsed;
         private IShellViewModel _shellViewModel;
+        private RelayCommand _viewObjectResult;
 
         #region Implementation of IToolRegion
 
@@ -111,8 +164,10 @@ namespace Dev2.Activities.Designers2.Core
 
         public IToolRegion CloneRegion()
         {
-            var ser = new Dev2JsonSerializer();
-            return ser.Deserialize<IToolRegion>(ser.SerializeToBuilder(this));
+            Mapper.AddMap<OutputsRegion, OutputsRegion>();
+            var outputsRegion = new OutputsRegion();
+            Mapper.Map(this,outputsRegion);
+            return outputsRegion;
         }
 
         public void RestoreRegion(IToolRegion toRestore)
@@ -153,6 +208,14 @@ namespace Dev2.Activities.Designers2.Core
                 {
                     _outputs = value;
                     _modelItem.SetProperty("Outputs", value.ToList());
+                    if (!IsObject)
+                    {
+                        IsOutputsEmptyRows = Outputs.Count == 0;
+                    }
+                    else
+                    {
+                        IsOutputsEmptyRows = !string.IsNullOrWhiteSpace(ObjectResult);
+                    }
                     OnPropertyChanged();
                 }
                 else
@@ -207,13 +270,10 @@ namespace Dev2.Activities.Designers2.Core
             {
                 if (string.IsNullOrEmpty(_recordsetName))
                 {
-                    if(Outputs != null)
+                    var recSet = Outputs?.FirstOrDefault(mapping => !string.IsNullOrEmpty(mapping.RecordSetName));
+                    if (recSet != null)
                     {
-                        var recSet = Outputs.FirstOrDefault(mapping => !string.IsNullOrEmpty(mapping.RecordSetName));
-                        if (recSet != null)
-                        {
-                            _recordsetName = recSet.RecordSetName;
-                        }
+                        _recordsetName = recSet.RecordSetName;
                     }
                 }
                 return _recordsetName;
@@ -247,6 +307,32 @@ namespace Dev2.Activities.Designers2.Core
             }            
         }
 
+
+        public IJsonObjectsView JsonObjectsView => CustomContainer.GetInstancePerRequestType<IJsonObjectsView>();
+
+        public RelayCommand ViewObjectResult
+        {
+            get
+            {
+                return _viewObjectResult ?? (_viewObjectResult = new RelayCommand(item =>
+                {
+                    ViewJsonObjects();
+                }, CanRunCommand));
+            }
+        }
+
+        private bool CanRunCommand(object obj)
+        {
+            return true;
+        }
+
+        private void ViewJsonObjects()
+        {
+            JsonObjectsView?.ShowJsonString(JSONUtils.Format(ObjectResult));
+        }
+
+        
+
         public string ObjectName
         {
             get { return _objectName; }
@@ -264,6 +350,10 @@ namespace Dev2.Activities.Designers2.Core
                             var language = FsInteropFunctions.ParseLanguageExpressionWithoutUpdate(value);
                             if (language.IsJsonIdentifierExpression)
                             {
+                                if (_shellViewModel == null)
+                                {
+                                    _shellViewModel = CustomContainer.Get<IShellViewModel>();
+                                }
                                 _shellViewModel.UpdateCurrentDataListWithObjectFromJson(DataListUtil.RemoveLanguageBrackets(value), ObjectResult);
                             }                            
                             _modelItem.SetProperty("ObjectName", value);                            
@@ -350,10 +440,9 @@ namespace Dev2.Activities.Designers2.Core
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+      
     }
 }

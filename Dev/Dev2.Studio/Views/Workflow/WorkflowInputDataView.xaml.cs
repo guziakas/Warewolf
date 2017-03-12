@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml;
+using Dev2.Common.Interfaces;
 using Dev2.Data.Interfaces;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.UI;
@@ -451,6 +452,15 @@ namespace Dev2.Studio.Views.Workflow
                 }
             }
             FocusOnAddition();
+        }
+
+        private void WorkflowInputDataView_OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
+            {
+                var mainViewModel = CustomContainer.Get<IShellViewModel>();
+                mainViewModel?.ResetMainView();
+            }
         }
     }
 

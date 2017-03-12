@@ -13,7 +13,7 @@ using ExchangeService = Microsoft.Exchange.WebServices.Data.ExchangeService;
 namespace Dev2.Runtime.ServiceModel.Data
 {
     [Serializable]
-    public class ExchangeSource : Resource, IExchangeSource, IResourceSource
+    public class ExchangeSource : Resource, IExchange, IResourceSource
     {
         private ExchangeService _exchangeService;
 
@@ -25,10 +25,17 @@ namespace Dev2.Runtime.ServiceModel.Data
         public static int SslPort = 465;
         public static int TlsPort = 587;
 
+        public override bool IsSource => true;
+
+        public override bool IsService => false;
+        public override bool IsFolder => false;
+        public override bool IsReservedService => false;
+        public override bool IsServer => false;
+        public override bool IsResourceVersion => false;
+
         #region Properties
 
         public string AutoDiscoverUrl { get; set; }
-        public string Name { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
         public enSourceType Type { get; set; }
@@ -52,7 +59,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             get
             {
                 var stringBuilder = base.DataList;
-                return stringBuilder != null ? stringBuilder.ToString() : null;
+                return stringBuilder?.ToString();
             }
             set
             {

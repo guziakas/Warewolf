@@ -8,6 +8,7 @@ using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 // ReSharper disable PossibleUnintendedReferenceComparison
+// ReSharper disable InconsistentNaming
 
 namespace Warewolf.Studio.ViewModels.ToolBox.Tests
 {
@@ -398,10 +399,11 @@ namespace Warewolf.Studio.ViewModels.ToolBox.Tests
             _target.ClearFilterCommand.Execute(null);
 
             //assert
-            Assert.AreEqual(3, _target.Tools.Count);
-            Assert.IsTrue(_target.Tools.Any(it => it.Tool == toolDescriptorMockContainingInLocal.Object && it.IsEnabled));
-            Assert.IsTrue(_target.Tools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal.Object && !it.IsEnabled));
-            Assert.IsTrue(_target.Tools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal2.Object && !it.IsEnabled));
+            Assert.AreEqual(3, _target.BackedUpTools.Count);
+            Assert.AreEqual(0, _target.Tools.Count);
+            Assert.IsTrue(_target.BackedUpTools.Any(it => it.Tool == toolDescriptorMockContainingInLocal.Object && it.IsEnabled));
+            Assert.IsTrue(_target.BackedUpTools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal.Object && !it.IsEnabled));
+            Assert.IsTrue(_target.BackedUpTools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal2.Object && !it.IsEnabled));
         }
 
         [TestMethod]

@@ -16,6 +16,7 @@ using Warewolf.Studio.Core.Infragistics_Prism_Region_Adapter;
 using Warewolf.Studio.ServerProxyLayer;
 using Warewolf.Studio.ViewModels;
 using Warewolf.Studio.Views;
+// ReSharper disable RedundantAssignment
 
 namespace Warewolf.UIBindingTests.WebSource
 {
@@ -23,6 +24,7 @@ namespace Warewolf.UIBindingTests.WebSource
     public class WebSourceSteps
     {
         private readonly ScenarioContext scenarioContext;
+        string illegalCharactersInPath = "Illegal characters in path.";
 
         public WebSourceSteps(ScenarioContext scenarioContext)
         {
@@ -126,6 +128,8 @@ namespace Warewolf.UIBindingTests.WebSource
                 UserName = "IntegrationTester",
                 Password = "I73573r0"
             };
+            mockStudioUpdateManager.Setup(model => model.FetchSource(It.IsAny<Guid>()))
+                .Returns(webServiceSourceDefinition);
             var manageWebserviceSourceViewModel = new ManageWebserviceSourceViewModel(mockStudioUpdateManager.Object, mockEventAggregator.Object,webServiceSourceDefinition, new SynchronousAsyncWorker(), mockExecutor.Object);
             manageWebserviceSourceControl.DataContext = manageWebserviceSourceViewModel;
             scenarioContext.Remove("viewModel");
@@ -218,7 +222,7 @@ namespace Warewolf.UIBindingTests.WebSource
             var viewModel = scenarioContext.Get<ManageWebserviceSourceViewModel>("viewModel");
             var errorMessageFromControl = manageWebserviceSourceControl.GetErrorMessage();
             var errorMessageOnViewModel = viewModel.TestMessage;
-            Assert.IsFalse(string.IsNullOrEmpty(errorMessageFromControl));
+            Assert.AreNotEqual(string.IsNullOrEmpty(errorMessageFromControl), errorMessageOnViewModel);
             var isErrorMessage = !errorMessageOnViewModel.Contains("Passed");
             Assert.IsTrue(isErrorMessage);
         }
@@ -313,12 +317,22 @@ namespace Warewolf.UIBindingTests.WebSource
             Assert.AreEqual(password, viewModel.Password);
         }
 
+        [When(@"the error message is ""(.*)""")]
+        public void WhenTheErrorMessageIs(string errorMessage)
+        {
+            errorMessage = "Exception: " + illegalCharactersInPath + Environment.NewLine + Environment.NewLine +
+                           "Inner Exception: " + illegalCharactersInPath;
+
+            var viewModel = ScenarioContext.Current.Get<ManageWebserviceSourceViewModel>("viewModel");
+            Assert.AreEqual(errorMessage, viewModel.TestMessage);
+        }
+
         [Given(@"""(.*)"" is ""(.*)""")]
         [When(@"""(.*)"" is ""(.*)""")]
         [Then(@"""(.*)"" is ""(.*)""")]
         public void GivenIs(string controlName, string enabledString)
         {
-            Utils.CheckControlEnabled(controlName, enabledString, scenarioContext.Get<ICheckControlEnabledView>(Utils.ViewNameKey));
+            Utils.CheckControlEnabled(controlName, enabledString, scenarioContext.Get<ICheckControlEnabledView>(Utils.ViewNameKey), Utils.ViewNameKey);
         }
 
         [Then(@"Test Connecton is ""(.*)""")]
@@ -341,7 +355,7 @@ namespace Warewolf.UIBindingTests.WebSource
             else
             {
                 mockUpdateManager.Setup(manager => manager.TestConnection(It.IsAny<IWebServiceSource>()))
-                    .Throws(new WarewolfTestException("Server not found", null));
+                    .Throws(new WarewolfTestException(illegalCharactersInPath, new Exception(illegalCharactersInPath)));
             }
             var manageWebserviceSourceControl = scenarioContext.Get<ManageWebserviceSourceControl>(Utils.ViewNameKey);
             manageWebserviceSourceControl.PerformTestConnection();

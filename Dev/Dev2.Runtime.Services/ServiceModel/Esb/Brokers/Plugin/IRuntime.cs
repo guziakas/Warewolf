@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,8 +17,10 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
     /// </summary>
     public interface IRuntime
     {
+        PluginExecutionDto CreateInstance(PluginInvokeArgs constructor);
+        PluginExecutionDto Run(PluginExecutionDto dto);
         object Run(PluginInvokeArgs setupInfo);
 
-        IOutputDescription Test(PluginInvokeArgs setupInfo,out string serializedResult);
+        IOutputDescription Test(PluginInvokeArgs setupInfo, out string serializedResult);
     }
 }

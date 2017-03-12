@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,7 +31,7 @@ namespace Dev2.Services.Sql
 
         public bool IsConnected => _connection != null && _connection.State == ConnectionState.Open;
 
-        public string ConnectionString => _connection == null ? null : _connection.ConnectionString;
+        public string ConnectionString => _connection?.ConnectionString;
 
         public void FetchStoredProcedures(Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> procedureProcessor, Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> functionProcessor, bool continueOnProcessorException = false, string dbName = "")
         {
@@ -140,6 +140,11 @@ namespace Dev2.Services.Sql
 
             foreach (DataRow row in proceduresDataTable.Rows)
             {
+                var type = row[procedureTypeColumn];
+                if (type.ToString().ToUpperInvariant() == "SQL_TABLE_VALUED_FUNCTION")
+                {
+                    continue;
+                }
                 string fullProcedureName = GetFullProcedureName(row, procedureDataColumn, procedureSchemaColumn);
 
                 using (
@@ -150,7 +155,8 @@ namespace Dev2.Services.Sql
                     {
                         List<IDbDataParameter> parameters = GetProcedureParameters(command);
 
-                        string helpText = FetchHelpTextContinueOnException(fullProcedureName, _connection);
+                        //string helpText = FetchHelpTextContinueOnException(fullProcedureName, _connection);
+                        string helpText = "";
 
                         if (IsStoredProcedure(row, procedureTypeColumn))
                         {
@@ -253,13 +259,14 @@ namespace Dev2.Services.Sql
         #endregion
 
         private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior,
-            Func<IDataReader, T> handler)
+            Func<IDataAdapter, T> handler)
         {
             try
             {
-                using (IDataReader reader = command.ExecuteReader(commandBehavior))
+                var da = new SqlDataAdapter(command as SqlCommand);
+                using (da)
                 {
-                    return handler(reader);
+                    return handler(da);
                 }
             }
             catch (DbException e)
@@ -269,7 +276,7 @@ namespace Dev2.Services.Sql
                     var exceptionDataTable = new DataTable("Error");
                     exceptionDataTable.Columns.Add("ErrorText");
                     exceptionDataTable.LoadDataRow(new object[] {e.Message}, true);
-                    return handler(new DataTableReader(exceptionDataTable));
+                    return handler(new SqlDataAdapter());
                 }
                 throw;
             }
@@ -309,12 +316,16 @@ namespace Dev2.Services.Sql
                     string.Format("sp_helptext '{0}'", objectName)))
             {
                 return ExecuteReader(command, CommandBehavior.SchemaOnly & CommandBehavior.KeyInfo,
-                    delegate(IDataReader reader)
+                    delegate(IDataAdapter reader)
                     {
                         var sb = new StringBuilder();
-                        while (reader.Read())
+                        DataSet ds = new DataSet(); //conn is opened by dataadapter
+                        reader.Fill(ds);
+                        var t = ds.Tables[0];
+                        var dataTableReader = t.CreateDataReader();
+                        while (dataTableReader.Read())
                         {
-                            object value = reader.GetValue(0);
+                            object value = dataTableReader.GetValue(0);
                             if (value != null)
                             {
                                 sb.Append(value);
@@ -369,7 +380,7 @@ namespace Dev2.Services.Sql
                 }
                 SqlDbType sqlType;
                 Enum.TryParse(row["DATA_TYPE"] as string, true, out sqlType);
-                int maxLength = row["CHARACTER_MAXIMUM_LENGTH"] is int ? (int) row["CHARACTER_MAXIMUM_LENGTH"] : -1;
+                int maxLength = row["CHARACTER_MAXIMUM_LENGTH"] as int? ?? -1;
                 var sqlParameter = new SqlParameter(parameterName, sqlType, maxLength);
                 command.Parameters.Add(sqlParameter);
                 if (parameterName.ToLower() == "@return_value")
@@ -465,15 +476,9 @@ namespace Dev2.Services.Sql
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    if (_transaction != null)
-                    {
-                        _transaction.Dispose();
-                    }
+                    _transaction?.Dispose();
 
-                    if (_command != null)
-                    {
-                        _command.Dispose();
-                    }
+                    _command?.Dispose();
 
                     if (_connection != null)
                     {

@@ -46,14 +46,14 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
 
-                Dev2Logger.Info("Test DB Connection Service");
+                Dev2Logger.Info("Test Web Connection Service");
                 StringBuilder resourceDefinition;
 
                 values.TryGetValue("WebService", out resourceDefinition);
 
                 IWebService src = serializer.Deserialize<IWebService>(resourceDefinition);
                 // ReSharper disable MaximumChainedReferences
-                var parameters = src.Inputs == null ? new List<MethodParameter>() : src.Inputs.Select(a => new MethodParameter { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value }).ToList();
+                var parameters = src.Inputs?.Select(a => new MethodParameter { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value }).ToList() ?? new List<MethodParameter>();
                 // ReSharper restore MaximumChainedReferences
                 var requestHeaders = src.Headers.Select(nameValue => nameValue.Name + ":" + nameValue.Value).ToList();
                 var requestHeader = string.Join(";", requestHeaders).TrimEnd(':',';');

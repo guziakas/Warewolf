@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -41,8 +41,8 @@ namespace Dev2.DynamicServices.Test
 
         const enDynamicServiceObjectType ServiceType = enDynamicServiceObjectType.DynamicService;
 
-        readonly static object SyncRoot = new object();
-        readonly static object MonitorLock = new object();
+        static readonly object SyncRoot = new object();
+        static readonly object MonitorLock = new object();
 
         #region TestInitialize/Cleanup
 
@@ -68,7 +68,7 @@ namespace Dev2.DynamicServices.Test
         {
             var workspaceID = Guid.NewGuid();
             var workspace = new Workspace(workspaceID);
-            workspace.Update(null, false);
+            workspace.Update(null);
         }
 
 

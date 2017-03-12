@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,17 +28,18 @@ using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.Utils;
 using Dev2.Studio.Core.ViewModels;
 using Dev2.Studio.Core.ViewModels.Base;
-using Dev2.Studio.Core.Workspaces;
 using Dev2.Studio.ViewModels.Diagnostics;
 using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Utils;
 using Dev2.Webs;
-using Dev2.Workspaces;
 using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 // ReSharper disable CheckNamespace
 namespace Dev2.Studio.ViewModels.WorkSurface
@@ -61,7 +62,6 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         private IContextualResourceModel _contextualResourceModel;
 
         private readonly IWindowManager _windowManager;
-        private readonly IWorkspaceItemRepository _workspaceItemRepository;
 
         private AuthorizeCommand _viewInBrowserCommand;
         private AuthorizeCommand _debugCommand;
@@ -182,11 +182,11 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             WorkSurfaceViewModel = workSurfaceViewModel;
 
             _windowManager = CustomContainer.Get<IWindowManager>();
-            _workspaceItemRepository = WorkspaceItemRepository.Instance;
 
             var model = WorkSurfaceViewModel as IWorkflowDesignerViewModel;
             if (model != null)
             {
+                model.WorkflowChanged += UpdateForWorkflowChange;
                 _environmentModel = model.EnvironmentModel;
                 if (_environmentModel != null)
                 {
@@ -197,6 +197,11 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             
             _popupController = popupController;
             _saveDialogAction = saveDialogAction;
+        }
+
+        private void UpdateForWorkflowChange()
+        {
+            _workspaceSaved = false;
         }
 
         private void OnReceivedResourceAffectedMessage(Guid resourceId, CompileMessageList compileMessageList)
@@ -406,8 +411,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
                 return;
             }
 
-            // only try saving if I can debug and contribute, else I should just debug what I have
-            if (resourceModel.UserPermissions.IsContributor())
+            if (!resourceModel.IsWorkflowSaved)
             {
                 var succesfulSave = Save(resourceModel, true);
                 if (!succesfulSave)
@@ -473,10 +477,13 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public void QuickViewInBrowser()
         {
-            var successfuleSave = Save(ContextualResourceModel, true);
-            if (!successfuleSave)
+            if (!ContextualResourceModel.IsWorkflowSaved)
             {
-                return;
+                var successfuleSave = Save(ContextualResourceModel, true);
+                if (!successfuleSave)
+                {
+                    return;
+                }
             }
             ViewInBrowserInternal(ContextualResourceModel);
         }
@@ -496,25 +503,28 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             }
             if (WorkflowDesignerViewModel.ValidatResourceModel(ContextualResourceModel.DataList))
             {
-                var successfuleSave = Save(ContextualResourceModel, true);
-                if (!successfuleSave)
+                if(!ContextualResourceModel.IsWorkflowSaved && !_workspaceSaved)
                 {
-                    return;
-                }
+                    var successfuleSave = Save(ContextualResourceModel, true);
+                    if(!successfuleSave)
+                    {
+                        return;
+                    }
+                }                
             }
             else
             {
                 _popupController.Show(StringResources.Debugging_Error,
                                       StringResources.Debugging_Error_Title,
-                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false);
+                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false);
 
                 SetDebugStatus(DebugStatus.Finished);
                 return;
             }
-
             var inputDataViewModel = SetupForDebug(ContextualResourceModel, true);
             inputDataViewModel.LoadWorkflowInputs();
             inputDataViewModel.Save();
+
         }
 
         public void BindToModel()
@@ -524,6 +534,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         }
 
         private bool _waitingforDialog;
+        private bool _workspaceSaved;
 
         public void ShowSaveDialog(IContextualResourceModel resourceModel, bool addToTabManager)
         {
@@ -532,8 +543,15 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public bool Save(bool isLocalSave = false, bool isStudioShutdown = false)
         {
-            var saveResult = Save(ContextualResourceModel, isLocalSave, isStudioShutdown: isStudioShutdown);
+            var saveResult = Save(ContextualResourceModel, isLocalSave);
             WorkSurfaceViewModel?.NotifyOfPropertyChange("DisplayName");
+            if (!isLocalSave)
+            {
+                if (DebugOutputViewModel != null)
+                {
+                    ViewModelUtils.RaiseCanExecuteChanged(DebugOutputViewModel.AddNewTestCommand);
+                }
+            }
             return saveResult;
         }
 
@@ -556,7 +574,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         #region private methods
 
-        protected virtual bool Save(IContextualResourceModel resource, bool isLocalSave, bool addToTabManager = true, bool isStudioShutdown = false)
+        protected virtual bool Save(IContextualResourceModel resource, bool isLocalSave, bool addToTabManager = true)
         {
             if (resource == null || !resource.UserPermissions.IsContributor())
             {
@@ -569,7 +587,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             {
                 _popupController.Show(string.Format(StringResources.Saving_Error + System.Environment.NewLine + System.Environment.NewLine + DataListViewModel.DataListErrorMessage),
                                       StringResources.Saving_Error_Title,
-                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false);
+                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false);
 
                 return false;
             }
@@ -583,22 +601,18 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             }
 
             BindToModel();
-
-            var result = _workspaceItemRepository.UpdateWorkspaceItem(resource, isLocalSave);
-
-            // shutdown - just save to workspace
-            if (isStudioShutdown)
-            {
-                return true;
-            }
-
-            resource.Environment.ResourceRepository.Save(resource);
-            DisplaySaveResult(result, resource);
             if (!isLocalSave)
             {
                 ExecuteMessage saveResult = resource.Environment.ResourceRepository.SaveToServer(resource);
                 DispatchServerDebugMessage(saveResult, resource);
                 resource.IsWorkflowSaved = true;
+                _workspaceSaved = true;
+            }
+            else
+            {
+                _workspaceSaved = true;
+                ExecuteMessage saveResult = resource.Environment.ResourceRepository.Save(resource);
+                DisplaySaveResult(saveResult, resource);
             }
             return true;
         }

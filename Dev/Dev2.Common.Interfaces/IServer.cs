@@ -48,6 +48,10 @@ namespace Dev2.Common.Interfaces
         Task<List<string>> LoadExplorerDuplicates();
 
         Permissions GetPermissions(Guid resourceID);
+
+        IList<IServer> GetAllServerConnections();
+        Dictionary<string, string> GetServerInformation();
+        IServer FetchServer(Guid savedServerID);
     }
 
     public delegate void PermissionsChanged(PermissionsChangedArgs args);

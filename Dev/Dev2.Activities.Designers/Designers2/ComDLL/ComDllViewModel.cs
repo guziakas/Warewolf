@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -49,15 +49,8 @@ namespace Dev2.Activities.Designers2.ComDLL
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
-        readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.ComPluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
+        readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
         public ComDllViewModel(ModelItem modelItem)
             : base(modelItem)
@@ -69,6 +62,7 @@ namespace Dev2.Activities.Designers2.ComDLL
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Resources_Com_DLL;
         }
 
         Guid UniqueID => GetProperty<Guid>();
@@ -490,20 +484,7 @@ namespace Dev2.Activities.Designers2.ComDLL
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,7 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Data.ServiceModel
 {
-    public class RabbitMQSource : Resource, IResourceSource
+    public class RabbitMQSource : Resource, IResourceSource, IRabbitMQ
     {
         private const int DefaultPort = 5672;
         private const string DefaultVirtualHost = "/";

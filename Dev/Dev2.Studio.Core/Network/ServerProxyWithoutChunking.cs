@@ -123,7 +123,6 @@ namespace Dev2.Network
             {
                 EsbProxy = HubConnection.CreateHubProxy("esb");
                 EsbProxy.On<string>("SendMemo", OnMemoReceived);
-                EsbProxy.On<string>("ReceiveResourcesAffectedMemo", OnReceiveResourcesAffectedMemo);
                 EsbProxy.On<string>("SendPermissionsMemo", OnPermissionsMemoReceived);
                 EsbProxy.On<string>("SendDebugState", OnDebugStateReceived);
                 EsbProxy.On<Guid>("SendWorkspaceID", OnWorkspaceIdReceived);
@@ -135,10 +134,22 @@ namespace Dev2.Network
         }
 
         public Action<Guid, CompileMessageList> ReceivedResourceAffectedMessage { get; set; }
-        void OnReceiveResourcesAffectedMemo(string objString)
+
+        public void FetchResourcesAffectedMemo(Guid resourceId)
         {
-            var obj = _serializer.Deserialize<CompileMessageList>(objString);
-            ReceivedResourceAffectedMessage?.Invoke(obj.ServiceID, obj);
+            if (ReceivedResourceAffectedMessage != null)
+            {
+                var result = Task.Run(async () => await EsbProxy.Invoke<string>("FetchResourcesAffectedMemo", resourceId)).ConfigureAwait(false).GetAwaiter().GetResult();
+                if (!string.IsNullOrWhiteSpace(result))
+                {
+                    var obj = _serializer.Deserialize<CompileMessageList>(result);
+                    if (obj != null)
+                    {
+                        ReceivedResourceAffectedMessage.Invoke(obj.ServiceID, obj);
+                    }
+                }
+            }
+            
         }
 
         void HubConnectionOnClosed()
@@ -594,11 +605,7 @@ namespace Dev2.Network
                 throw new ArgumentNullException(nameof(payload));
             }
 
-            Dev2Logger.Debug("Execute Command Payload [ " + payload + " ]");
-
-            var result = new StringBuilder();
-            var resultTask = Task.Run(async () => result = await ExecuteCommandAsync(payload, workspaceId));
-            resultTask.Wait();
+            var result = Task.Run(async () => await ExecuteCommandAsync(payload, workspaceId)).Result;
             return result;
 
         }

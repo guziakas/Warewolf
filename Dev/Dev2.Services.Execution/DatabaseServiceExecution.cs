@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,6 +27,7 @@ using Oracle.ManagedDataAccess.Client;
 using System.Data.Odbc;
 using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Services.Sql;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 using Npgsql;
 using Warewolf.Resource.Errors;
@@ -262,8 +263,8 @@ namespace Dev2.Services.Execution
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error("Sql Error:", ex);
-                errors.AddError($"{"Sql Error: "}{ex.Message}");
+                Dev2Logger.Error("SQL Error:", ex);
+                errors.AddError($"SQL Error: {ex.Message}");
             }
         }
 
@@ -541,7 +542,7 @@ namespace Dev2.Services.Execution
                     if (parameters != null)
                     {
                         // ReSharper disable CoVariantArrayConversion
-                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
+                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName)))
                         // ReSharper restore CoVariantArrayConversion
                         {
                             TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);

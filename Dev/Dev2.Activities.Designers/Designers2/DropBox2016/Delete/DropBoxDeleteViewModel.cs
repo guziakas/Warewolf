@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Windows;
 using System.Windows.Input;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
@@ -41,13 +40,13 @@ namespace Dev2.Activities.Designers2.DropBox2016.Delete
             : base(modelItem, "File Or Folder", String.Empty)
         {
             _sourceManager = sourceManager;
-            ThumbVisibility = Visibility.Visible;
             EditDropboxSourceCommand = new RelayCommand(o => EditDropBoxSource(), p => IsDropboxSourceSelected);
             NewSourceCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(CreateOAuthSource);
             // ReSharper disable once VirtualMemberCallInContructor
             Sources = LoadOAuthSources();
             AddTitleBarLargeToggle();
             EditDropboxSourceCommand.RaiseCanExecuteChanged();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Dropbox_Delete;
         }
 
         public ICommand NewSourceCommand { get; set; }
@@ -130,7 +129,10 @@ namespace Dev2.Activities.Designers2.DropBox2016.Delete
 
         private void EditDropBoxSource()
         {
-            CustomContainer.Get<IShellViewModel>().OpenResource(SelectedSource.ResourceID, CustomContainer.Get<IShellViewModel>().ActiveServer);
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var activeServer = shellViewModel.ActiveServer;
+            if (activeServer != null)
+                shellViewModel.OpenResource(SelectedSource.ResourceID, activeServer.EnvironmentID, activeServer);
         }
 
         public void CreateOAuthSource()
@@ -153,10 +155,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.Delete
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -165,7 +164,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.Delete
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public ObservableCollection<DropBoxSource> LoadOAuthSources()

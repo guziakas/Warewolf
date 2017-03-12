@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -244,6 +244,18 @@ namespace Dev2.Core.Tests.Environments
             repo.ForceLoad();
             Assert.IsFalse(repo.IsLoaded);
             Assert.AreEqual(1, repo.LoadInternalHitCount);
+        }
+
+        [TestMethod]
+        public void EnvironmentRepositoryLoadCompleteExpectedEnvironmentsReturned()
+        {
+            var source = new Mock<IEnvironmentModel>();
+            var e1 = new Mock<IEnvironmentModel>();
+            var e2 = new Mock<IEnvironmentModel>();
+
+            var repo = new TestLoadEnvironmentRespository(source.Object, e1.Object, e2.Object) { IsLoaded = true };
+            var environments = repo.ReloadAllServers();
+            Assert.AreEqual(3,environments.Count);
         }
 
         #endregion

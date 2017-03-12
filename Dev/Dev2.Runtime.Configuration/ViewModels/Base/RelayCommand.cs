@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -96,7 +96,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         public bool CanExecute(object parameter)
         {
             // ReSharper disable SimplifyConditionalTernaryExpression
-            return _canExecute == null ? true : _canExecute((T)parameter);
+            return _canExecute?.Invoke((T)parameter) ?? true;
             // ReSharper restore SimplifyConditionalTernaryExpression
         }
 
@@ -110,10 +110,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public void RaiseCanExecuteChanged()
         {
-            if (CanExecuteChanged != null)
-            {
-                CanExecuteChanged(this, EventArgs.Empty);
-            }
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
         #endregion // ICommand Members
     }

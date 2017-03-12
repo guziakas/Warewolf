@@ -6,7 +6,6 @@ Feature: WorkflowExecution
 	 
 Background: Setup for workflow execution
 			Given Debug events are reset
-			And All environments disconnected
 			And Debug states are cleared
 
 Scenario: Workflow with multiple tools executing against the server
@@ -1295,8 +1294,8 @@ Scenario: Workflow with Assign and ForEach
 	 And the "ForEachTest" in WorkFlow "WFWithAssignForEach" has  "3" nested children 
 	 And each "11714Nested" contains debug outputs for "Assign (1)" as
       | variable | value    |
-      | [[a]]    | warewolf |  
-        
+      | [[a]]    | warewolf | 
+	          
 Scenario: Workflow with ForEach which contains assign
       Given I have a workflow "WFWithForEachContainingAssign"
 	  And "WFWithForEachContainingAssign" contains an Assign "Rec To Convert" as
@@ -1324,6 +1323,56 @@ Scenario: Workflow with ForEach which contains assign
 	  And the "MyAssign" in step 2 for "ForEachTest" debug outputs as
 		| # |                     |
 		| 1 | [[rec(2).a]] = Test |
+		
+
+
+Scenario: Gather System Info returns values
+	Given I have a workflow "WorkflowWithGatherSystemInfo"
+	And "WorkflowWithGatherSystemInfo" contains Gather System Info "System info" as
+	| Variable                   | Selected                             |
+	| [[ComputerName]]           | Computer Name                        |
+	| [[OperatingSystemVersion]] | Operating System Version             |
+	| [[VirtualMemoryAvailable]] | Virtual Memory Available (MB)        |
+	| [[VirtualMemoryTotal]]     | Virtual Memory Total (MB)            |
+	| [[MacAddress]]             | MAC Addresses                        |
+	| [[GateWayAddress]]         | Defaut Gateway Addresses             |
+	| [[DNSAddress]]             | DNS Server Addresses                 |
+	| [[IPv4Address]]            | IPv4 Addresses                       |
+	| [[IPv6Address]]            | IPv6 Addresses                       |
+	| [[WarewolfMemory]]         | Warewolf Memory Usage                |
+	| [[WarewolfCPU]]            | Warewolf Total CPU Usage (All Cores) |
+	| [[WarewolfServerVersion]]  | Warewolf Server Version              |
+	 When "WorkflowWithGatherSystemInfo" is executed
+	  Then the workflow execution has "NO" error
+	  And the "System info" in WorkFlow "WorkflowWithGatherSystemInfo" debug inputs as
+	  | #  |                              |                                      |
+	  | 1  | [[ComputerName]] =           | Computer Name                        |
+	  | 2  | [[OperatingSystemVersion]] = | Operating System Version             |
+	  | 3  | [[VirtualMemoryAvailable]] = | Virtual Memory Available (MB)        |
+	  | 4  | [[VirtualMemoryTotal]] =     | Virtual Memory Total (MB)            |
+	  | 5  | [[MacAddress]] =             | MAC Addresses                        |
+	  | 6  | [[GateWayAddress]] =         | Defaut Gateway Addresses             |
+	  | 7  | [[DNSAddress]] =             | DNS Server Addresses                 |
+	  | 8  | [[IPv4Address]] =            | IPv4 Addresses                       |
+	  | 9  | [[IPv6Address]] =            | IPv6 Addresses                       |
+	  | 10 | [[WarewolfMemory]] =         | Warewolf Memory Usage                |
+	  | 11 | [[WarewolfCPU]] =            | Warewolf Total CPU Usage (All Cores) |
+	  | 12 | [[WarewolfServerVersion]] =  | Warewolf Server Version              |
+	  And the "System info" in Workflow "WorkflowWithGatherSystemInfo" debug outputs as
+	  | #  |                                     |
+	  | 1  | [[ComputerName]] = String           |
+	  | 2  | [[OperatingSystemVersion]] = String |
+	  | 3  | [[VirtualMemoryAvailable]] = String |
+	  | 4  | [[VirtualMemoryTotal]] = String     |
+	  | 5  | [[MacAddress]] = String             |
+	  | 6  | [[GateWayAddress]] = String         |
+	  | 7  | [[DNSAddress]] = String             |
+	  | 8  | [[IPv4Address]] = String            |
+	  | 9  | [[IPv6Address]] = String            |
+	  | 10 | [[WarewolfMemory]] = String         |
+	  | 11 | [[WarewolfCPU]] = String            |
+	  | 12 | [[WarewolfServerVersion]] = String  |
+
 
 Scenario: Workflow with ForEach which contains Sequence
       Given I have a workflow "WorkflowWithForEachContainingSeq"
@@ -1380,6 +1429,7 @@ Scenario: Workflow with ForEach which contains Sequence
 	  And the "System info" in 'Seq1' in step 2 for "ForEachTest1" debug outputs as
 	  | # |                       |
 	  | 1 | [[rec(1).d]] = String |	
+
 
 Scenario: Executing ForEach in Rec with star which contains Sequence
       Given I have a workflow "WorkFWithForEachwithRecContainingSequence"
@@ -1445,6 +1495,70 @@ Scenario: Executing ForEach in Rec with star which contains Sequence
 	  | # |                       |
 	  | 1 | [[rec(2).d]] = String |
 
+ Scenario: Workflow with ForEach in Rec with star which contains Dot Net DLL
+      Given I have a workflow "WFWithForEachContainingDotNetDLL"	
+	   And "WFWithForEachContainingDotNetDLL" contains an Assign "RecVal" as
+	  | variable         | value |
+	  | [[rec().number]] | 1     |
+	  | [[rec().number]] | 2     |
+	  | [[rec().number]] | 3     |
+	  | [[rec().number]] | 4     |
+	  And "WFWithForEachContainingDotNetDLL" contains a Foreach "ForEachTest" as "InRecordset" executions "[[rec(*)]]" 		
+	  And "ForEachTest" contains an DotNet DLL "DotNetService" as
+	     | Source                   | ClassName                       | ObjectName | Action    | ActionOutputVaribale |
+	     | New DotNet Plugin Source | TestingDotnetDllCascading.Human | [[@human]] | BuildInts | [[rec1().num]]       |
+	  And "DotNetService" constructorinputs 0 with inputs as
+	  | parameterName | value |type|
+	  
+      When "WFWithForEachContainingDotNetDLL" is executed
+	  Then the workflow execution has "NO" error
+	   And the "RecVal" in WorkFlow "WFWithForEachContainingDotNetDLL" debug inputs as 
+		  | # | Variable           | New Value |
+		  | 1 | [[rec().number]] = | 1         |
+		  | 2 | [[rec().number]] = | 2         |
+		  | 3 | [[rec().number]] = | 3         |
+		  | 4 | [[rec().number]] = | 4         |	  
+      And the "ForEachTest" in WorkFlow "WFWithForEachContainingDotNetDLL" has  "4" nested children 	 	  
+	  And the dotnetdll "BuildInts" in 'DotNet DLL' in step 1 for "ForEachTest" debug inputs as
+		 | label | Variable          | value | operater |
+		 | a     | [[rec(1).number]] | 1     | =        |
+		 | b     | [[rec(1).number]] | 1     | =        |
+		 | c     | [[rec(1).number]] | 1     | =        |
+		 | d     | [[rec(1).number]] | 1     | =        |
+	  And the dotnetdll "BuildInts" in 'DotNet DLL' in step 2 for "ForEachTest" debug inputs as
+			 | label | Variable          | value | operater |
+			 | a     | [[rec(2).number]] | 2     | =        |
+			 | b     | [[rec(2).number]] | 2     | =        |
+			 | c     | [[rec(2).number]] | 2     | =        |
+			 | d     | [[rec(2).number]] | 2     | =        |
+	 And the dotnetdll "BuildInts" in 'DotNet DLL' in step 3 for "ForEachTest" debug inputs as
+		 	 | label | Variable          | value | operater |
+		 	 | a     | [[rec(3).number]] | 3     | =        |
+		 	 | b     | [[rec(3).number]] | 3     | =        |
+		 	 | c     | [[rec(3).number]] | 3     | =        |
+		 	 | d     | [[rec(3).number]] | 3     | =        |
+	 And the dotnetdll "BuildInts" in 'DotNet DLL' in step 4 for "ForEachTest" debug inputs as
+		 	 | label | Variable          | value | operater |
+		 	 | a     | [[rec(4).number]] | 4     | =        |
+		 	 | b     | [[rec(4).number]] | 4     | =        |
+		 	 | c     | [[rec(4).number]] | 4     | =        |
+		 	 | d     | [[rec(4).number]] | 4     | =        |
+	And the dotnetdll "BuildInts" in "DotNet DLL" in step 1 for "ForEachTest" debug output as
+		 | label | Variable        | value | operater |
+	   	 |       | [[rec1(4).num]] | 1     | =        |
+    And the dotnetdll "BuildInts" in "DotNet DLL" in step 2 for "ForEachTest" debug output as
+		 | label | Variable        | value | operater |
+		 |       | [[rec1(8).num]] | 2     | =        |
+    And the dotnetdll "BuildInts" in "DotNet DLL" in step 3 for "ForEachTest" debug output as
+		 | label | Variable         | value | operater |
+		 |       | [[rec1(12).num]] | 3     | =        |
+    And the dotnetdll "BuildInts" in "DotNet DLL" in step 4 for "ForEachTest" debug output as
+		 | label | Variable         | value | operater |
+		 |       | [[rec1(16).num]] | 4     | =        |
+
+	
+		
+
 Scenario: Executing 2 ForEach"s inside a ForEach which contains Assign only
       Given I have a workflow "WFContainsForEachInsideforEach"
 	  And "WFContainsForEachInsideforEach" contains a Foreach "ForEachTest1" as "NumOfExecution" executions "2"
@@ -1505,7 +1619,7 @@ Scenario: Executing 2 ForEach"s inside a ForEach which contains Assign only
 	  When "WFForEachInsideforEachLargeTenFifty" is executed
 	  Then the workflow execution has "NO" error
 	  And the server CPU usage is less than 15%
-	  And the server memory difference is less than 150 mb
+	  And the server memory difference is less than 200 mb
 	  And the "ForEachTest1" in WorkFlow "WFForEachInsideforEachLargeTenFifty" debug inputs as 
 	  |                 | Number |
 	  | No. of Executes | 10      |
@@ -2814,12 +2928,9 @@ Scenario: Workflow with Assign  DeleteNullHandler and testing variables that has
 	  And the "DelRec" in Workflow "WorkflowWithAssignDelete12" debug outputs as  
 	  | # |                   |
 	  | 1 | [[rec(1).a]] = 50 |
-	  And the "Delet12" in WorkFlow "WorkflowWithAssignDelete12" debug inputs as
-	  | Records      |
-	  | [[Del(1)]] = |
 	  And the "Delet12" in Workflow "WorkflowWithAssignDelete12" debug outputs as  
 	  |                       |
-	  | [[result1]] = Failure |
+	  | [[result1]] = Success |
 
 
 Scenario: Workflow with Assign Sort and testing variables that hasn"t been assigned
@@ -3081,7 +3192,7 @@ Examples:
     | WorkflowName                  | ServiceName | nameVariable    | emailVariable    | errorOccured |
     | TestMySqlWFWithMySqlStarIndex | MySqlEmail  | [[rec(*).name]] | [[rec(*).email]] | NO           |
 
-Scenario Outline: Database MySqlDB Database service using char in param name
+Scenario: Database MySqlDB Database service using char in param name
      Given I have a workflow "TestMySqlWFWithMySqlCharParamName"
 	 And "TestMySqlWFWithMySqlCharParamName" contains a mysql database service "procWithCharNoOutput" with mappings as
 	  | Input to Service | From Variable | Output from Service | To Variable |
@@ -3132,7 +3243,9 @@ Scenario Outline: Database MySqlDB Database service scalar outputs
       When "<WorkflowName>" is executed
      Then the workflow execution has "<errorOccured>" error
 	 And the "<ServiceName>" in Workflow "<WorkflowName>" debug outputs as
-	  |                      |
+	  |                                |
+	  | [[name]] = Monk                |
+	  | [[email]] = dora@explorers.com |
 Examples: 
     | WorkflowName               | ServiceName | nameVariable | emailVariable | errorOccured |
     | TestMySqlWFWithMySqlScalar | MySqlEmail  | [[name]]     | [[email]]     | NO           |
@@ -3240,5 +3353,28 @@ Scenario Outline: Database SqlDB  service using scalar outputs
 	  | [[name]] = dora                  |
 	  | [[email]] = dora@explorers.co.za |
 Examples: 
-    | WorkflowName              | ServiceName | nameVariable | emailVariable | errorOccured |
-    | TestWFWithDBSqlServerScalar | dbo.SQLEmail    | [[name]]     | [[email]]     | NO           |
+    | WorkflowName                | ServiceName  | nameVariable | emailVariable | errorOccured |
+    | TestWFWithDBSqlServerScalar | dbo.SQLEmail | [[name]]     | [[email]]     | NO           |
+
+Scenario: Executing unsaved workflow should execute by ID
+	Given I create a new unsaved workflow with name "Unsaved 1"
+	And "Unsaved 1" contains an Assign "Rec To Convert" as
+	  | variable    | value |
+	  | [[rec(1).a]] | yes   |
+	  | [[rec(2).a]] | no    |	 
+	  When '1' unsaved WF "Unsaved 1" is executed
+	  Then the workflow execution has "NO" error
+	  And the "Rec To Convert" in Workflow "Unsaved 1" debug outputs as    
+	  | # |                    |
+	  | 1 | [[rec(1).a]] = yes |
+	  | 2 | [[rec(2).a]] = no  |
+	  Then I create a new unsaved workflow with name "Unsaved 1"
+	  And "Unsaved 1" contains an Assign "Assign 1" as
+	  | variable    | value |
+	  | [[rec(1).a]] | 1   |
+	  | [[rec(2).a]] | 2    |	 
+	  When '2' unsaved WF "Unsaved 1" is executed	 
+	  And the "Assign 1" in Workflow "Unsaved 1" debug outputs as    
+	  | # |                    |
+	  | 1 | [[rec(1).a]] = 1 |
+	  | 2 | [[rec(2).a]] = 2  |

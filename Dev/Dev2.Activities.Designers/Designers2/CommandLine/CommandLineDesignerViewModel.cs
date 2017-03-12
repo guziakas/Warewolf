@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,6 +29,7 @@ namespace Dev2.Activities.Designers2.CommandLine
         {
             AddTitleBarLargeToggle();
             InitializeCommandPriorities();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Scripting_CMD_Script;
         }
 
         public List<KeyValuePair<ProcessPriorityClass, string>> CommandPriorities { get; private set; }

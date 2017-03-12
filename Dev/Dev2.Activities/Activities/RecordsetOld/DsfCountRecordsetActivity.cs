@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,8 +15,8 @@ using System.Linq;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Util;
@@ -68,6 +68,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { CountNumber };
+        }
+
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
@@ -181,15 +187,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == CountNumber);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == CountNumber);
-                if(itemUpdate != null)
-                {
-                    CountNumber = itemUpdate.Item2;
-                }
+                CountNumber = itemUpdate.Item2;
             }
-
         }
 
 

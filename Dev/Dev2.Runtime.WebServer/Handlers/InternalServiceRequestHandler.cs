@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.Text;
 using System.Threading;
 using Dev2.Common;
 using Dev2.Communication;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Control;
@@ -113,18 +113,25 @@ namespace Dev2.Runtime.WebServer.Handlers
             dataObject.EsbChannel = channel;
             dataObject.ServiceName = request.ServiceName;
 
-            var resource = ResourceCatalog.Instance.GetResource(workspaceID, request.ServiceName);
-
+            var resource = request.ResourceID != Guid.Empty ? ResourceCatalog.Instance.GetResource(workspaceID, request.ResourceID) : ResourceCatalog.Instance.GetResource(workspaceID, request.ServiceName);
             var isManagementResource = false;
+            if (!string.IsNullOrEmpty(request.TestName))
+            {
+                dataObject.TestName = request.TestName;
+                dataObject.IsServiceTestExecution = true;
+            }
             if (resource != null)
             {
                 dataObject.ResourceID = resource.ResourceID;
-                if (!string.IsNullOrEmpty(request.TestName))
-                {
-                    dataObject.TestName = request.TestName;
-                    dataObject.IsServiceTestExecution = true;
-                }
+                dataObject.SourceResourceID = resource.ResourceID;
                 isManagementResource = ResourceCatalog.Instance.ManagementServices.ContainsKey(resource.ResourceID);
+            }
+            else
+            {
+                if (request.ResourceID != Guid.Empty)
+                {
+                    dataObject.ResourceID = request.ResourceID;
+                }
             }
 
             dataObject.ClientID = Guid.Parse(connectionId);

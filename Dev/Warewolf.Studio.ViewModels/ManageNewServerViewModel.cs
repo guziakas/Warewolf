@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,6 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Common.Interfaces.Threading;
-using Dev2.ConnectionHelpers;
 using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.Practices.Prism.Commands;
@@ -91,31 +90,22 @@ namespace Warewolf.Studio.ViewModels
             : this(updateManager, aggregator, asyncWorker, executor)
         {
             VerifyArgument.IsNotNull("serverSource", serverSource);
-            _serverSource = serverSource;
+            
             _warewolfserverName = updateManager.ServerName;
-
-            Item = new ServerSource
+            AsyncWorker.Start(() => updateManager.FetchSource(serverSource.ID), source =>
             {
-                AuthenticationType = _serverSource.AuthenticationType,
-                ID = _serverSource.ID,
-                Name = _serverSource.Name,
-                Password = _serverSource.Password,
-                ResourcePath = _serverSource.ResourcePath,
-                ServerName = _serverSource.ServerName,
-                UserName = _serverSource.UserName,
-                Address = _serverSource.Address
-            };
 
-            GetLoadComputerNamesTask(() =>
-                {
-                    FromModel(_serverSource);
-                    SetupHeaderTextFromExisting();
-                }
-            );
-            if (string.IsNullOrEmpty(TestMessage))
-            {
-                FromModel(_serverSource);
-            }
+                _serverSource = source;
+                _serverSource.ResourcePath = serverSource.ResourcePath;
+                GetLoadComputerNamesTask(() =>
+                    {
+                        FromModel(_serverSource);
+                        Item = ToModel();
+                        SetupHeaderTextFromExisting();
+                    }
+                );
+               
+            });
         }
 
         void SetupHeaderTextFromExisting()
@@ -258,14 +248,17 @@ namespace Warewolf.Studio.ViewModels
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                    var res = requestServiceNameViewModel.ShowSaveDialog();
 
                     if (res == MessageBoxResult.OK)
                     {
-                        ResourceName = RequestServiceNameViewModel.Result.ResourceName.Name;
+                        ResourceName = requestServiceNameViewModel.ResourceName.Name;
                         var src = ToSource();
-                        src.ResourcePath = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                        src.ResourcePath = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(src);
+                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ID);
                         Item = src;
                         _serverSource = src;
                         SetupHeaderTextFromExisting();
@@ -289,11 +282,13 @@ namespace Warewolf.Studio.ViewModels
         void Save(IServerSource source)
         {
             _updateManager.Save(source);
+            
         }
         public override void Save()
         {
             SaveConnection();
-            ConnectControlSingleton.Instance.ReloadServer();
+            //ConnectControlSingleton.Instance.ReloadServer();
+            
         }
 
         public override IServerSource ToModel()
@@ -337,6 +332,7 @@ namespace Warewolf.Studio.ViewModels
                     Address = GetAddressName(),
                     AuthenticationType = AuthenticationType,
                     Name = ResourceName,
+                    UserName = UserName,
                     Password = Password,
                     ID = _serverSource?.ID ?? SelectedGuid
                 }
@@ -356,13 +352,13 @@ namespace Warewolf.Studio.ViewModels
         {
             if (Testing)
                 return false;
-            if (String.IsNullOrEmpty(Address))
+            if (string.IsNullOrEmpty(Address))
             {
                 return false;
             }
             if (AuthenticationType == AuthenticationType.User)
             {
-                return !String.IsNullOrEmpty(UserName) && !String.IsNullOrEmpty(Password);
+                return !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password);
             }
             return true;
         }
@@ -405,7 +401,7 @@ namespace Warewolf.Studio.ViewModels
             _token, exception =>
             {
                 FailedTesting();
-                TestMessage = exception?.Message ?? "Failed";
+                TestMessage = GetExceptionMessage(exception);
             });
         }
 
@@ -718,5 +714,7 @@ namespace Warewolf.Studio.ViewModels
 
 
         string ServerName { get; set; }
+
+        IServerSource FetchSource(Guid resourceID);
     }
 }

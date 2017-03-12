@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,30 +12,34 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.Binary_Objects;
 using Dev2.Data.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
+using Dev2.Diagnostics.Debug;
 using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Value_Objects;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
+using Warewolf.Resource.Messages;
 using Warewolf.Storage;
 
 // ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 // ReSharper restore CheckNamespace
 {
-    [ToolDescriptorInfo("Execution-ForEach", "ForEach", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Loop Constructs", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_LoopConstruct_For Each_Tags")]
+    [ToolDescriptorInfo("Execution-ForEach", "ForEach", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Loop Constructs", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_LoopConstruct_For Each")]
     public class DsfForEachActivity : DsfActivityAbstract<bool>
     {
         string _previousParentId;
@@ -170,8 +174,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         private Variable<string> _origOutput = new Variable<string>("origOutput");
         // ReSharper restore FieldCanBeMadeReadOnly.Local
         readonly object _forEachExecutionObject = new object();
-        
-
+        private string _childUniqueID;
+        private Guid _originalUniqueID;
 
         #endregion Properties
 
@@ -208,6 +212,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         public override void UpdateDebugParentID(IDSFDataObject dataObject)
         {
             WorkSurfaceMappingId = Guid.Parse(UniqueID);
+            var isNestedForEach = dataObject.ForEachNestingLevel > 0;
+            if (!isNestedForEach || _originalUniqueID == Guid.Empty)
+            {
+                _originalUniqueID = WorkSurfaceMappingId;
+            }
             UniqueID = dataObject.ForEachNestingLevel > 0 ? Guid.NewGuid().ToString() : UniqueID;
         }
 
@@ -728,7 +737,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     }
                     dataObject.ParentInstanceID = UniqueID;
                     // ReSharper disable RedundantTypeArgumentsOfMethod
-                    context.ScheduleFunc<string, bool>(DataFunc, UniqueID, ActivityCompleted);
+                    context.ScheduleFunc(DataFunc, UniqueID, ActivityCompleted);
                     // ReSharper restore RedundantTypeArgumentsOfMethod
                     return;
                 }
@@ -770,6 +779,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion Get Inputs/Outputs
+
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
+        }
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -822,8 +837,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     DispatchDebugState(dataObject, StateType.After, update);
                 }
                 exePayload.InnerActivity = innerA;
-
-                while(itr.HasMore())
+                
+                while (itr.HasMore())
                 {
                     operationalData = exePayload;
                     int idx = exePayload.IndexIterator.FetchNextIndex();
@@ -832,7 +847,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     {
                         innerupdate = idx;
                     }
-
+                    _childUniqueID = exeAct.UniqueID;
                     exeAct.Execute(dataObject, innerupdate);
 
                     operationalData.IncIterationCount();
@@ -840,14 +855,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 if(errors.HasErrors())
                 {
                     allErrors.MergeErrors(errors);
-                }
-
-                if(dataObject.IsDebugMode())
-                {
-                    _debugOutputs = new List<DebugItem>();
-                    _debugOutputs = new List<DebugItem>();
-                    DispatchDebugState(dataObject, StateType.Duration, 0);
-                }
+                }                
             }
             catch(Exception e)
             {
@@ -863,11 +871,39 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         RestoreHandlerFn();
                     }
                 }
+                var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
+                if (dataObject.IsServiceTestExecution)
+                {
+                    var serviceTestSteps = serviceTestStep?.Children;
+                    UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList());
+                    if (serviceTestStep != null)
+                    {
+                        var testRunResult = new TestRunResult();
+                        GetFinalTestRunResult(serviceTestStep, testRunResult);
+                        serviceTestStep.Result = testRunResult;
+                        
+                    }
+                }
                 dataObject.ParentInstanceID = _previousParentId;
                 dataObject.ForEachNestingLevel--;
                 dataObject.IsDebugNested = false;
+                if (dataObject.IsDebugMode())
+                {
+                    if (dataObject.IsServiceTestExecution && serviceTestStep!=null)
+                    {
+                        var debugItems = TestDebugMessageRepo.Instance.GetDebugItems(dataObject.ResourceID, dataObject.TestName);
+                        debugItems = debugItems.Where(state => state.WorkSurfaceMappingId == serviceTestStep.UniqueId).ToList();
+                        var debugStates = debugItems.LastOrDefault();
+
+                        var debugItemStaticDataParams = new DebugItemServiceTestStaticDataParams(serviceTestStep.Result.Message, serviceTestStep.Result.RunTestResult == RunResult.TestFailed);
+                        DebugItem itemToAdd = new DebugItem();
+                        itemToAdd.AddRange(debugItemStaticDataParams.GetDebugItemResult());
+                        debugStates?.AssertResultList?.Add(itemToAdd);
+                    }
+                    DispatchDebugState(dataObject, StateType.Duration, 0);
+                }
                 // Handle Errors
-                if(allErrors.HasErrors())
+                if (allErrors.HasErrors())
                 {
                     dataObject.ParentInstanceID = _previousParentId;
                     dataObject.ForEachNestingLevel--;
@@ -886,6 +922,33 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 }
             }
         }
+
+        private static void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult)
+        {
+            var nonPassingSteps = serviceTestStep.Children?.Where(step => step.Result?.RunTestResult != RunResult.TestPassed).ToList();
+            if (nonPassingSteps != null && nonPassingSteps.Count == 0)
+            {
+                testRunResult.Message = Messages.Test_PassedResult;
+                testRunResult.RunTestResult = RunResult.TestPassed;
+            }
+            else
+            {
+                if(nonPassingSteps != null)
+                {
+                    var failMessage = string.Join(Environment.NewLine, nonPassingSteps.Select(step => step.Result.Message));
+                    testRunResult.Message = failMessage;
+                }
+                testRunResult.RunTestResult = RunResult.TestFailed;
+            }
+
+
+            
+        }
+
+        private void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps)
+        {
+            ServiceTestHelper.UpdateDebugStateWithAssertions(dataObject,serviceTestTestSteps,_childUniqueID);            
+        }        
 
         #region GetForEachInputs/Outputs
 

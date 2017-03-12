@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -49,6 +49,7 @@ namespace Dev2.Common
             };
         }
 
+        public const string ArmResultText = "Flow Arm";
         // ReSharper disable InconsistentNaming
         //Default TimeoutValue
         // ReSharper disable UnusedMember.Global
@@ -278,6 +279,7 @@ namespace Dev2.Common
 
         // Storage Cache Constants
         public const int DefaultColumnSizeLvl1 = 10;
+        public const int LogFileNumberOfLines = 15;
 
         public const int DefaultStorageSegments = 1;
         public const int DefaultStorageSegmentSize = 8 * 1024 * 1024; // 8 MB default buffer size ;)
@@ -384,11 +386,18 @@ or type_desc LIKE '%Procedure%'";
 
         public const string SchemaQueryMySql = @"SHOW PROCEDURE STATUS;";
 
-        public const string SchemaQueryPostgreSql = @"SELECT  p.proname as Name, current_database() as Db
-FROM    pg_catalog.pg_namespace n
-JOIN    pg_catalog.pg_proc p
-ON      p.pronamespace = n.oid
-WHERE   n.nspname = 'public'
+        public const string SchemaQueryPostgreSql = @"
+select 
+    pp.proname as Name,
+    current_database() as Db,    
+    pg_get_functiondef(pp.oid),
+    pp.proretset,
+    t.typname
+from pg_proc pp
+inner join pg_namespace pn on (pp.pronamespace = pn.oid)
+inner join pg_language pl on (pp.prolang = pl.oid)
+inner join pg_type t on (pp.prorettype = t.oid)
+where pn.nspname = 'public';
 ";
 
         public const string SchemaQueryOracle = @"SELECT OBJECT_NAME AS Name,OWNER AS Db,OBJECT_TYPE as ROUTINE_TYPE FROM ALL_OBJECTS WHERE OWNER = '{0}' AND OBJECT_TYPE IN('FUNCTION','PROCEDURE')";
@@ -600,7 +609,7 @@ WHERE   n.nspname = 'public'
 
         public static string DropboxPathNotFoundException = "Dropbox location cannot be found";
         public static string DropboxPathNotFileException = "Please specify the path of a file in Dropbox";
-        public static string DropBoxSucces = "Success";
+        public static string DropBoxSuccess = "Success";
         public static string DropBoxFailure = "Failed";
         public static string GlobalCounterName = "All";
         public static string Warewolf = "Warewolf";

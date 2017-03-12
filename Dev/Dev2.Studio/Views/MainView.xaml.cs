@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,9 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Data;
@@ -29,6 +31,7 @@ using Dev2.Studio.Core;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Dev2.ViewModels;
+using Dev2.Workspaces;
 using Infragistics.Windows.DockManager;
 
 // ReSharper disable CheckNamespace
@@ -39,8 +42,14 @@ namespace Dev2.Studio.Views
         private static bool _isSuperMaximising;
         private bool _isLocked;
         readonly string _savedLayout;
+        private static MainView _this;
 
         #region Constructor
+
+        public static MainView GetInstance()
+        {
+            return _this;
+        }
 
         public MainView()
         {
@@ -76,6 +85,8 @@ namespace Dev2.Studio.Views
                     }
                 }
             }
+
+            _this = this;
         }
 
         private string FilePath => Path.Combine(new[]
@@ -114,9 +125,7 @@ namespace Dev2.Studio.Views
         {
             var handle = new WinInterop.WindowInteropHelper(this).Handle;
             var handleSource = WinInterop.HwndSource.FromHwnd(handle);
-            if (handleSource == null)
-                return;
-            handleSource.AddHook(WindowProc);
+            handleSource?.AddHook(WindowProc);
         }
 
         private static IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -186,6 +195,10 @@ namespace Dev2.Studio.Views
 
         private void Shell_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
+            {
+                ResetToStartupView();
+            }
             if (e.Key == Key.Home && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
                 var imageWindow = new ImageWindow();
@@ -198,6 +211,10 @@ namespace Dev2.Studio.Views
             if (e.Key == Key.I && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
 
+            }
+            if (e.Key == Key.F1)
+            {
+                Process.Start(Warewolf.Studio.Resources.Languages.HelpText.WarewolfHelpURL);
             }
             if (e.Key == Key.F11 && _isLocked)
             {
@@ -216,8 +233,86 @@ namespace Dev2.Studio.Views
             }
         }
 
-        void OnLoaded(object sender, RoutedEventArgs e)
+        public void ResetToStartupView()
         {
+            var windowCollection = System.Windows.Application.Current.Windows;
+            var mainViewModel = DataContext as MainViewModel;
+
+            foreach (var window in windowCollection)
+            {
+                var window1 = window as Window;
+
+                if (window1 != null && window1.Name != "MainViewWindow")
+                {
+                    if (window1.GetType().Name == "ToolWindowHostWindow")
+                    {
+                        var contentPane = window1.Content as PaneToolWindow;
+
+                        var splitPane = contentPane?.Pane;
+
+                        if (splitPane != null)
+                            foreach (var item in splitPane.Panes)
+                            {
+                                var pane = item as ContentPane;
+
+                                RemoveWorkspaceItems(pane, mainViewModel);
+                            }
+                    }
+                    window1.Close();
+                }
+            }
+
+            for (int i = TabManager.Items.Count - 1; i>= 0; i--)
+            {
+                var item = TabManager.Items[i];
+                var contentPane = item as ContentPane;
+                RemoveWorkspaceItems(contentPane, mainViewModel);
+            }
+            
+            TabManager.Items.Clear();
+            
+            if (mainViewModel != null)
+            {
+                mainViewModel.ExplorerViewModel.SearchText = string.Empty;
+                mainViewModel.ToolboxViewModel.SearchTerm = string.Empty;
+
+                if(mainViewModel.LocalhostServer.IsConnected)
+                {
+                    if (mainViewModel.ActiveServer != mainViewModel.LocalhostServer) {
+                        mainViewModel.SetActiveEnvironment(mainViewModel.LocalhostServer.EnvironmentID);
+                        mainViewModel.SetActiveServer(mainViewModel.LocalhostServer);
+                    }
+
+                    foreach (var server in mainViewModel.ExplorerViewModel.ConnectControlViewModel.Servers)
+                    {
+                        if (server.DisplayName != mainViewModel.LocalhostServer.DisplayName && server.IsConnected)
+                        {
+                            server.Disconnect();
+                        }
+                    }
+
+                    for (var i = 0;  i < mainViewModel.ExplorerViewModel.Environments.Count-1; i++)
+                    {
+                        var remoteEnvironment = mainViewModel.ExplorerViewModel.Environments.FirstOrDefault(model => model.ResourceId != Guid.Empty);
+                        mainViewModel.ExplorerViewModel.Environments.Remove(remoteEnvironment);
+                    }
+                }
+            }
+        }
+
+        private static void RemoveWorkspaceItems(ContentPane pane, MainViewModel mainViewModel)
+        {
+            var item1 = pane?.Content as WorkflowDesignerViewModel;
+            if (item1?.ResourceModel != null)
+                WorkspaceItemRepository.Instance.ClearWorkspaceItems(item1.ResourceModel);
+            item1?.RemoveAllWorkflowName(item1.DisplayName);
+
+            var workSurfaceContextViewModel = pane?.DataContext as WorkSurfaceContextViewModel;
+            mainViewModel?.Items.Remove(workSurfaceContextViewModel);
+        }
+
+        void OnLoaded(object sender, RoutedEventArgs e)
+         {
             var xmlDocument = new XmlDocument();
             if (_savedLayout != null)
             {
@@ -236,16 +331,18 @@ namespace Dev2.Studio.Views
         private static void SetMenuExpanded(XmlDocument xmlDocument, MainViewModel mainViewModel)
         {
             var elementsByTagNameMenuExpanded = xmlDocument.GetElementsByTagName("MenuExpanded");
-            if (elementsByTagNameMenuExpanded.Count > 0)
+            if(elementsByTagNameMenuExpanded.Count > 0)
             {
                 var menuExpandedString = elementsByTagNameMenuExpanded[0].InnerXml;
 
                 bool menuExpanded;
-                if (bool.TryParse(menuExpandedString, out menuExpanded))
+                if(bool.TryParse(menuExpandedString, out menuExpanded))
                 {
                     mainViewModel.MenuExpanded = menuExpanded;
                 }
             }
+            else
+                mainViewModel.MenuExpanded = true;
         }
 
         private static void SetMenuPanelOpen(XmlDocument xmlDocument, MainViewModel mainViewModel)
@@ -276,6 +373,8 @@ namespace Dev2.Studio.Views
                     mainViewModel.MenuViewModel.IsPanelLockedOpen = panelLockedOpen;
                 }
             }
+            else
+                mainViewModel.MenuViewModel.IsPanelLockedOpen = false;
         }
 
         #region Implementation of IWin32Window

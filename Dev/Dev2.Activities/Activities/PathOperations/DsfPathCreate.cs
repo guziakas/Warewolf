@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
 using Dev2.PathOperations;
@@ -33,7 +34,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
     /// Status : New
     /// Purpose : To create an activity to create files on FTP, FTPS and file system
     /// </summary>
-    [ToolDescriptorInfo("FileFolder-Create", "Create", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Create_Tags")]
+    [ToolDescriptorInfo("FileFolder-Create", "Create", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Create")]
     public class DsfPathCreate : DsfAbstractFileActivity, IPathOutput, IPathOverwrite
     {
 
@@ -137,13 +138,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

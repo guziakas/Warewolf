@@ -93,10 +93,7 @@ namespace Warewolf.UIBindingTests.Variables
                             item.DisplayName = variableName;
                             item.IsUsed = isUsed;
                             item.ColumnIODirection = ioDirection;
-                            if (existingRecordSet != null)
-                            {
-                                existingRecordSet.Children.Add(item);
-                            }
+                            existingRecordSet?.Children.Add(item);
                         }
                     }
                 }
@@ -118,7 +115,7 @@ namespace Warewolf.UIBindingTests.Variables
         [Then(@"""(.*)"" is ""(.*)""")]
         public void ThenIs(string controlName, string enabledString)
         {
-            Utils.CheckControlEnabled(controlName, enabledString, ScenarioContext.Current.Get<ICheckControlEnabledView>(Utils.ViewNameKey));
+            Utils.CheckControlEnabled(controlName, enabledString, ScenarioContext.Current.Get<ICheckControlEnabledView>(Utils.ViewNameKey), Utils.ViewNameKey);
         }
 
         [When(@"I delete unassigned variables")]

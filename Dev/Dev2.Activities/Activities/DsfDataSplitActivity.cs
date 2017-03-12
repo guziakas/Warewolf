@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
@@ -22,8 +23,8 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Validation;
@@ -36,7 +37,7 @@ using WarewolfParserInterop;
 // ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
-    [ToolDescriptorInfo("Data-DataSplit", "Data Split", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Data Split_Tags")]
+    [ToolDescriptorInfo("Data-DataSplit", "Data Split", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Data_Split")]
     public class DsfDataSplitActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Fields
@@ -172,6 +173,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     if(!string.IsNullOrEmpty(item))
                     {
                         string val = item;
+                        
                         var blankRows = new List<int>();
                         if(SkipBlankRows)
                         {
@@ -479,15 +481,20 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         if(!string.IsNullOrEmpty(t.At))
                         {
                             entry = compiler.EvalAsListOfStrings(t.At, update).FirstOrDefault();
-
-                           
+                            if (entry != null && (entry.Contains(@"\r\n") || entry.Contains(@"\n")))
+                            {
+                                var match = Regex.Match(stringToSplit, @"[\r\n]+");
+                                if (match.Success && !SkipBlankRows)
+                                {
+                                    stringToSplit = Regex.Escape(stringToSplit);
+                                    dtb.ToTokenize = stringToSplit;
+                                }
+                            }
                             string escape = t.EscapeChar;
                             if(!String.IsNullOrEmpty(escape))
                             {
-                                escape = compiler.EvalAsListOfStrings(t.EscapeChar, update).FirstOrDefault();
-                              
+                                escape = compiler.EvalAsListOfStrings(t.EscapeChar, update).FirstOrDefault();                              
                             }
-
                             dtb.AddTokenOp(entry, t.Include, escape);
                         }
                         break;
@@ -676,5 +683,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion
+
+        public override List<string> GetOutputs()
+        {
+            return ResultsCollection.Select(dto => dto.OutputVariable).ToList();
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace Dev2.Common
 {
@@ -73,17 +74,7 @@ namespace Dev2.Common
         /// </returns>
         private bool CanUseEnumerator()
         {
-            bool result = false;
-
-            if (_ops != null)
-            {
-                // are all the ops token based?!
-                if (_ops.Count(op => op.CanUseEnumerator(_isReversed)) == _ops.Count)
-                {
-                    result = true;
-                }
-            }
-
+            bool result = _ops != null && _ops?.Count(op => op.CanUseEnumerator(_isReversed)) == _ops.Count;
             return result;
         }
 
@@ -210,14 +201,7 @@ namespace Dev2.Common
             try
             {
                 // we can be smart about the operations ;)
-                if (_useEnumerator)
-                {
-                    result = _ops[_opPointer].ExecuteOperation(_charEnumerator, _startIdx, _masterLen, _isReversed);
-                }
-                else
-                {
-                    result = _ops[_opPointer].ExecuteOperation(_tokenParts, _startIdx, _isReversed);
-                }
+                result = _useEnumerator ? _ops[_opPointer].ExecuteOperation(_charEnumerator, _startIdx, _masterLen, _isReversed) : _ops[_opPointer].ExecuteOperation(_tokenParts, _startIdx, _isReversed);
 
                 MoveStartIndex(result.Length + _ops[_opPointer].OpLength());
                 MoveOpPointer();

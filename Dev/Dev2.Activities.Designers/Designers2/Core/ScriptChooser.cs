@@ -1,3 +1,4 @@
+using System.Linq;
 using Dev2.Studio.Core.Messages;
 
 namespace Dev2.Activities.Designers2.Core
@@ -20,15 +21,15 @@ namespace Dev2.Activities.Designers2.Core
             {
                 if (args.PropertyName == @"SelectedFiles")
                 {
-                    if (chooserMessage.SelectedFiles != null)
+                    if (chooserMessage.SelectedFiles == null || !chooserMessage.SelectedFiles.Any())
                     {
-                        if (string.IsNullOrEmpty(includeFile))
+                        includeFile = "";
+                    }
+                    else
+                    {
+                        if (chooserMessage.SelectedFiles != null)
                         {
                             includeFile = string.Join(Separator, chooserMessage.SelectedFiles);
-                        }
-                        else
-                        {
-                            includeFile += Separator + string.Join(Separator, chooserMessage.SelectedFiles);
                         }
                     }
                 }

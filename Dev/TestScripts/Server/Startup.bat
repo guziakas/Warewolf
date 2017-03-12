@@ -33,26 +33,56 @@ if %errorLevel% == 0 (
 @echo on
 
 REM ** Cleanup **
-call "%~dp0Cleanup.bat"
+IF EXIST "%~dp0Cleanup.bat" (
+	call "%~dp0Cleanup.bat"
+) else (
+	IF EXIST "%~dp0qtcleanup.bat" (
+		call "%~dp0qtcleanup.bat"
+	)
+)
+
+REM ** Init path to DotCover Exe **
+IF NOT "%1"=="" (
+	IF EXIST "%LocalAppData%\JetBrains\Installations\dotCover07\dotCover.exe" (
+		set DotCoverExePath="%LocalAppData%\JetBrains\Installations\dotCover07\dotCover.exe"
+	) else (
+		set DotCoverExePath=%1
+	)
+)
 
 REM Init paths to Warewolf server under test
 IF EXIST "%DeploymentDirectory%\DebugServer.zip" powershell.exe -nologo -noprofile -command "& { Expand-Archive '%DeploymentDirectory%\DebugServer.zip' '%DeploymentDirectory%\Server' -Force }"
 IF "%DeploymentDirectory%"=="" IF EXIST "%~dp0..\..\Dev2.Server\bin\Debug\Warewolf Server.exe" SET DeploymentDirectory=%~dp0..\..\Dev2.Server\bin\Debug
 IF "%DeploymentDirectory%"=="" IF EXIST "%~dp0Server\Warewolf Server.exe" SET DeploymentDirectory=%~dp0Server
 IF "%DeploymentDirectory%"=="" IF EXIST "%~dp0Warewolf Server.exe" SET DeploymentDirectory=%~dp0
+IF "%DeploymentDirectory%"=="" IF EXIST "%~dp0..\Warewolf Server.exe" SET DeploymentDirectory=%~dp0..
+IF "%DeploymentDirectory%"=="" IF EXIST "%~dp0..\..\Warewolf Server.exe" SET DeploymentDirectory=%~dp0..\..
+IF "%DeploymentDirectory%"=="" IF EXIST "%~dp0..\..\..\Warewolf Server.exe" SET DeploymentDirectory=%~dp0..\..\..
 IF EXIST "%DeploymentDirectory%\Server\Warewolf Server.exe" SET DeploymentDirectory=%DeploymentDirectory%\Server
 IF EXIST "%DeploymentDirectory%\ServerStarted" DEL "%DeploymentDirectory%\ServerStarted"
 
 REM ** Try Refresh Warewolf Server Bin Resources and Tests
-IF NOT EXIST "%DeploymentDirectory%\Resources" IF EXIST "%~dp0..\..\Resources - Debug\Resources" echo d | xcopy /S /Y "%~dp0..\..\Resources - Debug\Resources" "%DeploymentDirectory%\Resources"
-IF NOT EXIST "%DeploymentDirectory%\Tests" IF EXIST "%~dp0..\..\Resources - Debug\Tests" echo d | xcopy /S /Y "%~dp0..\..\Resources - Debug\Tests" "%DeploymentDirectory%\Tests"
+IF EXIST "%~dp0..\..\Resourses - ServerTests" echo d | xcopy /S /Y "%~dp0..\..\Resources - ServerTests" "%DeploymentDirectory%"
+IF EXIST "%~dp0..\..\Resourses - Release" echo d | xcopy /S /Y "%~dp0..\..\Resources - Release" "%DeploymentDirectory%"
 
 REM ** Try Refresh Warewolf ProgramData Resources and Tests
-IF NOT EXIST "%ProgramData%\Warewolf\Resources" IF EXIST "%DeploymentDirectory%\Resources" echo d | xcopy /S /Y "%DeploymentDirectory%\Resources" "%ProgramData%\Warewolf\Resources"
-IF NOT EXIST "%ProgramData%\Warewolf\Tests" IF EXIST "%DeploymentDirectory%\Tests" echo d | xcopy /S /Y "%DeploymentDirectory%\Tests" "%ProgramData%\Warewolf\Tests"
+IF EXIST "%DeploymentDirectory%\Resources - ServerTests" echo d | xcopy /S /Y "%DeploymentDirectory%\Resources - ServerTests" "%ProgramData%\Warewolf"
+IF EXIST "%DeploymentDirectory%\Resources - Release" echo d | xcopy /S /Y "%DeploymentDirectory%\Resources - Release" "%ProgramData%\Warewolf"
 
 REM ** Start Warewolf server from deployed binaries **
-IF EXIST %windir%\nircmd.exe (nircmd elevate "%DeploymentDirectory%\Warewolf Server.exe") else (START "%DeploymentDirectory%\Warewolf Server.exe" /D "%DeploymentDirectory%" "Warewolf Server.exe")
+IF EXIST %windir%\nircmd.exe (
+	IF NOT "%1"=="" (
+		nircmd elevate %DotCoverExePath% cover /TargetExecutable="%DeploymentDirectory%\Warewolf Server.exe" /LogFile="%ProgramData%\Warewolf\Server Log\dotCover.log" /Output="%ProgramData%\Warewolf\Server Log\dotCover.dcvr"
+	) else (
+		nircmd elevate "%DeploymentDirectory%\Warewolf Server.exe"
+	)
+) else (
+	IF NOT "%1"=="" (
+		%DotCoverExePath% cover /TargetExecutable="%DeploymentDirectory%\Warewolf Server.exe" /LogFile="%ProgramData%\Warewolf\Server Log\dotCover.log" /Output="%ProgramData%\Warewolf\Server Logs\dotCover.dcvr"
+	) else (
+		START "%DeploymentDirectory%\Warewolf Server.exe" /D "%DeploymentDirectory%" "Warewolf Server.exe"
+	)
+)
 @echo Started "%DeploymentDirectory%\Warewolf Server.exe".
 
 :WaitForServerStart

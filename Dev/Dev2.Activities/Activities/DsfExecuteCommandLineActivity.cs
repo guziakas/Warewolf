@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +24,7 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
@@ -37,7 +38,7 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Scripting-CMDScript", "CMD Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_CMD Script_Tags")]
+    [ToolDescriptorInfo("Scripting-CMDScript", "CMD Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_CMD_Script")]
     public class DsfExecuteCommandLineActivity : DsfActivityAbstract<string>
     {
         #region Fields
@@ -89,6 +90,11 @@ namespace Dev2.Activities
             }
         }
 
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { CommandResult };
+        }
         #region Overrides of DsfNativeActivity<string>
 
         public DsfExecuteCommandLineActivity()
@@ -154,10 +160,7 @@ namespace Dev2.Activities
                             //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
                             foreach(var region in DataListCleaningUtils.SplitIntoRegions(CommandResult))
                             {
-                                if(dataObject.Environment != null)
-                                {
-                                    dataObject.Environment.Assign(region, readValue, update == 0 ? counter : update);
-                                }
+                                dataObject.Environment?.Assign(region, readValue, update == 0 ? counter : update);
                             }
                             counter++;
                             errorReader.Close();
@@ -449,13 +452,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == CommandResult);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == CommandResult);
-                if(itemUpdate != null)
-                {
-                    CommandResult = itemUpdate.Item2;
-                }
+                CommandResult = itemUpdate.Item2;
             }
         }
 

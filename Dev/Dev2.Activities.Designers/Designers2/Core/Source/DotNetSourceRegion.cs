@@ -35,7 +35,7 @@ namespace Dev2.Activities.Designers2.Core.Source
 
         public DotNetSourceRegion(IPluginServiceModel model, ModelItem modelItem)
         {
-            LabelWidth = 70;
+            LabelWidth = 74;
             ToolRegionName = "DotNetSourceRegion";
             SetInitialValues();
             Dependants = new List<IToolRegion>();
@@ -46,13 +46,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             IsEnabled = true;
             _modelItem = modelItem;
             SourceId = modelItem.GetProperty<Guid>("SourceId");
-            SourcesHelpText = Warewolf.Studio.Resources.Languages.Core.PluginServiceSourcesHelp;
-            EditSourceHelpText = Warewolf.Studio.Resources.Languages.Core.PluginServiceEditSourceHelp;
-            NewSourceHelpText = Warewolf.Studio.Resources.Languages.Core.PluginServiceNewSourceHelp;
+            SourcesHelpText = Warewolf.Studio.Resources.Languages.HelpText.PluginServiceSourcesHelp;
+            EditSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.PluginServiceEditSourceHelp;
+            NewSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.PluginServiceNewSourceHelp;
 
-            SourcesTooltip = Warewolf.Studio.Resources.Languages.Core.ManagePluginServiceSourcesTooltip;
-            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManagePluginServiceEditSourceTooltip;
-            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManagePluginServiceNewSourceTooltip;
+            SourcesTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManagePluginServiceSourcesTooltip;
+            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManagePluginServiceEditSourceTooltip;
+            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManagePluginServiceNewSourceTooltip;
 
             if (SourceId != Guid.Empty)
             {
@@ -168,10 +168,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 _sourceId = value;
-                if (_modelItem != null)
-                {
-                    _modelItem.SetProperty("SourceId", value);
-                }
+                _modelItem?.SetProperty("SourceId", value);
             }
         }
 

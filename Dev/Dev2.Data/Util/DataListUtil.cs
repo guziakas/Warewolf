@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +22,7 @@ using Dev2.Common.Interfaces.Enums.Enums;
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
 using Dev2.Data.Binary_Objects;
 using Dev2.Data.Interfaces;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Newtonsoft.Json;
 using Warewolf.Security.Encryption;
@@ -215,11 +216,11 @@ namespace Dev2.Data.Util
         public static bool IsValueRecordset(string value) => RecSetCommon.IsValueRecordset(value);
 
         /// <summary>
-        /// Determines whether the value is a recordset.
+        /// Determines whether the value is a scalar.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>
-        ///   <c>true</c> if [value is recordset] [the specified value]; otherwise, <c>false</c>.
+        ///   <c>true</c> if [value is scalar] [the specified value]; otherwise, <c>false</c>.
         /// </returns>
         public static bool IsValueScalar(string value) => ScalarCommon.IsValueScalar(value);
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,6 @@
 using Dev2.Activities.Designers2.Rename;
 using Dev2.Activities.Specs.BaseTypes;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.ESB.Execution;
@@ -24,6 +23,7 @@ using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 using TechTalk.SpecFlow;
 using Unlimited.Applications.BusinessDesignStudio.Activities;

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -370,7 +370,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             Assert.IsTrue(textBox.HasError, "Expected [ True ] But got [ " + textBox.HasError + " ]");
         }
 
-        [TestMethod]
+         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("IntellisenseTextBoxTests_SetText")]
         public void IntellisenseTextBoxTests_SetText_FilterTypeIsScalarsOnlyAndTextIsScalar_ToolTipHasNoErrorMessage()
@@ -620,15 +620,6 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
         }
 
         [TestMethod]
-        public void IntellisenseBox_ErrorTooltip_ShouldBeSetTo_CurrentError()
-        {
-            IntellisenseTextBox textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.JsonObject };
-            textBox.CreateVisualTree();
-            textBox.Text = "[[City.]]";
-            Assert.IsTrue(textBox.HasError);
-        }
-
-        [TestMethod]
         public void IntellisenseBox_Function_HasIsCalcMode_SetTo_True()
         {
             IntellisenseTextBoxTestHelper textBoxTest = new IntellisenseTextBoxTestHelper { AllowUserCalculateMode = true };
@@ -641,14 +632,28 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
 
         [TestMethod]
         [Owner("Sanele Mthembu")]
-        [TestCategory("IntellisenseTextBoxTests_ValidateText")]
-        public void IntellisenseTextBoxTests_ValidateText_FilterTypeIsJsonObjectAndTextIsScalar_ToolTipHasErrorMessage()
+        [TestCategory("IntellisenseTextBoxTests_SetText")]
+        public void IntellisenseTextBoxTests_SetText_FilterTypeIsAllAndTextIsRecordset_ToolTipHasNoErrorMessage()
         {
-            IntellisenseTextBox textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.JsonObject };
-            textBox.CreateVisualTree();
-            textBox.Text = "[[City.]]";
-            Assert.IsTrue(textBox.HasError);
+            var textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.All };
+            textBox.Text = "[[People(*)]]";
+            Assert.IsFalse(textBox.HasError);
         }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("IntellisenseTextBoxTests_SetText")]
+        public void IntellisenseTextBoxTests_SetText_FilterTypeIsRecodsetFieldsAndTextMultipleRecordSetFields_ToolTipHasNoErrorMessage()
+        {
+            var textBox = new IntellisenseTextBox
+            {
+                FilterType = enIntellisensePartType.RecordsetFields,
+                AllowMultipleVariables = true
+            };
+            textBox.Text = "[[rec(*).warewolf]],[[rec(*).soa]]";
+            Assert.IsFalse(textBox.HasError);
+        }
+        
 
         [TestMethod]
         [Owner("Sanele Mthembu")]
@@ -664,28 +669,32 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
         [TestMethod]
         [Owner("Sanele Mthembu")]
         [TestCategory("IntellisenseTextBoxTests_ValidateText")]
-        public void IntellisenseTextBoxTests_ValidateText_FilterTypeIsJsonObjectAndTextIsInvalidJson_ToolTipHasErrorMessage()
-        {
-            IntellisenseTextBox textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.JsonObject };
-            textBox.CreateVisualTree();
-            textBox.Text = "[[@2City]]";
-            Assert.AreEqual("Variable name [[@2City]] begins with a number", textBox.ToolTip);
-            textBox.Text = "[[@&City]]";
-            Assert.AreEqual("Variable name [[@&City]] contains invalid character(s)", textBox.ToolTip);
-            textBox.Text = "@.";
-            Assert.AreEqual("Variable name @. contains invalid character(s)", textBox.ToolTip);
-            Assert.IsTrue(textBox.HasError);
-        }
-
-        [TestMethod]
-        [Owner("Sanele Mthembu")]
-        [TestCategory("IntellisenseTextBoxTests_ValidateText")]
         public void IntellisenseTextBoxTests_ValidateText_FilterTypeIsJsonObjectAndTextIsScalar_ToolTipHasNoErrorMessage()
         {
             var mockPresentationSource =new Mock<PresentationSource>();
             IntellisenseTextBoxTestHelper testHelper = new IntellisenseTextBoxTestHelper();
             testHelper.OnKeyDown(new KeyEventArgs(null, mockPresentationSource.Object, 0, Key.Escape));
             Assert.IsFalse(testHelper.IsDropDownOpen);
+        }
+
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("IntellisenseTextBoxTests_SetText")]
+        public void IntellisenseTextBoxTests_SetText_InvalidJsonArrayIndex_ShouldError()
+        {
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            mockDataListViewModel.Setup(model => model.Resource).Returns(new Mock<IResourceModel>().Object);
+            DataListSingleton.SetDataList(mockDataListViewModel.Object);
+            Mock<IIntellisenseProvider> intellisenseProvider = new Mock<IIntellisenseProvider>();
+            intellisenseProvider.Setup(a => a.HandlesResultInsertion).Returns(true);
+            intellisenseProvider.Setup(a => a.GetIntellisenseResults(It.IsAny<IntellisenseProviderContext>()))
+                .Returns(default(IList<IntellisenseProviderResult>));
+
+            var textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.JsonObject, IntellisenseProvider = intellisenseProvider.Object };
+            textBox.Text = "[[@this.new(1).val(x).s]]";
+            Assert.IsTrue(textBox.HasError);
+            Assert.AreEqual("Variable name [[@this.new(1).val(x).s]] contains invalid character(s). Only use alphanumeric _ and - ", textBox.ToolTip.ToString());
         }
     }
 

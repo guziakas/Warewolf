@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -73,12 +73,6 @@ namespace Dev2.Activities.Specs.Scheduler
         [Given(@"""(.*)"" has a username of ""(.*)"" and a Password of ""(.*)""")]
         public void GivenHasAUsernameOfAndAPasswordOf(string scheduleName, string userName, string password)
         {
-            if (userName.Contains('\\'))
-            {
-                var strings = userName.Split('\\');
-                userName = strings.Last();
-
-            }
             _scenarioContext.Add("UserName", userName);
             _scenarioContext.Add("Password", password);
         }
@@ -109,6 +103,7 @@ namespace Dev2.Activities.Specs.Scheduler
             scheduler.SelectedTask.UserName = _scenarioContext["UserName"].ToString();
             scheduler.SelectedTask.Password = _scenarioContext["Password"].ToString();
             scheduler.SelectedTask.WorkflowName = _scenarioContext["WorkFlow"].ToString();
+            scheduler.SelectedTask.ResourceId = new Guid("acb75027-ddeb-47d7-814e-a54c37247ec1");
             scheduler.SelectedTask.NumberOfHistoryToKeep = (int)_scenarioContext["HistoryCount"];
             scheduler.SelectedTask.Status = (SchedulerStatus)_scenarioContext["TaskStatus"];
             scheduler.Errors.ClearErrors();
@@ -259,9 +254,9 @@ namespace Dev2.Activities.Specs.Scheduler
         [Then(@"the Schedule task has ""(.*)"" error")]
         public void ThenTheScheduleTaskHasError(string error)
         {
-            if (error == "AN" && _scenarioContext["Error"] == null)
+            if (error == "AN" && (!_scenarioContext.ContainsKey("Error") || _scenarioContext["Error"] == null))
                 Assert.Fail("Error Expected");
-            if (error == "NO" && _scenarioContext["Error"] != null)
+            if (error == "NO" && _scenarioContext.ContainsKey("Error") && _scenarioContext["Error"] != null)
                 Assert.Fail(_scenarioContext["Error"].ToString());
         }
 
@@ -361,10 +356,7 @@ namespace Dev2.Activities.Specs.Scheduler
         public static void CleanupAfterTestScheduler()
         {
             var vm = _scenarioContext["Scheduler"] as SchedulerViewModel;
-            if (vm != null)
-            {
-                vm.DeleteCommand.Execute(vm.SelectedTask);
-            }
+            vm?.DeleteCommand.Execute(vm.SelectedTask);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +9,7 @@
 */
 
 using System;
+using System.Threading.Tasks;
 using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Factory;
 using Dev2.Studio.ViewModels.Diagnostics;
@@ -25,7 +26,7 @@ namespace Dev2.Studio.Diagnostics
             _environment = environment;
         }
 
-        protected override IExceptionViewModel CreateExceptionViewModel(Exception ex, ErrorSeverity severity)
+        protected override Task<IExceptionViewModel> CreateExceptionViewModel(Exception ex, ErrorSeverity severity)
         {
             return ExceptionFactory.CreateViewModel(ex, _environment, severity);
         }

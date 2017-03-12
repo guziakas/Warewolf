@@ -1,7 +1,7 @@
 
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +22,7 @@ using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.Enums;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
@@ -30,10 +31,11 @@ using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 using WarewolfParserInterop;
+// ReSharper disable CyclomaticComplexity
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Utility-SystemInformation", "Sys Info", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Sys Info_Tags")]
+    [ToolDescriptorInfo("Utility-SystemInformation", "Sys Info", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Sys_Info")]
     public class DsfGatherSystemInformationActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Fields
@@ -58,6 +60,12 @@ namespace Dev2.Activities
             {
                 _getSystemInformation = value;
             }
+        }
+
+
+        public override List<string> GetOutputs()
+        {
+            return SystemInformationCollection.Select(to => to.Result).ToList();
         }
 
         #region Overrides of DsfNativeActivity<string>
@@ -215,8 +223,12 @@ namespace Dev2.Activities
         {
             switch(enTypeOfSystemInformation)
             {
+                case enTypeOfSystemInformationToGather.ComputerName:
+                    return GetSystemInformation.GetComputerName();
                 case enTypeOfSystemInformationToGather.OperatingSystem:
                     return GetSystemInformation.GetOperatingSystemInformation();
+                case enTypeOfSystemInformationToGather.OperatingSystemVersion:
+                    return GetSystemInformation.GetOperatingSystemVersionInformation();
                 case enTypeOfSystemInformationToGather.ServicePack:
                     return GetSystemInformation.GetServicePackInformation();
                 case enTypeOfSystemInformationToGather.OSBitValue:
@@ -229,6 +241,10 @@ namespace Dev2.Activities
                     return GetSystemInformation.GetDiskSpaceAvailableInformation();
                 case enTypeOfSystemInformationToGather.DiskTotal:
                     return GetSystemInformation.GetDiskSpaceTotalInformation();
+                case enTypeOfSystemInformationToGather.VirtualMemoryAvailable:
+                    return GetSystemInformation.GetVirtualMemoryAvailableInformation();
+                case enTypeOfSystemInformationToGather.VirtualMemoryTotal:
+                    return GetSystemInformation.GetVirtualMemoryTotalInformation();
                 case enTypeOfSystemInformationToGather.PhysicalMemoryAvailable:
                     return GetSystemInformation.GetPhysicalMemoryAvailableInformation();
                 case enTypeOfSystemInformationToGather.PhysicalMemoryTotal:
@@ -247,8 +263,24 @@ namespace Dev2.Activities
                     return GetSystemInformation.GetUserNameInformation();
                 case enTypeOfSystemInformationToGather.Domain:
                     return GetSystemInformation.GetDomainInformation();
-                case enTypeOfSystemInformationToGather.NumberOfWarewolfAgents:
-                    return GetSystemInformation.GetNumberOfWareWolfAgentsInformation();
+                case enTypeOfSystemInformationToGather.NumberOfServerNICS:
+                    return GetSystemInformation.GetNumberOfNICS();
+                case enTypeOfSystemInformationToGather.MacAddress:
+                    return GetSystemInformation.GetMACAdresses();
+                case enTypeOfSystemInformationToGather.GateWayAddress:
+                    return GetSystemInformation.GetDefaultGateway();
+                case enTypeOfSystemInformationToGather.DNSAddress:
+                    return GetSystemInformation.GetDNSServer();
+                case enTypeOfSystemInformationToGather.IPv4Address:
+                    return GetSystemInformation.GetIPv4Adresses();
+                case enTypeOfSystemInformationToGather.IPv6Address:
+                    return GetSystemInformation.GetIPv6Adresses();
+                case enTypeOfSystemInformationToGather.WarewolfMemory:
+                    return GetSystemInformation.GetWarewolfServerMemory();
+                case enTypeOfSystemInformationToGather.WarewolfCPU:
+                    return GetSystemInformation.GetWarewolfCPU();
+                case enTypeOfSystemInformationToGather.WarewolfServerVersion:
+                    return GetSystemInformation.GetWareWolfVersion();
                 default:
                     throw new ArgumentOutOfRangeException("enTypeOfSystemInformation");
             }

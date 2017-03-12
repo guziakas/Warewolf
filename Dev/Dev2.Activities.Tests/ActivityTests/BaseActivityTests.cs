@@ -130,6 +130,20 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[Bob]]", dsfForEachItems[0].Name);
             Assert.AreEqual("[[Bob]]", dsfForEachItems[0].Value);
         }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfBaseActivity_GetOutputs")]
+        public void DsfBaseActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new MySimpleActivity { Input1 = "SomeText", Result = "[[Bob]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1,outputs.Count);
+            Assert.AreEqual("[[Bob]]",outputs[0]);
+        }
     }
 
     internal sealed class MySimpleActivity : DsfBaseActivity
@@ -139,18 +153,16 @@ namespace Dev2.Tests.Activities.ActivityTests
             DisplayName = "MySimpleActivty";
         }
 
-        public override string DisplayName { get; set; }
-
         [Inputs("My Input 1")]
         public string Input1 { get; set; }
 
         [Inputs("My Input 2")]
         public string Input2 { get; set; }
 
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             var result = evaluatedValues["Input1"] + " - " + evaluatedValues["Input2"];
-            return result;
+            return new List<string> { result };
         }
     }
     // ReSharper restore InconsistentNaming

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,6 +25,7 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
 using Warewolf.Tools.Specs.BaseTypes;
 using Dev2.Common.Interfaces;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 
 namespace Dev2.Activities.Specs.Toolbox.LoopConstructs.ForEach

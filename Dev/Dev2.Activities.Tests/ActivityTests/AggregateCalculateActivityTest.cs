@@ -7,6 +7,7 @@ using ActivityUnitTests;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+// ReSharper disable InconsistentNaming
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -76,6 +77,20 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             Assert.AreEqual(entry, "12");
 
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfAggregateCalculateActivity_GetOutputs")]
+        public void DsfAggregateCalculateActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfAggregateCalculateActivity { Expression = @"Sum([[scalar]], 10)", Result = "[[result]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[result]]", outputs[0]);
         }
 
         [TestMethod]

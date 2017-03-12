@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -45,7 +45,6 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 {
     public class SqlBulkInsertDesignerViewModel : ActivityCollectionDesignerViewModel<DataColumnMapping>
     {
-
         public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         readonly IEventAggregator _eventPublisher;
@@ -106,6 +105,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             {
                 IsSqlDatabase = SelectedDatabase.ServerType == enSourceType.SqlDatabase;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_SQL_Bulk_Insert;
         }
 
         #region Properties
@@ -380,10 +380,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     Databases.Add(database);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -393,10 +390,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
             if (!IsDatabaseSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -419,10 +413,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     Tables.Add(table);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -434,10 +425,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     ModelItemCollection.Clear();
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -464,16 +452,13 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     var mapping1 = mapping;
                     var oldColumn = oldColumns.FirstOrDefault(c => c.OutputColumn.ColumnName == mapping1.OutputColumn.ColumnName);
-                    if (oldColumn != null)
+                    if (oldColumn?.InputColumn != null)
                     {
-                        if (oldColumn.InputColumn != null)
-                        {
-                            var inputcolumn = oldColumn.InputColumn;
-                            inputcolumn = inputcolumn.Replace("[", "");
-                            inputcolumn = inputcolumn.Replace("]", "");
-                            inputcolumn = inputcolumn.Replace(" ", "");
-                            mapping.InputColumn = string.Format("[[{0}]]", inputcolumn);
-                        }
+                        var inputcolumn = oldColumn.InputColumn;
+                        inputcolumn = inputcolumn.Replace("[", "");
+                        inputcolumn = inputcolumn.Replace("]", "");
+                        inputcolumn = inputcolumn.Replace(" ", "");
+                        mapping.InputColumn = string.Format("[[{0}]]", inputcolumn);
                     }
                     if (string.IsNullOrEmpty(mapping.InputColumn))
                     {
@@ -482,10 +467,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
                     ModelItemCollection.Add(mapping);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -494,20 +476,21 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             if(shellViewModel != null)
             {
-                shellViewModel.OpenResource(SelectedDatabase.ResourceID,_environmentModel.ID);
+                shellViewModel.OpenResource(SelectedDatabase.ResourceID,_environmentModel.ID,shellViewModel.ActiveServer);
                 RefreshDatabases();
             }            
         }
 
         void CreateDbSource()
         {
-            CustomContainer.Get<IShellViewModel>().NewDatabaseSource(string.Empty);
+            CustomContainer.Get<IShellViewModel>().NewSqlServerSource(string.Empty);
             RefreshDatabases();
         }
 
         IEnumerable<DbSource> GetDatabases()
         {
-            return _environmentModel.ResourceRepository.FindSourcesByType<DbSource>(_environmentModel, enSourceType.SqlDatabase);
+            var dbSources = _environmentModel.ResourceRepository.FindSourcesByType<DbSource>(_environmentModel, enSourceType.SqlDatabase);
+            return dbSources.Where(source => source.ResourceType== "SqlDatabase" || source.ServerType==enSourceType.SqlDatabase);
         }
 
         DbTableList GetDatabaseTables(DbSource dbSource)
@@ -552,7 +535,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
         static string GetTableName(DbTable table)
         {
-            return table == null ? null : table.FullName;
+            return table?.FullName;
         }
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
@@ -735,10 +718,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         protected override void OnToggleCheckedChanged(string propertyName, bool isChecked)

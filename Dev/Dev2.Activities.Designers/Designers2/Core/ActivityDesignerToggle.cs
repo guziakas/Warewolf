@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -139,9 +139,11 @@ namespace Dev2.Activities.Designers2.Core
 
         static Image CreateImage(string sourceUri)
         {
-            Image image = new Image();
-            image.Height = 14;
-            image.Width = 14;
+            Image image = new Image
+            {
+                Height = 14,
+                Width = 14
+            };
 
             if(Application.Current != null)
             {

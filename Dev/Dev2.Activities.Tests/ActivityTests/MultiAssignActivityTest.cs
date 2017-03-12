@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -789,6 +789,24 @@ namespace Dev2.Tests.Activities.ActivityTests
             // remove test datalist ;)
 
             Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfBaseActivity_GetOutputs")]
+        public void DsfBaseActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var fieldCollection = new ObservableCollection<ActivityDTO>();
+            fieldCollection.Add(new ActivityDTO("[[gRec(1).opt]]", "\"testData\"", fieldCollection.Count));
+            fieldCollection.Add(new ActivityDTO("[[gRec(2).opt]]", "some value [[gRec(1).opt]] another", fieldCollection.Count));
+            var act = new DsfMultiAssignActivity { OutputMapping = null, FieldsCollection = fieldCollection };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, outputs.Count);
+            Assert.AreEqual("[[gRec(1).opt]]", outputs[0]);
+            Assert.AreEqual("[[gRec(2).opt]]", outputs[1]);
         }
 
         [TestMethod]

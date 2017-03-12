@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,22 +13,30 @@ using System.Activities;
 using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Dev2.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
+using Warewolf.Resource.Messages;
 using Warewolf.Storage;
+// ReSharper disable InconsistentNaming
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace Dev2.Activities
 {
 
-    [ToolDescriptorInfo("ControlFlow-Sequence", "Sequence", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Control Flow", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Flow_Sequence_Tags")]
+    [ToolDescriptorInfo("ControlFlow-Sequence", "Sequence", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Control Flow", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Flow_Sequence")]
     public class DsfSequenceActivity : DsfActivityAbstract<string>
     {
         private readonly Sequence _innerSequence = new Sequence();
         string _previousParentID;
+        private Guid _originalUniqueID;
 
         public DsfSequenceActivity()
         {
@@ -49,6 +57,10 @@ namespace Dev2.Activities
             set;
         }
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
+        }
         #region Get Debug Inputs/Outputs
 
         public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
@@ -128,7 +140,12 @@ namespace Dev2.Activities
         public override void UpdateDebugParentID(IDSFDataObject dataObject)
         {
             WorkSurfaceMappingId = Guid.Parse(UniqueID);
-            UniqueID = dataObject.ForEachNestingLevel > 0 ? Guid.NewGuid().ToString() : UniqueID;
+            var isNestedForEach = dataObject.ForEachNestingLevel > 0;
+            if (!isNestedForEach || _originalUniqueID==Guid.Empty)
+            {
+                _originalUniqueID = WorkSurfaceMappingId;
+            }
+            UniqueID = isNestedForEach ? Guid.NewGuid().ToString() : UniqueID;
         }
         /// <summary>
         /// When overridden runs the activity's execution logic 
@@ -172,21 +189,77 @@ namespace Dev2.Activities
             {
                 DispatchDebugState(dataObject, StateType.After, update);
             }
-           foreach(var dsfActivity in Activities)
+            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
+            var serviceTestSteps = serviceTestStep?.Children;
+            foreach (var dsfActivity in Activities)
             {
                 var act = dsfActivity as IDev2Activity;
                 if (act != null)
                 {
                     act.Execute(dataObject, update);
+                    if (dataObject.IsServiceTestExecution)
+                    {
+                        UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList(),Guid.Parse(act.UniqueID));
+                    }
                 }
             }
-           if (dataObject.IsDebugMode())
-           {
-               _debugOutputs = new List<DebugItem>();
-               _debugOutputs = new List<DebugItem>();
-               DispatchDebugState(dataObject, StateType.Duration,update);
-           }
+            if (dataObject.IsServiceTestExecution)
+            {
+                if (serviceTestStep != null)
+                {
+                    var testRunResult = new TestRunResult();
+                    GetFinalTestRunResult(serviceTestStep, testRunResult);
+                    serviceTestStep.Result = testRunResult;
+                }
+            }
             OnCompleted(dataObject);
+            if (dataObject.IsDebugMode())
+            {
+                _debugOutputs = new List<DebugItem>();
+                DispatchDebugState(dataObject, StateType.Duration, update);
+            }
+        }
+
+        private static void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult)
+        {
+            ObservableCollection<TestRunResult> resultList = new ObservableCollection<TestRunResult>();
+            foreach (var testStep in serviceTestStep.Children)
+            {
+                if (testStep.Result != null)
+                {
+                    resultList.Add(testStep.Result);
+                }
+            }
+
+            if (resultList.Count == 0)
+            {
+                testRunResult.RunTestResult = RunResult.TestPassed;
+            }
+            else
+            {
+                testRunResult.RunTestResult = RunResult.TestInvalid;
+
+                var testRunResults = resultList.Where(runResult => runResult.RunTestResult == RunResult.TestInvalid).ToList();
+                if (testRunResults.Count>0)
+                {
+                    testRunResult.Message = string.Join(Environment.NewLine, testRunResults.Select(result => result.Message));
+                    testRunResult.RunTestResult = RunResult.TestInvalid;
+                }
+                else
+                {
+                    var passed = resultList.All(runResult => runResult.RunTestResult == RunResult.TestPassed);
+                    if (passed)
+                    {
+                        testRunResult.Message = Messages.Test_PassedResult;
+                        testRunResult.RunTestResult = RunResult.TestPassed;
+                    }
+                    else
+                    {
+                        testRunResult.Message = Messages.Test_FailureResult;
+                        testRunResult.RunTestResult = RunResult.TestFailed;
+                    }
+                }
+            }
         }
 
         void OnCompleted(IDSFDataObject dataObject)
@@ -202,5 +275,11 @@ namespace Dev2.Activities
         }
 
         #endregion
+
+        private void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps, Guid childId)
+        {
+            ServiceTestHelper.UpdateDebugStateWithAssertions(dataObject, serviceTestTestSteps, childId.ToString());
+            
+        }   
     }
 }

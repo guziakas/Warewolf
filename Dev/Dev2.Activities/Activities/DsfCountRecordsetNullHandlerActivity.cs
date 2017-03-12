@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,8 +16,8 @@ using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Util;
@@ -31,7 +31,7 @@ using Warewolf.Storage;
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 // ReSharper restore CheckNamespace
 {
-    [ToolDescriptorInfo("RecordSet-CountRecords", "Count", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Recordset", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Recordset_Count_Tags")]
+    [ToolDescriptorInfo("RecordSet-CountRecords", "Count", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Recordset", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Recordset_Count")]
     public class DsfCountRecordsetNullHandlerActivity : DsfActivityAbstract<string>
     {
         #region Fields
@@ -159,6 +159,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     DispatchDebugState(dataObject, StateType.After, update);
                 }
             }
+        }
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> {CountNumber};
         }
 
         #region Get Debug Inputs/Outputs

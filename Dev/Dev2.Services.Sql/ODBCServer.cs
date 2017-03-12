@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -73,7 +73,7 @@ namespace Dev2.Services.Sql
             }
             return commandType;
         }
-        public string ConnectionString => _connection == null ? null : _connection.ConnectionString;
+        public string ConnectionString => _connection?.ConnectionString;
 
         public bool IsConnected
         {
@@ -158,15 +158,9 @@ namespace Dev2.Services.Sql
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    if (_transaction != null)
-                    {
-                        _transaction.Dispose();
-                    }
+                    _transaction?.Dispose();
 
-                    if (_command != null)
-                    {
-                        _command.Dispose();
-                    }
+                    _command?.Dispose();
 
                     if (_connection != null)
                     {
@@ -207,18 +201,15 @@ namespace Dev2.Services.Sql
                 reader => _factory.CreateTable(reader, LoadOption.OverwriteChanges));
         }
 
-        public static T ExecuteReaader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataReader, T> handler)
+        public static T ExecuteReaader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
         {
             try
             {
                 
                 
                 using (OdbcDataAdapter adapter = new OdbcDataAdapter(command as OdbcCommand))
-                {
-                    var dataTable = new DataTable();
-                    adapter.Fill(dataTable);
-                    var reader = dataTable.CreateDataReader();
-                    return handler(reader);
+                {                    
+                    return handler(adapter);
                 }
             }
             catch (DbException e)
@@ -228,14 +219,14 @@ namespace Dev2.Services.Sql
                     DataTable exceptionDataTable = new DataTable("Error");
                     exceptionDataTable.Columns.Add("ErrorText");
                     exceptionDataTable.LoadDataRow(new object[] { e.Message }, true);
-                    return handler(new DataTableReader(exceptionDataTable));
+                    return handler(new OdbcDataAdapter());
                 }
                 throw;
             }
         }
 
 
-        private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataReader, T> handler)
+        private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
         {
             if (command.CommandType == CommandType.StoredProcedure)
             {

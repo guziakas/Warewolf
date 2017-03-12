@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -80,7 +80,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                             values.TryGetValue("PreviousResource", out previousTask);
 
                             model.Save(res, userName.ToString(), password.ToString());
-                            if(previousTask != null && !string.IsNullOrEmpty(previousTask.ToString()) && previousTask.ToString() != res.Name)
+                            if(!string.IsNullOrEmpty(previousTask?.ToString()) && previousTask.ToString() != res.Name)
                             {
                                 model.DeleteSchedule(new ScheduledResource(previousTask.ToString(), SchedulerStatus.Disabled, DateTime.MaxValue, null, null,Guid.NewGuid().ToString()));
                             }

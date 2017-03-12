@@ -6,9 +6,11 @@ using Dev2;
 using Dev2.Common.Interfaces;
 using Dev2.Communication;
 using Dev2.Controller;
+using Dev2.Runtime.Hosting;
 using Dev2.Studio.Core.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Warewolf.Studio.Core;
 
 // ReSharper disable InconsistentNaming
 
@@ -122,7 +124,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(requestServiceNameViewModel.ResourceName);
             Assert.AreEqual("MyParentFolder\\MyFolder\\", requestServiceNameViewModel.ResourceName.Path);
             Assert.AreEqual("TestResource", requestServiceNameViewModel.ResourceName.Name);
-            Assert.AreEqual("", requestServiceNameViewModel.ErrorMessage);
+            Assert.AreEqual("Can only save to folders or root", requestServiceNameViewModel.ErrorMessage);
         }
 
 
@@ -132,7 +134,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         public async Task RequestServiceNameViewModel_ShowSaveDialog_ItemSelectedHasDuplicateName_ShouldReturnError()
         {
             //------------Setup for test--------------------------
-            const string expectedErrorMessage = "An item with name \'TestResource\' already exists in this folder.";
+            const string expectedErrorMessage = "An item with this name already exists in this folder.";
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
@@ -165,10 +167,45 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RequestServiceNameViewModel_ShowSaveDialog")]
+        public async Task RequestServiceNameViewModel_ShowSaveDialog_ItemSelectedHasDuplicateName_WhenDuplicate_ShouldReturnError()
+        {
+            //------------Setup for test--------------------------
+            const string expectedErrorMessage = "An item with this name already exists in this folder.";
+
+            var mockExplorerTreeItem = new Mock<IExplorerItemViewModel>();
+            mockExplorerTreeItem.Setup(item => item.ResourceType).Returns("Folder");
+            mockExplorerTreeItem.Setup(item => item.ResourceName).Returns("MyFolder");
+            var childDuplicateExplorerTreeItem = new Mock<IExplorerItemViewModel>();
+            childDuplicateExplorerTreeItem.Setup(item => item.ResourceType).Returns("DbService");
+            childDuplicateExplorerTreeItem.Setup(item => item.Children).Returns(new ObservableCollection<IExplorerItemViewModel>());
+            childDuplicateExplorerTreeItem.Setup(item => item.ResourceName).Returns("TestResource");
+            childDuplicateExplorerTreeItem.Setup(model => model.Parent).Returns(mockExplorerTreeItem.Object);
+            var explorerItemViewModels = new ObservableCollection<IExplorerItemViewModel> { childDuplicateExplorerTreeItem.Object };
+            mockExplorerTreeItem.Setup(item => item.Children).Returns(explorerItemViewModels);
+
+            var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
+            CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
+            var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            mockEnvironmentModel.Setup(model => model.Children).Returns(new AsyncObservableCollection<IExplorerItemViewModel> { mockExplorerTreeItem.Object });
+            var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "", mockExplorerTreeItem.Object);
+            requestServiceNameViewModel.ShowSaveDialog();
+            
+            requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.SelectedItem = null;
+            //------------Execute Test---------------------------
+            requestServiceNameViewModel.Name = "MyFolder";
+            //------------Assert Results-------------------------
+            Assert.IsTrue(requestServiceNameViewModel.IsDuplicate);
+            Assert.AreEqual(expectedErrorMessage, requestServiceNameViewModel.ErrorMessage);
+            Assert.IsFalse(requestServiceNameViewModel.OkCommand.CanExecute(null));
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("RequestServiceNameViewModel_ShowSaveDialog")]
         public async Task RequestServiceNameViewModel_ShowSaveDialog_NoItemSelectedHasDuplicateName_ShouldReturnError()
         {
             //------------Setup for test--------------------------
-            const string expectedErrorMessage = "An item with name \'TestResource\' already exists in this folder.";
+            const string expectedErrorMessage = "An item with this name already exists in this folder.";
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
@@ -255,7 +292,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RequestServiceNameViewModel_ShowSaveDialog")]
-        public async Task RequestServiceNameViewModel_ShowSaveDialog_NameValidNotLoaded_CannotClickOk()
+        public async Task RequestServiceNameViewModel_ShowSaveDialog_NameValidNotLoaded_CanClickOk()
         {
             //------------Setup for test--------------------------
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
@@ -269,7 +306,8 @@ namespace Warewolf.Studio.ViewModels.Tests
             requestServiceNameViewModel.OkCommand.Execute(null);
             //------------Assert Results-------------------------
             Assert.AreEqual("", requestServiceNameViewModel.ErrorMessage);
-            Assert.IsFalse(requestServiceNameViewModel.OkCommand.CanExecute(null));
+            var canExecute = requestServiceNameViewModel.OkCommand.CanExecute(null);
+            Assert.IsTrue(canExecute);
         }
 
         [TestMethod]
@@ -415,7 +453,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             selectedItemMock.Setup(sitem => sitem.SelectedItem).Returns(item.Object);
             var viewModel = RequestServiceNameViewModel.CreateAsync(envModel.Object, "", "", itemObj.Object).Result;
 
-
             controller.Setup(communicationController => communicationController.AddPayloadArgument("ResourceID", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.AddPayloadArgument("NewResourceName", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.AddPayloadArgument("FixRefs", It.IsAny<string>()));
@@ -444,7 +481,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //---------------Test Result -----------------------
             controller.Verify(communicationController => communicationController.AddPayloadArgument("ResourceID", It.IsAny<string>()));
             controller.Verify(communicationController => communicationController.AddPayloadArgument("NewResourceName", It.IsAny<string>()));
-            controller.Verify(communicationController => communicationController.ExecuteCommand<ExecuteMessage>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
+            controller.Verify(communicationController => communicationController.ExecuteCommand<ResourceCatalogDuplicateResult>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
         }
 
         [TestMethod]
@@ -456,7 +493,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             var envMock = new Mock<IEnvironmentConnection>();
             var controller = new Mock<ICommunicationController>();
             var envModel = new Mock<IEnvironmentViewModel>();
-            envModel.Setup(model => model.Server.UpdateRepository.FireItemSaved(true)).Verifiable("Explorer Not Refreshed");
             var selectedItemMock = new Mock<IExplorerViewModel>();
             var item = new Mock<IExplorerTreeItem>();
             item.Setup(model => model.ResourceName).Returns("name");
@@ -497,7 +533,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             var envMock = new Mock<IEnvironmentConnection>();
             var controller = new Mock<ICommunicationController>();
             var envModel = new Mock<IEnvironmentViewModel>();
-            envModel.Setup(model => model.Server.UpdateRepository.FireItemSaved(true)).Verifiable("Explorer Not Refreshed");
             var selectedItemMock = new Mock<IExplorerViewModel>();
             var itemObj = new Mock<IExplorerItemViewModel>();
             itemObj.Setup(model => model.IsFolder).Returns(true);

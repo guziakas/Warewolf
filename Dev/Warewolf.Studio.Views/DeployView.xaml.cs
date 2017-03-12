@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Views
             InitializeComponent();
         }
 
-        public IServer SelectedServer => SourceNavigationView.SelectedServer;
+        public IServer SelectedServer => null;
 
         public IServer SelectedDestinationServer
         {
@@ -37,10 +37,7 @@ namespace Warewolf.Studio.Views
             get
             {
                 var be = Status.GetBindingExpression(TextBlock.TextProperty);
-                if(be != null)
-                {
-                    be.UpdateTarget();
-                }
+                be?.UpdateTarget();
                 return Status.Text;
             }
             set

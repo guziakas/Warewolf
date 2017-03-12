@@ -105,8 +105,13 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Globalization" />
+    <Reference Include="System.ObjectModel" />
+    <Reference Include="System.Windows" />
     <Reference Include="System.Core" />
     <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.IdentityModel" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -131,6 +136,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="AuthenticationType.cs" />
     <Compile Include="Communication\IMemo.cs" />
     <Compile Include="Communication\ISerializer.cs" />
@@ -151,7 +160,7 @@
     <Compile Include="Core\Convertors\DateAndTime\IDateTimeParser.cs" />
     <Compile Include="Core\Convertors\DateAndTime\IDateTimeResultTO.cs" />
     <Compile Include="Core\Convertors\DateAndTime\ITimeZoneTO.cs" />
-    <Compile Include="Core\DbSourceDefinition.cs" />
+    <Compile Include="Core\Database\DbSourceDefinition.cs" />
     <Compile Include="Core\DynamicServices\Globals.cs" />
     <Compile Include="Core\DynamicServices\IDynamicServiceObject.cs" />
     <Compile Include="Core\RabbitMQServiceSourceDefinition.cs" />
@@ -190,6 +199,7 @@
     <Compile Include="DB\IServiceOutputMapping.cs" />
     <Compile Include="DB\ISourceBase.cs" />
     <Compile Include="Deploy\IDeployDestinationExplorerViewModel.cs" />
+    <Compile Include="Deploy\IDeployResult.cs" />
     <Compile Include="Deploy\IDeploySourceExplorerViewModel.cs" />
     <Compile Include="Deploy\IDeployStatsViewer.cs" />
     <Compile Include="Deploy\IDeployViewModel.cs" />
@@ -218,21 +228,31 @@
     <Compile Include="IAdminManager.cs" />
     <Compile Include="IAssignValue.cs" />
     <Compile Include="ICheckControlEnabledView.cs" />
+    <Compile Include="IChooseDLLView.cs" />
+    <Compile Include="ICircularDependency.cs" />
+    <Compile Include="IComPlugin.cs" />
     <Compile Include="IComPluginService.cs" />
     <Compile Include="IComPluginServiceModel.cs" />
     <Compile Include="IComPluginSource.cs" />
     <Compile Include="IComputerName.cs" />
     <Compile Include="IConnectControlViewModel.cs" />
+    <Compile Include="IConnection.cs" />
+    <Compile Include="IConstructorParameter.cs" />
     <Compile Include="ICreateDuplicateResourceView.cs" />
+    <Compile Include="IDatabaseSourceViewModel.cs" />
+    <Compile Include="IDbSource.cs" />
     <Compile Include="IDeletedFileMetadata.cs" />
+    <Compile Include="IDependencyGraphGenerator.cs" />
+    <Compile Include="IDependencyVisualizationNode.cs" />
+    <Compile Include="IDev2MethodInfo.cs" />
+    <Compile Include="IDLLChooser.cs" />
     <Compile Include="IDllListing.cs" />
     <Compile Include="IDropboxExecutor.cs" />
     <Compile Include="IDropboxResult.cs" />
-    <Compile Include="IEmailAttachmentModel.cs" />
-    <Compile Include="IEmailAttachmentView.cs" />
-    <Compile Include="IEmailAttachmentVm.cs" />
     <Compile Include="IEmailServiceSource.cs" />
+    <Compile Include="IEmailSource.cs" />
     <Compile Include="IEnvironmentViewModel.cs" />
+    <Compile Include="IExchange.cs" />
     <Compile Include="IExchangeEmailSender.cs" />
     <Compile Include="IExchangeServiceFactory.cs" />
     <Compile Include="IExecutionToken.cs" />
@@ -241,12 +261,15 @@
     <Compile Include="IExplorerRepository.cs" />
     <Compile Include="IExplorerTreeItem.cs" />
     <Compile Include="IExplorerUpdateManager.cs" />
-    <Compile Include="IExplorerView.cs" />
     <Compile Include="IExplorerViewModel.cs" />
     <Compile Include="IExternalProcessExecutor.cs" />
+    <Compile Include="IFileChooser.cs" />
+    <Compile Include="IFileChooserModel.cs" />
+    <Compile Include="IFileChooserView.cs" />
     <Compile Include="IFilenameValidator.cs" />
     <Compile Include="IFileResource.cs" />
     <Compile Include="IFrameworkRepository.cs" />
+    <Compile Include="IGraph.cs" />
     <Compile Include="IHelpView.cs" />
     <Compile Include="IIntellisenseStringResult.cs" />
     <Compile Include="IIntellisenseStringResultBuilder.cs" />
@@ -254,8 +277,8 @@
     <Compile Include="ILocalPathManager.cs" />
     <Compile Include="IManageComPluginSourceModel.cs" />
     <Compile Include="IManageComPluginSourceViewModel.cs" />
+    <Compile Include="IManageDatabaseSourceModel.cs" />
     <Compile Include="IManageDatabaseSourceView.cs" />
-    <Compile Include="IManageDatabaseSourceViewModel.cs" />
     <Compile Include="IManageRabbitMQSourceViewModel.cs" />
     <Compile Include="IManageEmailSourceViewModel.cs" />
     <Compile Include="IManageExchangeSourceViewModel.cs" />
@@ -270,6 +293,7 @@
     <Compile Include="IManageWcfSourceViewModel.cs" />
     <Compile Include="IManageWebserviceSourceViewModel.cs" />
     <Compile Include="IMenuView.cs" />
+    <Compile Include="IMethodParameter.cs" />
     <Compile Include="INamespaceItem.cs" />
     <Compile Include="INetworkStateChangedEventArgs.cs" />
     <Compile Include="Infrastructure\Communication\IExecuteMessage.cs" />
@@ -298,12 +322,15 @@
     <Compile Include="IOAuthSource.cs" />
     <Compile Include="IPerformanceCountersByMachine.cs" />
     <Compile Include="IPerformanceCountersByResource.cs" />
+    <Compile Include="IPlugin.cs" />
     <Compile Include="IPluginAction.cs" />
+    <Compile Include="IPluginConstructor.cs" />
     <Compile Include="IPluginService.cs" />
     <Compile Include="IPluginServiceModel.cs" />
     <Compile Include="IPluginSource.cs" />
     <Compile Include="IPulseLogger.cs" />
     <Compile Include="IQueryManager.cs" />
+    <Compile Include="IRabbitMQ.cs" />
     <Compile Include="IRabbitMQServiceSourceDefinition.cs" />
     <Compile Include="IRequestServiceNameView.cs" />
     <Compile Include="IResourceHolder.cs" />
@@ -334,6 +361,7 @@
     <Compile Include="IWcfService.cs" />
     <Compile Include="IWcfServiceModel.cs" />
     <Compile Include="IWcfSource.cs" />
+    <Compile Include="IWebSource.cs" />
     <Compile Include="IWorksurfaceKey.cs" />
     <Compile Include="Monitoring\IPerformanceCounter.cs" />
     <Compile Include="Monitoring\IPerformanceCounterFactory.cs" />
@@ -383,6 +411,7 @@
     <Compile Include="Studio\IDialogueViewModel.cs" />
     <Compile Include="Studio\IdialogViewModelFactory.cs" />
     <Compile Include="Studio\IMenuViewModel.cs" />
+    <Compile Include="TestSaveResult.cs" />
     <Compile Include="Threading\IAsyncWorker.cs" />
     <Compile Include="ToolBase\Database\IDatabaseServiceViewModel.cs" />
     <Compile Include="ToolBase\DotNet\IDotNetViewModel.cs" />
@@ -391,6 +420,7 @@
     <Compile Include="ToolBase\ExchangeEmail\IExchangeServiceViewModel.cs" />
     <Compile Include="ToolBase\ExchangeEmail\IExchangeSource.cs" />
     <Compile Include="ToolBase\IActionToolRegion.cs" />
+    <Compile Include="ToolBase\IConstructorRegion.cs" />
     <Compile Include="ToolBase\ICustomToolViewModelWithRegionBase.cs" />
     <Compile Include="ToolBase\IGenerateInputArea.cs" />
     <Compile Include="ToolBase\IGenerateOutputArea.cs" />

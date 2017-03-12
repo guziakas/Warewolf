@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,6 +36,7 @@ using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.Models.DataList;
 using Dev2.Studio.ViewModels.DataList;
+using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Moq.Language.Flow;
@@ -415,7 +416,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             };
             var modelItem = CreateModelItem(activity);
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             //---------------Execute Test ----------------------
             var displayName = activity.DisplayName;
             Assert.AreEqual(helloWorld, displayName);
@@ -461,7 +462,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             };
             var modelItem = CreateModelItem(activity);
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             //---------------Execute Test ----------------------
             var displayName = activity.DisplayName;
             Assert.AreEqual(helloWorld, displayName);
@@ -476,7 +477,6 @@ namespace Dev2.Activities.Designers.Tests.Service
         {
             //------------Setup for test--------------------------
             var resourceID = Guid.NewGuid();
-            const string helloWorld = "Hello World1";
             var resourceModel = CreateResourceModel(Guid.Empty, false, null);
             resourceModel.Setup(model => model.ResourceType).Returns(Studio.Core.AppResources.Enums.ResourceType.Service);
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
@@ -486,8 +486,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
-          
-            var envRepository = new Mock<IEnvironmentRepository>();
+              var envRepository = new Mock<IEnvironmentRepository>();
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IEnvironmentModel, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveEnvironment).Returns(resourceModel.Object.Environment);
             var envModel = new Mock<IEnvironmentModel>();
@@ -509,34 +508,10 @@ namespace Dev2.Activities.Designers.Tests.Service
             };
             var modelItem = CreateModelItem(activity);
             //------------Execute Test---------------------------
-
-            try
-            {
-                // ReSharper disable once UnusedVariable
-                // ReSharper disable once ObjectCreationAsStatement
-                var serviceDesignerViewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
-                var value = serviceDesignerViewModel.ModelItem.GetProperty<string>("FriendlySourceName");
-                if (value != null)
-                {
-
-                    Assert.AreEqual("www.youtube.com", value);
-                }
-            }
-            catch(Exception)
-            {
-                //var fieldInfo = viewModel.GetType().GetField("FriendlySourceName", BindingFlags.Instance | BindingFlags.GetField);
-                // ReSharper disable once PossibleNullReferenceException
-                //var actual = fieldInfo.GetValue(viewModel);
-                var modelProperty = modelItem.Properties["FriendlySourceName"];
-                if(modelProperty != null)
-                {
-                    var value = modelProperty.Value;
-                    Assert.AreEqual(helloWorld, value);
-                }
-                //---------------Test Result -----------------------
-                ;
-            }
-          
+            var serviceDesignerViewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object,new SynchronousAsyncWorker());
+            var value = serviceDesignerViewModel.ModelItem.GetProperty<string>("FriendlySourceName");
+            Assert.IsNotNull(value);
+            Assert.AreEqual("helloworld.com", value);
           
         }
 
@@ -1043,7 +1018,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             var modelItem = CreateModelItem(activity);
 
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
 
             var inputMapping = viewModel.ModelItem.GetProperty<string>("InputMapping");
             var outputMapping = viewModel.ModelItem.GetProperty<string>("OutputMapping");
@@ -1132,7 +1107,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resRepo.Setup(a => a.LoadContextualResourceModel(It.IsAny<Guid>())).Returns(resourceModel.Object);
             environment.Setup(a => a.ResourceRepository).Returns(resRepo.Object);
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             //------------Assert Results-------------------------
             var inputMapping = viewModel.InputMapping;
             var outputMapping = viewModel.OutputMapping;
@@ -1151,6 +1126,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(conn => conn.ServerEvents).Returns(new EventPublisher());
+            connection.Setup(conn => conn.WebServerUri).Returns(new Uri("http://www.youtube.com"));
 
             var environmentID = Guid.NewGuid();
             var environment = new Mock<IEnvironmentModel>();
@@ -1207,7 +1183,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             environment.Setup(a => a.ResourceRepository).Returns(resRepo.Object);
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             //------------Assert Results-------------------------
             Assert.AreEqual("www.youtube.com", viewModel.Properties.FirstOrDefault(a => a.Key == "Source :").Value);
 
@@ -1282,7 +1258,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resRepo.Object);
             //------------Execute Test---------------------------
             bool wasSet = false;
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             viewModel.PropertyChanged += (sender, args) =>
             {
                 if(args.PropertyName == "FriendlySourceName")
@@ -1364,10 +1340,10 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             environment.Setup(a => a.ResourceRepository).Returns(resRepo.Object);
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
            
             //------------Assert Results-------------------------
-            Assert.AreEqual("www.youtube.com", viewModel.Properties.FirstOrDefault(a => a.Key == "Source :").Value);
+            Assert.AreEqual("www.Dev2.com", viewModel.Properties.FirstOrDefault(a => a.Key == "Source :").Value);
 
         }
 
@@ -1447,10 +1423,15 @@ namespace Dev2.Activities.Designers.Tests.Service
             // ReSharper restore UnusedVariable
             environment.Setup(a => a.IsConnected).Returns(true);
             connection.Setup(a => a.Verify(It.IsAny<Action<ConnectResult>>(), true)).Verifiable();
+            var wasCalled = false;
+            environment.Object.ResourcesLoaded += (sender, args) =>
+              {
+                  wasCalled = true;
+              };
             environment.Raise(a => a.ResourcesLoaded += null, new ResourcesLoadedEventArgs { Model = environment.Object });
 
             //------------Assert Results-------------------------
-            worker.Verify(a => a.Start(It.IsAny<System.Action>(), It.IsAny<System.Action>()));
+            Assert.IsTrue(wasCalled);
         }
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
@@ -1530,7 +1511,7 @@ namespace Dev2.Activities.Designers.Tests.Service
                 );
             //------------Execute Test---------------------------
             // ReSharper disable UnusedVariable
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, worker.Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
 
             //------------Events Setup---------------------------
             var mappingF = new Mock<IDataMappingViewModelFactory>();
@@ -1630,7 +1611,7 @@ namespace Dev2.Activities.Designers.Tests.Service
                 );
             //------------Execute Test---------------------------
             // ReSharper disable UnusedVariable
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, worker.Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
 
             //------------Events Setup---------------------------
             var mappingF = new Mock<IDataMappingViewModelFactory>();
@@ -1731,7 +1712,7 @@ namespace Dev2.Activities.Designers.Tests.Service
                 );
             //------------Execute Test---------------------------
             // ReSharper disable UnusedVariable
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, worker.Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
 
             //------------Events Setup---------------------------
             var mappingF = new Mock<IDataMappingViewModelFactory>();
@@ -1830,7 +1811,7 @@ namespace Dev2.Activities.Designers.Tests.Service
                 );
             //------------Execute Test---------------------------
             // ReSharper disable UnusedVariable
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, worker.Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             // ReSharper restore UnusedVariable
             environment.Setup(a => a.IsConnected).Returns(true);
             connection.Setup(a => a.Verify(It.IsAny<Action<ConnectResult>>(), true)).Verifiable();
@@ -1918,7 +1899,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             // ReSharper disable UnusedVariable
 
 
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, worker.Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             var webFact = new Mock<IWebActivityFactory>();
             var wa = new Mock<IWebActivity>();
             // ReSharper disable MaximumChainedReferences
@@ -1983,7 +1964,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             var modelItem = CreateModelItem(activity);
 
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.ResourceModel);
             var inputMapping = viewModel.ModelItem.GetProperty<string>("InputMapping");
@@ -2020,7 +2001,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             var modelItem = CreateModelItem(activity);
 
             //------------Execute Test---------------------------
-            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object);
+            var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.ResourceModel);
 
@@ -2159,7 +2140,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
         #region CreateModelItem
 
-        public static Mock<ModelItem> CreateModelItem(Guid uniqueID, Guid serviceID, Guid environmentID, params ModelProperty[] modelProperties)
+        private static Mock<ModelItem> CreateModelItem(Guid uniqueID, Guid serviceID, Guid environmentID, params ModelProperty[] modelProperties)
         {
             const int OffSet = 4;
             var startIndex = 0;
@@ -2237,7 +2218,7 @@ namespace Dev2.Activities.Designers.Tests.Service
         {
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(conn => conn.ServerEvents).Returns(new EventPublisher());
-
+            connection.Setup(environmentConnection => environmentConnection.WebServerUri).Returns(new Uri("http://helloworld.com"));
             var environmentID = Guid.NewGuid();
             var environment = new Mock<IEnvironmentModel>();
             environment.Setup(e => e.Connection).Returns(connection.Object);
@@ -2301,8 +2282,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             var envRepository = new Mock<IEnvironmentRepository>();
             envRepository.Setup(e => e.ActiveEnvironment).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IEnvironmentModel, bool>>>())).Returns(resourceModel.Object.Environment);
-            var worker = new Mock<IAsyncWorker>().Object;
-            return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, worker);
+            return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
         }
 
         static ServiceDesignerViewModel CreateServiceDesignerViewModel(Guid instanceID, params IErrorInfo[] resourceErrors)
@@ -2337,8 +2317,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             var envRepository = new Mock<IEnvironmentRepository>();
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IEnvironmentModel, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveEnvironment).Returns(resourceModel.Object.Environment);
-            var worker = new Mock<IAsyncWorker>().Object;
-            return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, eventPublisher, worker);
+            return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, eventPublisher, new SynchronousAsyncWorker());
         }
 
         static ServiceDesignerViewModel CreateServiceDesignerViewModel(Guid instanceID, bool resourceRepositoryReturnsNull, IEventAggregator eventPublisher, ModelProperty[] modelProperties, Mock<IContextualResourceModel> resourceModel, params IErrorInfo[] resourceErrors)
@@ -2355,7 +2334,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IEnvironmentModel, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveEnvironment).Returns(resourceModel.Object.Environment);
 
-            return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, eventPublisher);
+            return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, eventPublisher, new SynchronousAsyncWorker());
         }
 
         static Mock<IResourceRepository> SetupForSourceCheck(out Guid instanceID, out Mock<IEnvironmentModel> environment, out Mock<IContextualResourceModel> resourceModel, out Guid sourceID, bool mangleXaml = false)
@@ -2448,7 +2427,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environmentRepository.Setup(e => e.ActiveEnvironment).Returns(activeEnvironment.Object);
 
             // ReSharper disable ObjectCreationAsStatement
-            var model = new ServiceDesignerViewModel(modelItem, rootModel.Object, environmentRepository.Object, new Mock<IEventAggregator>().Object);
+            var model = new ServiceDesignerViewModel(modelItem, rootModel.Object, environmentRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             // ReSharper restore ObjectCreationAsStatement
             return model;
         }

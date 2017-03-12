@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -130,7 +130,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.Errors);
-            Assert.AreEqual("'Results' - Variable name [[a$]] contains invalid character(s)", viewModel.Errors[0].Message);
+            Assert.AreEqual("'Results' - Variable name [[a$]] contains invalid character(s). Only use alphanumeric _ and - ", viewModel.Errors[0].Message);
         }
 
         [TestMethod]
@@ -263,10 +263,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
                 var modelItemCollection = modelProperty.Collection;
                 foreach(var dto in items)
                 {
-                    if(modelItemCollection != null)
-                    {
-                        modelItemCollection.Add(dto);
-                    }
+                    modelItemCollection?.Add(dto);
                 }
             }
             return modelItem;

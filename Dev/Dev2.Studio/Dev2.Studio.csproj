@@ -298,6 +298,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="ActivityDesigners\ActivityDesignerHelper.cs" />
     <Compile Include="AppResources\AttachedProperties\FocusAttachedProperty.cs" />
     <Compile Include="AppResources\Behaviors\ButtonPopupWorkaroundBehavior.cs" />
@@ -337,17 +341,12 @@
     <Compile Include="Diagnostics\AppExceptionHandlerAbstract.cs" />
     <Compile Include="Diagnostics\AppExceptionPopupController.cs" />
     <Compile Include="Diagnostics\AppExceptionPopupControllerAbstract.cs" />
-    <Compile Include="Diagnostics\DebugLineGroup.cs" />
-    <Compile Include="Diagnostics\DebugLineGroupRow.cs" />
-    <Compile Include="Diagnostics\DebugLineItem.cs" />
-    <Compile Include="Diagnostics\DebugLine.cs" />
     <Compile Include="Diagnostics\DebugStyleSelector.cs" />
     <Compile Include="Diagnostics\AppExceptionHandler.cs" />
     <Compile Include="Diagnostics\ErrorSeverity.cs" />
     <Compile Include="Diagnostics\IAppExceptionHandler.cs" />
     <Compile Include="Diagnostics\IAppExceptionPopupController.cs" />
     <Compile Include="Diagnostics\DebugLineTemplateSelector.cs" />
-    <Compile Include="Diagnostics\IDebugLineItem.cs" />
     <Compile Include="Dock\BindingHelper.cs" />
     <Compile Include="Dock\ContainerFactory.cs" />
     <Compile Include="Dock\ContentPaneFactory.cs" />
@@ -500,7 +499,6 @@
     <Compile Include="Views\DataMapping\DataMapping.xaml.cs">
       <DependentUpon>DataMapping.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ViewModels\Diagnostics\DebugTreeViewItemViewModel.cs" />
     <Compile Include="Views\Diagnostics\DebugOutputView.xaml.cs">
       <DependentUpon>DebugOutputView.xaml</DependentUpon>
     </Compile>
@@ -936,6 +934,14 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Dialogs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\PageNotAvailable.htm">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Help\PageNotAvailable.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">

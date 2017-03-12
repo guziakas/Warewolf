@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +16,7 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Hosting;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -82,7 +83,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             var msg = ResourceCatalog.Instance.SaveResource(WorkspaceRepository.ServerWorkspaceID, resourceDefinition, savePathValue.ToString(), "Deploy", "unknown");
             WorkspaceRepository.Instance.RefreshWorkspaces();
 
-            var result = new ExecuteMessage { HasError = false };
+            var result = new ExecuteMessage { HasError = msg.Status != ExecStatus.Success };
             result.SetMessage(msg.Message);
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             return serializer.SerializeToBuilder(result);

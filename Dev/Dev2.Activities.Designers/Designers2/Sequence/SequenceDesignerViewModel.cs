@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,6 +42,7 @@ namespace Dev2.Activities.Designers2.Sequence
             dynamic mi = ModelItem;
             ModelItemCollection activities = mi.Activities;
             activities.CollectionChanged += ActivitiesOnCollectionChanged;
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Flow_Sequence;
         }
 
         void ActivitiesOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs notifyCollectionChangedEventArgs)
@@ -127,7 +128,7 @@ namespace Dev2.Activities.Designers2.Sequence
                 try
                 {
                     IEnvironmentModel environmentModel = EnvironmentRepository.Instance.FindSingle(c => c.ID == envId);
-                    var resource = environmentModel?.ResourceRepository.FindSingle(c => c.ID == resourceId) as IContextualResourceModel;
+                    var resource = environmentModel?.ResourceRepository.LoadContextualResourceModel(resourceId);
 
                     if (resource != null)
                     {

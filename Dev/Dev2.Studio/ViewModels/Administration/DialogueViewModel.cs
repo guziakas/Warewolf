@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -65,12 +65,9 @@ namespace Dev2.Studio.ViewModels.Administration
             get
             {
                 return _okClicked ?? (_okClicked = new RelayCommand(p =>
-                    {
-                        if(OnOkClick != null)
-                        {
-                            OnOkClick(this, null);
-                        }
-                    }, p => true));
+                {
+                    OnOkClick?.Invoke(this, null);
+                }, p => true));
             }
         }
 

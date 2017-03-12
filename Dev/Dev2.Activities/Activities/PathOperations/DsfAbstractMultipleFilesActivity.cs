@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +16,7 @@ using System.Linq;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
@@ -265,13 +266,10 @@ namespace Dev2.Activities.PathOperations
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

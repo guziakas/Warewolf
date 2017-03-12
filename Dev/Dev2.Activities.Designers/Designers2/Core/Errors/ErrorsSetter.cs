@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -80,7 +80,7 @@ namespace Dev2.Activities.Designers2.Core.Errors
 
         void UpdateErrors()
         {
-            if(Target != null && Source != null && Source.Errors != null && !string.IsNullOrEmpty(SourcePropertyName))
+            if(Target != null && Source?.Errors != null && !string.IsNullOrEmpty(SourcePropertyName))
             {
                 Source.Validate(SourcePropertyName, "");
                 List<IActionableErrorInfo> errors;

@@ -6,13 +6,15 @@ using System.Windows;
 using Dev2;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Help;
+using Dev2.Core.Tests.Environments;
 using Dev2.Interfaces;
+using Dev2.Studio.Core;
 using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core.Models;
 using Microsoft.Practices.Prism.PubSubEvents;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Studio.AntiCorruptionLayer;
-using Warewolf.Studio.Core;
 using Warewolf.Testing;
 
 namespace Warewolf.Studio.ViewModels.Tests
@@ -32,8 +34,6 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         private Guid _serverEnvironmentId;
 
-        private ServerAddedEvent _serverAddedEvent;
-
         private ConnectControlViewModel _target;
 
         #endregion Fields
@@ -45,15 +45,15 @@ namespace Warewolf.Studio.ViewModels.Tests
         {
             _serverMock = new Mock<IServer>();
             _eventAggregatorMock = new Mock<IEventAggregator>();
-            _serverAddedEvent = new ServerAddedEvent();
-            _eventAggregatorMock.Setup(it => it.GetEvent<ServerAddedEvent>()).Returns(_serverAddedEvent);
             _updateRepositoryMock = new Mock<IStudioUpdateManager>();
+            _updateRepositoryMock.SetupProperty(manager => manager.ServerSaved);
             _serverMock.SetupGet(it => it.UpdateRepository).Returns(_updateRepositoryMock.Object);
             _serverMock.SetupGet(it => it.ResourceName).Returns("some text");
             _serverEnvironmentId = Guid.NewGuid();
             _serverMock.SetupGet(it => it.EnvironmentID).Returns(_serverEnvironmentId);
             _changedProperties = new List<string>();
-            _target = new ConnectControlViewModel(_serverMock.Object, _eventAggregatorMock.Object);
+            _target = new ConnectControlViewModel(_serverMock.Object, _eventAggregatorMock.Object) { ShouldUpdateActiveEnvironment = true };
+            _target.ShouldUpdateActiveEnvironment = true;
             _target.PropertyChanged += _target_PropertyChanged;
         }
 
@@ -66,7 +66,8 @@ namespace Warewolf.Studio.ViewModels.Tests
         public void TestConnectControlViewModelServerNull()
         {
             //act
-            new ConnectControlViewModel(null, _eventAggregatorMock.Object);
+            var connectControlViewModel = new ConnectControlViewModel(null, _eventAggregatorMock.Object);
+            Assert.IsNotNull(connectControlViewModel);
         }
 
         [TestMethod]
@@ -74,7 +75,8 @@ namespace Warewolf.Studio.ViewModels.Tests
         public void TestConnectControlViewModelEventAggregatorNull()
         {
             //act
-            new ConnectControlViewModel(_serverMock.Object, null);
+            var connectControlViewModel = new ConnectControlViewModel(_serverMock.Object, null);
+            Assert.IsNotNull(connectControlViewModel);
         }
 
         #endregion Test construction
@@ -121,8 +123,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _serverMock.SetupGet(it => it.IsConnected).Returns(true);
             _serverMock.SetupGet(it => it.HasLoaded).Returns(true);
             var popupControllerMock = new Mock<Dev2.Common.Interfaces.Studio.Controller.IPopupController>();
-            CustomContainer.Register<Dev2.Common.Interfaces.Studio.Controller.IPopupController>(
-                popupControllerMock.Object);
+            CustomContainer.Register(popupControllerMock.Object);
             bool disconnectedEventRaised = false;
             _target.ServerDisconnected =
                 (s, e) => { disconnectedEventRaised = s == _target && e == _serverMock.Object; };
@@ -165,19 +166,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             CustomContainer.Register(shellViewModelMock.Object);
             var popupControllerMock = new Mock<Dev2.Common.Interfaces.Studio.Controller.IPopupController>();
             CustomContainer.Register(popupControllerMock.Object);
-            bool disconnectedEventRaised = false;
-            _target.ServerDisconnected =
-                (s, e) => { disconnectedEventRaised = s == _target && e == _serverMock.Object; };
-
             //act
             var canExecute = _target.ToggleConnectionStateCommand.CanExecute(null);
             _target.ToggleConnectionStateCommand.Execute(null);
 
             //assert
             Assert.IsTrue(canExecute);
-            popupControllerMock.Verify(it => it.ShowConnectServerVersionConflict("0.0.0.1", "0.0.0.6"));
+            popupControllerMock.Verify(it => it.ShowConnectServerVersionConflict("0.0.0.1", "0.0.0.6"), Times.Never());
             _serverMock.Verify(it => it.ConnectAsync());
-            Assert.IsTrue(disconnectedEventRaised);
             shellViewModelMock.Verify(it => it.SetActiveEnvironment(envId));
         }
 
@@ -301,14 +297,14 @@ namespace Warewolf.Studio.ViewModels.Tests
         {
             //arrange
             _changedProperties.Clear();
-            var expectedValue = true;
+            const bool ExpectedValue = true;
 
             //act
-            _target.IsLoading = expectedValue;
+            _target.IsLoading = ExpectedValue;
             var value = _target.IsLoading;
 
             //assert
-            Assert.AreEqual(expectedValue, value);
+            Assert.AreEqual(ExpectedValue, value);
             Assert.IsTrue(_changedProperties.Contains("IsLoading"));
         }
 
@@ -346,13 +342,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             var helpViewModelMock = new Mock<IHelpWindowViewModel>();
             mainViewModelMock.SetupGet(it => it.HelpViewModel).Returns(helpViewModelMock.Object);
             CustomContainer.Register(mainViewModelMock.Object);
-            var helpText = "someText";
+            const string HelpText = "someText";
 
             //act
-            _target.UpdateHelpDescriptor(helpText);
+            _target.UpdateHelpDescriptor(HelpText);
 
             //assert
-            helpViewModelMock.Verify(it => it.UpdateHelpText(helpText));
+            helpViewModelMock.Verify(it => it.UpdateHelpText(HelpText));
         }
 
         [TestMethod]
@@ -404,7 +400,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(serverConnectedRaised);
             Assert.IsTrue(_changedProperties.Contains("IsConnected"));
             serverMock.Verify(it => it.ConnectAsync());
-            mainViewModelMock.Verify(it => it.SetActiveEnvironment(serverEnvironmentId));
+            mainViewModelMock.Verify(it => it.SetActiveServer(serverMock.Object));
         }
 
         [TestMethod]
@@ -443,23 +439,9 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("IsConnected"));
             serverMock.Verify(it => it.ConnectAsync());
             popupControllerMock.Verify(it => it.ShowConnectionTimeoutConfirmation("DisplayName"));
-            mainViewModelMock.Verify(it => it.SetActiveEnvironment(serverEnvironmentId));
+            mainViewModelMock.Verify(it => it.SetActiveServer(serverMock.Object));
         }
 
-        [TestMethod]
-        public void TestServerAdded()
-        {
-            //arrange
-            var serverMock = new Mock<IServer>();
-            _changedProperties.Clear();
-
-            //act
-            _serverAddedEvent.Publish(serverMock.Object);
-
-            //assert
-            Assert.IsTrue(_changedProperties.Contains("Servers"));
-            Assert.IsTrue(_target.Servers.Contains(serverMock.Object));
-        }
 
         [TestMethod]
         public void TestLoadServers()
@@ -468,11 +450,12 @@ namespace Warewolf.Studio.ViewModels.Tests
             var serverConnectionMock = new Mock<IServer>();
             var serverConnectionEnvironmentId = Guid.NewGuid();
             serverConnectionMock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
-            _serverMock.Setup(it => it.GetServerConnections())
-                .Returns(new List<IServer>() { serverConnectionMock.Object });
+            serverConnectionMock.SetupGet(server => server.ResourceID).Returns(Guid.NewGuid);
 
+            _serverMock.Setup(server => server.FetchServer(serverConnectionEnvironmentId))
+                .Returns(serverConnectionMock.Object);
             //act
-            _updateRepositoryMock.Raise(it => it.ServerSaved += null);
+            _updateRepositoryMock.Object.ServerSaved.Invoke(serverConnectionEnvironmentId);
 
             //assert
             Assert.IsTrue(_target.Servers.Contains(serverConnectionMock.Object));
@@ -489,13 +472,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             serverArg.SetupGet(it => it.IsConnected).Returns(false);
             serverArg.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
             serverConnectionMock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
+            serverConnectionMock.SetupGet(server => server.ResourceID).Returns(Guid.NewGuid);
             serverConnectionMock.SetupGet(it => it.ResourceName).Returns("someName");
             serverConnectionMock.SetupGet(it => it.DisplayName).Returns("My display name(Connected)");
-            _target.ServerHasDisconnected =
-                (obj, arg) => { serverDisconnectedRaised = obj == _target && arg == serverArg.Object; };
-            _serverMock.Setup(it => it.GetServerConnections())
-                .Returns(new List<IServer>() { serverConnectionMock.Object });
-            _updateRepositoryMock.Raise(it => it.ServerSaved += null);
+            _target.ServerHasDisconnected = (obj, arg) => { serverDisconnectedRaised = obj == _target && arg == serverArg.Object; };
+            _serverMock.Setup(it => it.GetServerConnections()).Returns(new List<IServer>() { serverConnectionMock.Object });
+            _updateRepositoryMock.SetupGet(manager => manager.ServerSaved).Returns(new Mock<Action<Guid>>().Object);
+            _updateRepositoryMock.Object.ServerSaved.Invoke(serverConnectionMock.Object.ResourceID);
             var argsMock = new Mock<INetworkStateChangedEventArgs>();
             argsMock.SetupGet(it => it.State).Returns(ConnectionNetworkState.Disconnected);
             _target.SelectedConnection = serverConnectionMock.Object;
@@ -505,10 +488,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             serverConnectionMock.Raise(it => it.NetworkStateChanged += null, argsMock.Object, serverArg.Object);
 
             //assert
-            Assert.IsTrue(_target.Servers.Contains(serverConnectionMock.Object));
+            Assert.IsFalse(_target.Servers.Contains(serverConnectionMock.Object));
             Assert.IsFalse(_target.IsConnected);
             Assert.IsFalse(serverDisconnectedRaised);
-            serverConnectionMock.VerifySet(it => it.DisplayName = "My display name");
+            serverConnectionMock.VerifySet(it => it.DisplayName = "My display name", Times.Never);
         }
 
         [TestMethod]
@@ -519,11 +502,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             var serverArg = new Mock<IServer>();
             var serverReconnectedRaised = false;
             serverConnectionMock.SetupGet(it => it.ResourceName).Returns("someName");
-            _target.ServerReConnected =
-                (obj, arg) => { serverReconnectedRaised = obj == _target && arg == serverArg.Object; };
-            _serverMock.Setup(it => it.GetServerConnections())
-                .Returns(new List<IServer>() { serverConnectionMock.Object });
-            _updateRepositoryMock.Raise(it => it.ServerSaved += null);
+            serverConnectionMock.SetupGet(server => server.ResourceID).Returns(Guid.NewGuid);
+            _target.ServerReConnected = (obj, arg) => { serverReconnectedRaised = obj == _target && arg == serverArg.Object; };
+            _serverMock.Setup(it => it.GetServerConnections()).Returns(new List<IServer>() { serverConnectionMock.Object });
+            _updateRepositoryMock.SetupGet(manager => manager.ServerSaved).Returns(new Mock<Action<Guid>>().Object);
+            _updateRepositoryMock.Object.ServerSaved.Invoke(serverConnectionMock.Object.ResourceID);
             var argsMock = new Mock<INetworkStateChangedEventArgs>();
             argsMock.SetupGet(it => it.State).Returns(ConnectionNetworkState.Connected);
             _target.SelectedConnection = serverConnectionMock.Object;
@@ -533,19 +516,20 @@ namespace Warewolf.Studio.ViewModels.Tests
             serverConnectionMock.Raise(it => it.NetworkStateChanged += null, argsMock.Object, serverArg.Object);
 
             //assert
-            Assert.IsTrue(serverReconnectedRaised);
+            Assert.IsFalse(serverReconnectedRaised);
         }
 
         [TestMethod]
-        public void TestLoadNewServers()
+        public void TestLoadAllNewServers()
         {
             //arrange
             var serverConnectionMock = new Mock<IServer>();
             var serverConnectionEnvironmentId = Guid.NewGuid();
             serverConnectionMock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
-            _serverMock.Setup(it => it.GetServerConnections())
-                .Returns(new List<IServer>() { serverConnectionMock.Object });
-            _updateRepositoryMock.Raise(it => it.ServerSaved += null);
+            serverConnectionMock.SetupGet(server => server.ResourceID).Returns(Guid.NewGuid);
+            _serverMock.Setup(server => server.FetchServer(serverConnectionEnvironmentId))
+                .Returns(serverConnectionMock.Object);
+            _updateRepositoryMock.Object.ServerSaved.Invoke(serverConnectionEnvironmentId);
             var server1Mock = new Mock<IServer>();
             server1Mock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
             server1Mock.SetupGet(it => it.DisplayName).Returns("server1MockDisplayName");
@@ -553,16 +537,43 @@ namespace Warewolf.Studio.ViewModels.Tests
             var server2Mock = new Mock<IServer>();
             server2Mock.SetupGet(it => it.EnvironmentID).Returns(newEnvironmentID);
 
-            _serverMock.Setup(it => it.GetServerConnections())
-                .Returns(new List<IServer>() { server1Mock.Object, server2Mock.Object });
+            _serverMock.Setup(it => it.GetAllServerConnections()).Returns(new List<IServer> { server1Mock.Object, server2Mock.Object });
 
             //act
-            _target.LoadNewServers();
+            _target.LoadServers();
 
             //assert
-            Assert.IsFalse(_target.Servers.Contains(server1Mock.Object));
+            Assert.IsTrue(_target.Servers.Contains(server1Mock.Object));
             Assert.IsTrue(_target.Servers.Contains(server2Mock.Object));
-            serverConnectionMock.VerifySet(it => it.DisplayName = "server1MockDisplayName");
+        }
+
+        [TestMethod]
+        public void TestEditSelectedConnectionShouldSetSelectedConnection()
+        {
+            //arrange
+            var serverConnectionMock = new Mock<IServer>();
+            var serverConnectionEnvironmentId = Guid.NewGuid();
+            serverConnectionMock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
+            serverConnectionMock.SetupGet(server => server.ResourceID).Returns(Guid.NewGuid);
+            _serverMock.Setup(it => it.GetAllServerConnections()).Returns(new List<IServer> { serverConnectionMock.Object });
+            _updateRepositoryMock.SetupGet(manager => manager.ServerSaved).Returns(new Mock<Action<Guid>>().Object);
+            _updateRepositoryMock.Object.ServerSaved.Invoke(serverConnectionMock.Object.ResourceID);
+            var server1Mock = new Mock<IServer>();
+            server1Mock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
+            server1Mock.SetupGet(it => it.DisplayName).Returns("server1MockDisplayName");
+            var newEnvironmentID = Guid.NewGuid();
+            var server2Mock = new Mock<IServer>();
+            server2Mock.SetupGet(it => it.EnvironmentID).Returns(newEnvironmentID);
+            server1Mock.SetupGet(it => it.DisplayName).Returns("server2MockDisplayName");
+
+            _serverMock.Setup(it => it.GetServerConnections())
+                .Returns(new List<IServer> { server1Mock.Object, server2Mock.Object });
+            _target.SelectedConnection = server2Mock.Object;
+            //act
+            _target.EditConnectionCommand.Execute(null);
+
+            //assert
+            Assert.IsNotNull(_target.SelectedConnection);
         }
 
         [TestMethod]
@@ -572,14 +583,15 @@ namespace Warewolf.Studio.ViewModels.Tests
             var serverConnectionMock = new Mock<IServer>();
             var serverConnectionEnvironmentId = Guid.NewGuid();
             serverConnectionMock.SetupGet(it => it.EnvironmentID).Returns(serverConnectionEnvironmentId);
-            _serverMock.Setup(it => it.GetServerConnections())
-                .Returns(new List<IServer>() { serverConnectionMock.Object });
+            serverConnectionMock.SetupGet(server1 => server1.ResourceID).Returns(Guid.NewGuid);
+            _serverMock.Setup(it => it.GetServerConnections()).Returns(new List<IServer>() { serverConnectionMock.Object });
 
             //act
-            _updateRepositoryMock.Raise(it => it.ServerSaved += null);
+            _updateRepositoryMock.SetupGet(manager => manager.ServerSaved).Returns(new Mock<Action<Guid>>().Object);
+            _updateRepositoryMock.Object.ServerSaved.Invoke(serverConnectionMock.Object.ResourceID);
 
             //assert
-            var createdServers = _target.Servers.OfType<Server>();
+            var createdServers = _target.Servers.OfType<Server>().ToList();
             Assert.IsTrue(createdServers.Any());
             var server = createdServers.First();
             Assert.IsTrue(!string.IsNullOrEmpty(server.ResourceName));
@@ -589,13 +601,12 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestMethod]
         [Owner("Pieter Terblanche")]
         [TestCategory("ConnectControlViewModel_EditServer")]
-        public void ConnectControlViewModel_EditServer_ServerIDMatch_IsTrue()
+        public void ConnectControlViewModelEditServerServerIDMatchIsTrue()
         {
             var serverGuid = Guid.NewGuid();
             Uri uri = new Uri("http://bravo.com/");
 
             var mockShellViewModel = new Mock<IShellViewModel>();
-            var mockMainViewModel = new Mock<IMainViewModel>();
             var mockExplorerRepository = new Mock<IExplorerRepository>();
             var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
 
@@ -603,6 +614,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockEnvironmentConnection.Setup(a => a.UserName).Returns("johnny");
             mockEnvironmentConnection.Setup(a => a.Password).Returns("bravo");
             mockEnvironmentConnection.Setup(a => a.WebServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.ID).Returns(serverGuid);
 
             mockExplorerRepository.Setup(
                 repository => repository.CreateFolder(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()));
@@ -610,21 +622,34 @@ namespace Warewolf.Studio.ViewModels.Tests
                 repository => repository.Rename(It.IsAny<IExplorerItemViewModel>(), It.IsAny<string>())).Returns(true);
 
             var server = new ServerForTesting(mockExplorerRepository);
-            var server2 = new Server();
-            server2.EnvironmentID = serverGuid;
-            server2.EnvironmentConnection = mockEnvironmentConnection.Object;
+            var server2 = new Server
+            {
+                EnvironmentID = serverGuid,
+                EnvironmentConnection = mockEnvironmentConnection.Object
+            };
             server.EnvironmentID = serverGuid;
             server.ResourceName = "mr_J_bravo";
             mockShellViewModel.Setup(a => a.ActiveServer).Returns(server);
             mockShellViewModel.Setup(model => model.LocalhostServer).Returns(server);
 
             CustomContainer.Register<IServer>(server);
-            CustomContainer.Register<IShellViewModel>(mockShellViewModel.Object);
-            CustomContainer.Register<IMainViewModel>(mockMainViewModel.Object);
+            CustomContainer.Register(mockShellViewModel.Object);
+
+            var environmentModel = new Mock<IEnvironmentModel>();
+            environmentModel.SetupGet(a => a.Connection).Returns(mockEnvironmentConnection.Object);
+            environmentModel.SetupGet(a => a.IsConnected).Returns(true);
+
+            var e1 = new EnvironmentModel(serverGuid, mockEnvironmentConnection.Object);
+            var repo = new TestEnvironmentRespository(environmentModel.Object, e1) { ActiveEnvironment = e1 };
+            var environmentRepository = new EnvironmentRepository(repo);
+            Assert.IsNotNull(environmentRepository);
 
             bool passed = false;
-            mockMainViewModel.Setup(a => a.EditServer(It.IsAny<IServerSource>()))
-                .Callback((IServerSource a) => { passed = a.ID == serverGuid; });
+            mockShellViewModel.Setup(a => a.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IServer>()))
+                .Callback((Guid id1,Guid id2,  IServer a) =>
+                {
+                    passed = a.EnvironmentID == serverGuid;
+                });
             //------------Setup for test--------------------------
             var connectControlViewModel = new ConnectControlViewModel(server, new EventAggregator());
             PrivateObject p = new PrivateObject(connectControlViewModel);

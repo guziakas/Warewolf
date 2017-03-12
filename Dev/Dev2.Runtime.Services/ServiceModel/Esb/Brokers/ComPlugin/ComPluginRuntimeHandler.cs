@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -298,7 +298,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                     serviceMethod.Parameters.Add(
                         new MethodParameter
                         {
-                            DefaultValue = parameterInfo.DefaultValue == null ? string.Empty : parameterInfo.DefaultValue.ToString(),
+                            DefaultValue = parameterInfo.DefaultValue?.ToString() ?? string.Empty,
                             EmptyToNull = false,
                             IsRequired = true,
                             Name = parameterInfo.Name,

@@ -2,6 +2,7 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Dev2.Common.Interfaces.ToolBase;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable VirtualMemberCallInContructor
 
@@ -18,27 +19,25 @@ namespace Dev2.Activities.Designers2.Core
         protected void OnPropertyChanged(string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         #endregion
 
         // ReSharper disable once PublicConstructorInAbstractClass
         public CustomToolWithRegionBase(ModelItem modelItem)
             : base(modelItem)
-        {         
+        {
         }
 
         public abstract IList<IToolRegion> BuildRegions();
-        
+
         // ReSharper disable PublicConstructorInAbstractClass
         public CustomToolWithRegionBase(ModelItem modelItem, IList<IToolRegion> regions)
             : base(modelItem)
         {
             _regions = regions;
         }
+
 
         #region Implementation of ICustomToolViewModelWithRegionBase
 
@@ -54,7 +53,8 @@ namespace Dev2.Activities.Designers2.Core
                 _regions = value;
             }
         }
-
-        #endregion
     }
+
+    #endregion
 }
+

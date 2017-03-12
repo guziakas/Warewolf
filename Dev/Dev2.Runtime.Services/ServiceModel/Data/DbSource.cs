@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,13 +20,19 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
-    public class DbSource : Resource, IResourceSource
+    public class DbSource : Resource, IResourceSource, IDb
     {
         #region CTOR
 
         public DbSource()
         {
             ResourceType = "DbSource";
+        }
+
+        public DbSource(enSourceType sourceType)
+        {
+            ResourceType = "DbSource";
+            ServerType = sourceType;
         }
 
         public DbSource(XElement xml)
@@ -57,13 +63,13 @@ namespace Dev2.Runtime.ServiceModel.Data
                     
                     break;
                 default:
+                    ResourceType = "DbSource";
                     ServerType = enSourceType.Unknown;
                     break;
             }
             var conString = xml.AttributeSafe("ConnectionString");
             var connectionString = conString.CanBeDecrypted() ? DpapiWrapper.Decrypt(conString) : conString;
             ResourceType = ServerType.ToString();
-            ResourceType = "DbSource";
             ConnectionString = connectionString;
         }
 
@@ -94,7 +100,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             get
             {
                 var stringBuilder = base.DataList;
-                return stringBuilder != null ? stringBuilder.ToString() : null;
+                return stringBuilder?.ToString();
             }
             set
             {

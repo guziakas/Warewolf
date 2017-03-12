@@ -8,6 +8,7 @@ using Caliburn.Micro;
 using Dev2.Activities.Designers2.ExchangeEmail;
 using Dev2.Activities.Exchange;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
@@ -78,13 +79,13 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             return ModelItemUtils.CreateModelItem(activity);
         }
 
-        static List<ExchangeSource> CreateEmailSources(int count)
+        static List<ExchangeSourceDefinition> CreateEmailSources(int count)
         {
-            var result = new List<ExchangeSource>();
+            var result = new List<ExchangeSourceDefinition>();
 
             for (var i = 0; i < count; i++)
             {
-                result.Add(new ExchangeSource()
+                result.Add(new ExchangeSourceDefinition
                 {
                     ResourceID = Guid.NewGuid(),
                     ResourceName = "Email" + i,
@@ -199,7 +200,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             Assert.IsNotNull(viewModel.SourceRegion.Sources);
             Assert.IsTrue(viewModel.CanTestEmailAccount);
             Assert.AreEqual(emailSourceCount, viewModel.SourceRegion.Sources.Count);
-            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.Name);
+            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.ResourceName);
             Assert.IsTrue(propertyChanged);
         }
 
@@ -256,7 +257,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             Assert.IsTrue(viewModel.CanTestEmailAccount);
 
             Assert.AreEqual(emailSourceCount, viewModel.SourceRegion.Sources.Count);
-            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.Name);
+            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.ResourceName);
 
             Assert.IsTrue(propertyChanged);
         }
@@ -275,7 +276,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             //------------Setup for test--------------------------
             var activity = new DsfExchangeEmailActivity() { To = to };
 
-            var emailSource = new ExchangeSource()
+            var emailSource = new ExchangeSourceDefinition
             {
                 UserName = "bob@mydomain.com",
                 Password = "MyPassword",
@@ -405,7 +406,6 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
 
             viewModel.AddProperty("Test","test");
 
-            Assert.IsNotNull(viewModel.AsyncWorker);
             Assert.IsTrue(viewModel.HasLargeView);
             Assert.IsTrue(viewModel.CanTestEmailAccount);
             Assert.IsTrue(viewModel.IsEmailSourceFocused);
@@ -920,10 +920,11 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
         public ObservableCollection<IExchangeSource> Sources { get; set; }
         private readonly ObservableCollection<IExchangeSource> _sources = new ObservableCollection<IExchangeSource>
         {
-            new ExchangeSource()
+            new ExchangeSourceDefinition
             {
-                Name = "TestExchange",
+                ResourceName = "TestExchange",
                 Type = enSourceType.ExchangeSource,
+                ResourceType = "ExchangeSource",
                 AutoDiscoverUrl = "Localhost",
                 UserName = "test",
                 Password = "test",
@@ -935,7 +936,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             {
                 _sources = new ObservableCollection<IExchangeSource>()
                 {
-                    new ExchangeSource()
+                    new ExchangeSourceDefinition()
                 };
             }
         }

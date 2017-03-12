@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -10,7 +11,7 @@ namespace Dev2
         
         public static void RaiseCanExecuteChanged(ICommand commandForCanExecuteChange)
         {
-            if (Application.Current != null && Application.Current.Dispatcher != null)
+            if (Application.Current != null && Application.Current.Dispatcher != null && Application.Current.CheckAccess())
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -34,7 +35,17 @@ namespace Dev2
                     var command = commandForCanExecuteChange as Microsoft.Practices.Prism.Commands.DelegateCommand;
                     if (command != null)
                     {
-                        command.RaiseCanExecuteChanged();
+                        if(Application.Current != null)
+                        {
+                            if(Application.Current.Dispatcher != null)
+                            {
+                                Application.Current.Dispatcher.BeginInvoke( new Action(() =>
+                                {
+                                    command.RaiseCanExecuteChanged();
+                                }));
+                            }
+                        }
+
                         return;
                     }
                 }
@@ -56,13 +67,15 @@ namespace Dev2
                         return;
                     }
                 }
+                if (typeOfCommand == typeof(DelegateCommand))
+                {
+                    var command = commandForCanExecuteChange as DelegateCommand;
+                    command?.RaiseCanExecuteChanged();
+                }
                 if (typeOfCommand == typeof(AuthorizeCommand))
                 {
                     var command = commandForCanExecuteChange as AuthorizeCommand;
-                    if (command != null)
-                    {
-                        command.RaiseCanExecuteChanged();
-                    }
+                    command?.RaiseCanExecuteChanged();
                 }
             }
         }

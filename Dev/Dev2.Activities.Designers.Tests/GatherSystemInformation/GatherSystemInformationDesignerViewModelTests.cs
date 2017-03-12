@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,7 +31,7 @@ namespace Dev2.Activities.Designers.Tests.GatherSystemInformation
             var items = new List<GatherSystemInformationTO> { new GatherSystemInformationTO() };
             var viewModel = new GatherSystemInformationDesignerViewModel(CreateModelItem(items));
             viewModel.Validate();
-            Assert.AreEqual(17, viewModel.ItemsList.Count);
+            Assert.AreEqual(29, viewModel.ItemsList.Count);
             Assert.IsTrue(viewModel.HasLargeView);
         }
 
@@ -106,10 +106,7 @@ namespace Dev2.Activities.Designers.Tests.GatherSystemInformation
                     var modelItemCollection = modelProperty.Collection;
                     foreach(var dto in items)
                     {
-                        if(modelItemCollection != null)
-                        {
-                            modelItemCollection.Add(dto);
-                        }
+                        modelItemCollection?.Add(dto);
                     }
                 }
             }

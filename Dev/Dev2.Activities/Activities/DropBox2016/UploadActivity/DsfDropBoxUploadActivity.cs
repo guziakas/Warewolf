@@ -21,7 +21,7 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities.DropBox2016.UploadActivity
 {
-    [ToolDescriptorInfo("Dropbox", "Upload", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C8C9EA2E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Upload_Tags")]
+    [ToolDescriptorInfo("Dropbox", "Upload", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C8C9EA2E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Upload")]
     public class DsfDropBoxUploadActivity : DsfBaseActivity
     {
         private DropboxClient _client;
@@ -120,7 +120,7 @@ namespace Dev2.Activities.DropBox2016.UploadActivity
         #endregion Overrides of DsfBaseActivity
 
         //All units used here has been unit tested seperately
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             var writeMode = GetWriteMode();
             DropboxSingleExecutor = new DropBoxUpload(writeMode, evaluatedValues["ToPath"], evaluatedValues["FromPath"]);
@@ -129,22 +129,17 @@ namespace Dev2.Activities.DropBox2016.UploadActivity
             if (dropboxSuccessResult != null)
             {
                 FileMetadata = dropboxSuccessResult.GerFileMetadata();
-                return GlobalConstants.DropBoxSucces;
+                return new List<string> { GlobalConstants.DropBoxSuccess };
             }
             var dropboxFailureResult = dropboxExecutionResult as DropboxFailureResult;
             if (dropboxFailureResult != null)
             {
                 Exception = dropboxFailureResult.GetException();
             }
-            var executionError = Exception.InnerException == null ? Exception.Message : Exception.InnerException.Message;
+            var executionError = Exception.InnerException?.Message ?? Exception.Message;
             throw new Exception(executionError);
         }
 
-        #region Overrides of DsfActivity
-
-        public override string DisplayName { get; set; }
-
-        #endregion Overrides of DsfActivity
 
         public WriteMode GetWriteMode()
         {

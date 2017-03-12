@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -71,9 +71,9 @@ namespace Warewolf.Studio.ViewModels
             _environment = environment;
             _updateManager = updateManager;
             _authenticationType = AuthenticationType.Windows;
-            _serverName = String.Empty;
-            _userName = String.Empty;
-            _password = String.Empty;
+            _serverName = string.Empty;
+            _userName = string.Empty;
+            _password = string.Empty;
             IsWindows = true;
             HeaderText = Resources.Languages.Core.SharePointServiceNewHeaderLabel;
             Header = Resources.Languages.Core.SharePointServiceNewHeaderLabel;
@@ -92,9 +92,15 @@ namespace Warewolf.Studio.ViewModels
             : this(updateManager, aggregator, asyncWorker, environment)
         {
             VerifyArgument.IsNotNull("sharePointServiceSource", sharePointServiceSource);
-            _sharePointServiceSource = sharePointServiceSource;
-            SetupHeaderTextFromExisting();
-            FromModel(sharePointServiceSource);
+
+            asyncWorker.Start(() => updateManager.FetchSource(sharePointServiceSource.Id), source =>
+            {
+                _sharePointServiceSource = source;
+                _sharePointServiceSource.Path = sharePointServiceSource.Path;
+                SetupHeaderTextFromExisting();
+                FromModel(source);
+            });
+
         }
 
         void SetupHeaderTextFromExisting()
@@ -135,13 +141,13 @@ namespace Warewolf.Studio.ViewModels
         {
             if (Testing)
                 return false;
-            if (String.IsNullOrEmpty(ServerName))
+            if (string.IsNullOrEmpty(ServerName))
             {
                 return false;
             }
             if (AuthenticationType == AuthenticationType.User)
             {
-                return !String.IsNullOrEmpty(UserName) && !String.IsNullOrEmpty(Password);
+                return !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password);
             }
             return true;
         }
@@ -149,10 +155,7 @@ namespace Warewolf.Studio.ViewModels
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void FromModel(ISharepointServerSource sharepointServerSource)
@@ -165,7 +168,6 @@ namespace Warewolf.Studio.ViewModels
             IsSharepointOnline = sharepointServerSource.IsSharepointOnline;
         }
 
-
         public override string Name
         {
             get
@@ -177,7 +179,6 @@ namespace Warewolf.Studio.ViewModels
                 ResourceName = value;
             }
         }
-
 
         public string ResourceName
         {
@@ -206,6 +207,8 @@ namespace Warewolf.Studio.ViewModels
                     var src = ToSource();
                     src.Path = RequestServiceNameViewModel.ResourceName.Path ?? RequestServiceNameViewModel.ResourceName.Name;
                     Save(src);
+                    if (RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                        AfterSave(RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                     Item = src;
                     _sharePointServiceSource = src;
                     SetupHeaderTextFromExisting();
@@ -245,7 +248,7 @@ namespace Warewolf.Studio.ViewModels
                 TestFailed = true;
                 TestPassed = false;
                 Testing = false;
-                TestMessage = exception != null ? exception.Message : "Failed";
+                TestMessage = GetExceptionMessage(exception);
             });
         }
 
@@ -271,7 +274,7 @@ namespace Warewolf.Studio.ViewModels
                 Password = Password,
                 UserName = UserName,
                 Name = ResourceName,
-                Id = _sharePointServiceSource == null ? Guid.NewGuid() : _sharePointServiceSource.Id
+                Id = _sharePointServiceSource?.Id ?? Guid.NewGuid()
             };
         }
 
@@ -286,7 +289,7 @@ namespace Warewolf.Studio.ViewModels
                     UserName = UserName,
                     Name = ResourceName,
                     IsSharepointOnline = IsSharepointOnline,
-                    Id = _sharePointServiceSource == null ? Guid.NewGuid() : _sharePointServiceSource.Id
+                    Id = _sharePointServiceSource?.Id ?? Guid.NewGuid()
                 };
             // ReSharper disable once RedundantIfElseBlock
             else
@@ -335,7 +338,6 @@ namespace Warewolf.Studio.ViewModels
                 {
                     throw _requestServiceNameViewModel.Exception;
                 }
-
             }
         }
 
@@ -514,10 +516,7 @@ namespace Warewolf.Studio.ViewModels
                 _testComplete = value;
                 OnPropertyChanged("TestComplete");
                 var command = SaveCommand as RelayCommand;
-                if (command != null)
-                {
-                    command.RaiseCanExecuteChanged();
-                }
+                command?.RaiseCanExecuteChanged();
             }
         }
         public bool Testing

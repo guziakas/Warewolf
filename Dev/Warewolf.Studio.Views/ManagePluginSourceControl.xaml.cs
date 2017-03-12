@@ -1,9 +1,8 @@
-﻿using System.Linq;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
 using Dev2.Common.Interfaces;
+using Dev2.UI;
 using Infragistics.Controls.Menus;
 using Microsoft.Practices.Prism.Mvvm;
 using Warewolf.Studio.ViewModels;
@@ -28,24 +27,10 @@ namespace Warewolf.Studio.Views
         }
 
 
-        void UIElement_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (e.OldValue.Equals(true) && e.NewValue.Equals(false))
-            {
-                SearchTextBox.IsEnabled = true;
-                RefreshButton.IsEnabled = true;
-            }
-        }
-
         public IDllListingModel SelectItem(string itemName)
         {
-            
+
             var xamDataTreeNode = GetItem(itemName);
-            if (xamDataTreeNode != null)
-            {
-                xamDataTreeNode.IsSelected = true;
-                ExplorerTree.ActiveNode = xamDataTreeNode;
-            }
             return xamDataTreeNode?.Data as IDllListingModel;
         }
 
@@ -57,19 +42,7 @@ namespace Warewolf.Studio.Views
 
         XamDataTreeNode GetItem(string itemName)
         {
-            var xamDataTreeNodes = TreeUtils.Descendants(ExplorerTree.Nodes.ToArray());
-            return xamDataTreeNodes.FirstOrDefault(node =>
-            {
-                var item = node.Data as IDllListingModel;
-                if (item != null)
-                {
-                    if (item.Name.ToLowerInvariant().Contains(itemName.ToLowerInvariant()))
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            });
+            return null;
         }
 
         public string GetAssemblyName()
@@ -77,11 +50,6 @@ namespace Warewolf.Studio.Views
             BindingExpression be = AssemblyNameTextBox.GetBindingExpression(TextBox.TextProperty);
             be?.UpdateTarget();
             return AssemblyNameTextBox.Text;
-        }
-
-        public void ClearFilter()
-        {
-            SearchTextBox.ClearSearchCommand.Execute(null);
         }
 
         public void PerformSave()
@@ -107,54 +75,66 @@ namespace Warewolf.Studio.Views
             return xamDataTreeNode?.Data as IDllListingModel;
         }
 
+        public void SetTextBoxValue(string controlName, string input)
+        {
+            switch (controlName)
+            {
+                case "AssemblyName":
+                    AssemblyNameTextBox.Text = input;
+                    BindingExpression assem = AssemblyNameTextBox.GetBindingExpression(TextBlock.TextProperty);
+                    assem?.UpdateSource();
+                    break;
+                case "ConfigFile":
+                    ConfigFileTextbox.Text = input;
+                    BindingExpression config = ConfigFileTextbox.GetBindingExpression(TextBlock.TextProperty);
+                    config?.UpdateSource();
+                    break;
+                case "GacAssemblyName":
+                    GacAssemblyNameTextBox.Text = input;
+                    BindingExpression gac = GacAssemblyNameTextBox.GetBindingExpression(TextBlock.TextProperty);
+                    gac?.UpdateSource();
+                    break;
+            }
+        }
+
         public bool GetControlEnabled(string controlName)
         {
-            switch(controlName)
+            switch (controlName)
             {
                 case "Save":
                     var viewModel = DataContext as ManagePluginSourceViewModel;
                     return viewModel != null && viewModel.OkCommand.CanExecute(null);
-                case "Filter":
-                    return SearchTextBox.IsEnabled;
+                case "AssemblyName":
+                    return AssemblyNameTextBox.IsEnabled;
+                case "ConfigFile":
+                    return ConfigFileTextbox.IsEnabled;
+                case "GacAssemblyName":
+                    return GacAssemblyNameTextBox.IsEnabled;
+                case "AssemblyNameButton":
+                    return AssemblyNameButton.IsEnabled;
+                case "ConfigFileButton":
+                    return ConfigFileButton.IsEnabled;
+                case "GacAssemblyNameButton":
+                    return GacAssemblyNameButton.IsEnabled;
             }
             return false;
         }
 
-        public void ExecuteRefresh()
+        private void GacAssemblyNameTextBox_OnTextChanged(object sender, RoutedEventArgs e)
         {
-            RefreshButton.Command.Execute(null);
-        }
-
-        public void FilterItems()
-        {
-            var count = ExplorerTree.Nodes.Count;
-        }
-
-        void ExplorerTree_OnLoaded(object sender, RoutedEventArgs e)
-        {
-            var menuTree = sender as XamDataTree;
-            if(menuTree != null)
+            var intellisenseTextBox = sender as IntellisenseTextBox;
+            if (intellisenseTextBox != null)
             {
-                var items = menuTree.ItemsSource;
-            }
-            SelectNode(ExplorerTree.Nodes, "KEYTOSELECT");
-        }
-        void SelectNode(XamDataTreeNodesCollection nodes, string nodeKey)
-        {
-            
-        }
-
-        private void ExplorerTree_OnPreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Tab)
-            {
-                AssemblyNameTextBox.Focus();
-                e.Handled = true;
-            }
-            if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift && e.KeyboardDevice.IsKeyDown(Key.Tab))
-            {
-                RefreshButton.Focus();
-                e.Handled = true;
+                if (string.IsNullOrWhiteSpace(intellisenseTextBox.Text))
+                {
+                    if (Application.Current != null)
+                        intellisenseTextBox.Style = Application.Current.TryFindResource("AutoCompleteBoxStyle") as Style;
+                }
+                else
+                {
+                    if (Application.Current != null)
+                        intellisenseTextBox.Style = Application.Current.TryFindResource("DisabledAutoCompleteBoxStyle") as Style;
+                }
             }
         }
     }

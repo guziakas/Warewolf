@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -53,9 +53,24 @@ namespace Warewolf.Studio.ViewModels
             return _queryProxy.PluginActions(source, ns).Where(a => a.Method != "GetType").ToList();
         }
 
+        public ICollection<IPluginAction> GetActionsWithReturns(IPluginSource source, INamespaceItem ns)
+        {
+            return _queryProxy.PluginActionsWithReturns(source, ns).Where(a => a.Method != "GetType").ToList();
+        }
+
+        public ICollection<IPluginConstructor> GetConstructors(IPluginSource source, INamespaceItem ns)
+        {
+            return _queryProxy.PluginConstructors(source, ns).ToList();
+        }
+
         public ICollection<INamespaceItem> GetNameSpaces(IPluginSource source)
         {
             return _queryProxy.FetchNamespaces(source);
+        }
+
+        public ICollection<INamespaceItem> GetNameSpacesWithJsonRetunrs(IPluginSource source)
+        {
+            return _queryProxy.FetchNamespacesWithJsonRetunrs(source);
         }
 
         public void CreateNewSource()

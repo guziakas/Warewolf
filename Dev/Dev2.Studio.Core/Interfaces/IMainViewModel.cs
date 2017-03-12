@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,8 @@ using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Security;
 using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core.ViewModels;
+
 // ReSharper disable InconsistentNaming
 
 namespace Dev2.Interfaces
@@ -39,7 +41,11 @@ namespace Dev2.Interfaces
         ICommand ShowStartPageCommand { get; }
         AuthorizeCommand<string> NewServiceCommand { get; }
         AuthorizeCommand<string> NewPluginSourceCommand { get; }
-        AuthorizeCommand<string> NewDatabaseSourceCommand { get; }
+        AuthorizeCommand<string> NewSqlServerSourceCommand { get; }
+        AuthorizeCommand<string> NewMySqlSourceCommand { get; }
+        AuthorizeCommand<string> NewPostgreSqlSourceCommand { get; }
+        AuthorizeCommand<string> NewOracleSourceCommand { get; }
+        AuthorizeCommand<string> NewOdbcSourceCommand { get; }
         AuthorizeCommand<string> NewWebSourceCommand { get; }
         AuthorizeCommand<string> NewServerSourceCommand { get; }
         AuthorizeCommand<string> NewEmailSourceCommand { get; }
@@ -48,13 +54,13 @@ namespace Dev2.Interfaces
         AuthorizeCommand<string> NewSharepointSourceCommand { get; }
         AuthorizeCommand<string> NewDropboxSourceCommand { get; }
         AuthorizeCommand<string> NewWcfSourceCommand { get; }
-
-        void EditServer(IServerSource serverSource);
+        IExplorerViewModel ExplorerViewModel { get; set; }
 
         void DisplayDialogForNewVersion();
 
         Task<bool> CheckForNewVersion();
 
         bool ShowDeleteDialogForFolder(string folderBeingDeleted);
+        IWorkflowDesignerViewModel CreateNewDesigner(IContextualResourceModel resourceModel);
     }
 }

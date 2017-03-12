@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,7 +32,6 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             : base(modelItem)
         {
             AddTitleBarLargeToggle();
-            //AddTitleBarHelpToggle();
 
             PreviewViewModel = new PreviewViewModel
                 {
@@ -49,6 +48,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             {
                 Headers = string.Empty;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Web_Request;
         }
 
         public PreviewViewModel PreviewViewModel { get; private set; }
@@ -325,10 +325,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

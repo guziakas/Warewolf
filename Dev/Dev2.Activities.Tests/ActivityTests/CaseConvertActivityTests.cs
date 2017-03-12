@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -52,7 +52,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(expected, actual);
         }
 
-        //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in case convert result
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfCaseConvertActivity_GetOutputs")]
+        public void DsfCaseConvertActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO> { CaseConverterFactory.CreateCaseConverterTO("[[testVar]]", "UPPER", "[[testVar]]", 1), CaseConverterFactory.CreateCaseConverterTO("[[testVar2]]", "UPPER", "[[testVar2]]", 1) };
+            var act = new DsfCaseConvertActivity { ConvertCollection = convertCollection };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, outputs.Count);
+            Assert.AreEqual("[[testVar]]", outputs[0]);
+            Assert.AreEqual("[[testVar2]]", outputs[1]);
+        }
+
         [TestMethod]
         public void CaseConvertWithAllUpperAndMultipleRegionsExpectedAllUpperCase()
         {

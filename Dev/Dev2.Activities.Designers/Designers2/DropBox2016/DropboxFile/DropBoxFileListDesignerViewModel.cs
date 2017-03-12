@@ -3,7 +3,6 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Input;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
@@ -41,7 +40,6 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
         public DropBoxFileListDesignerViewModel(ModelItem modelItem, IDropboxSourceManager sourceManager)
             : base(modelItem)
         {
-            ThumbVisibility = Visibility.Visible;
             _sourceManager = sourceManager;
             EditDropboxSourceCommand = new RelayCommand(o => EditDropBoxSource(), p => IsDropboxSourceSelected);
             NewSourceCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(CreateOAuthSource);
@@ -53,6 +51,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
             IncludeDeleted = false;
             IsRecursive = false;
             IncludeMediaInfo = false;
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Dropbox_List_Contents;
         }
 
         public ICommand NewSourceCommand { get; set; }
@@ -223,8 +222,10 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
 
         private void EditDropBoxSource()
         {
-            CustomContainer.Get<IShellViewModel>().OpenResource(SelectedSource.ResourceID, CustomContainer.Get<IShellViewModel>().ActiveServer);
-
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var activeServer = shellViewModel.ActiveServer;
+            if (activeServer != null)
+                shellViewModel.OpenResource(SelectedSource.ResourceID,activeServer.EnvironmentID, activeServer);
         }
 
         public void CreateOAuthSource()
@@ -252,10 +253,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -265,10 +263,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
         protected void OnPropertyChanged(string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             if (propertyName != null && propertyName.ToUpper() == "SelectedSource".ToUpper())
             {
                 ToPath = String.Empty;

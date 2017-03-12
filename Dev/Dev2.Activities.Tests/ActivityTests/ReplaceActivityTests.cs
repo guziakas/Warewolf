@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -382,6 +382,25 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(FieldsToSearch, act.FieldsToSearch);
             Assert.AreEqual(Find, act.Find);
             Assert.AreEqual(ReplaceWith, act.ReplaceWith);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string FieldsToSearch = "[[Numeric(1).num]]";
+            const string Find = "Up";
+            const string Result = "[[res]]";
+            const string ReplaceWith = "2";
+            var act = new DsfReplaceActivity { FieldsToSearch = FieldsToSearch, Find = Find, ReplaceWith = ReplaceWith, Result = Result };
+
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]

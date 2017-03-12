@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.WF;
@@ -56,15 +56,7 @@ namespace Dev2.Runtime.ESB.Execution
             if(DataObject.ServerID == Guid.Empty)
                 DataObject.ServerID = HostSecurityProvider.Instance.ServerID;
 
-            // Set resource ID, only if not set yet - original resource;
-            if(DataObject.ResourceID == Guid.Empty && ServiceAction?.Service != null)
-                DataObject.ResourceID = ServiceAction.Service.ID;
-
-            // Travis : Now set Data List
-            DataObject.DataList = ServiceAction.DataListSpecification;
-            // Set original instance ID, only if not set yet - original resource;
-            if(DataObject.OriginalInstanceID == Guid.Empty)
-                DataObject.OriginalInstanceID = DataObject.DataListID;
+           
             Dev2Logger.Info($"Started Execution for Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}");
             //Set execution origin
             if(!string.IsNullOrWhiteSpace(DataObject.ParentServiceName))
@@ -126,12 +118,14 @@ namespace Dev2.Runtime.ESB.Execution
                 var msg = iwe.Message;
 
                 int start = msg.IndexOf("Flowchart ", StringComparison.Ordinal);
-                to.AddError(start > 0 ? GlobalConstants.NoStartNodeError : iwe.Message);
+                var errorMessage = start > 0 ? GlobalConstants.NoStartNodeError : iwe.Message;
+                DataObject.Environment.AddError(errorMessage);
+                wfappUtils.DispatchDebugState(DataObject, StateType.End, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DataObject.StartTime, false, true);
             }
             catch (Exception ex)
             {
                 Dev2Logger.Error(ex);
-                to.AddError(ex.Message);
+                DataObject.Environment.AddError(ex.Message);
                 wfappUtils.DispatchDebugState(DataObject, StateType.End, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DataObject.StartTime, false, true);
             }
             return result;

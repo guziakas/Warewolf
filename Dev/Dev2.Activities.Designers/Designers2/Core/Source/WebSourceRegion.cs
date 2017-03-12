@@ -48,13 +48,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             IsEnabled = true;
             _modelItem = modelItem;
             SourceId = modelItem.GetProperty<Guid>("SourceId");
-            SourcesHelpText = Warewolf.Studio.Resources.Languages.Core.WebServiceSourcesHelp;
-            EditSourceHelpText = Warewolf.Studio.Resources.Languages.Core.WebServiceSelectedSourceHelp;
-            NewSourceHelpText = Warewolf.Studio.Resources.Languages.Core.WebServiceNewWebSourceHelp;
+            SourcesHelpText = Warewolf.Studio.Resources.Languages.HelpText.WebServiceSourcesHelp;
+            EditSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.WebServiceSelectedSourceHelp;
+            NewSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.WebServiceNewWebSourceHelp;
 
-            SourcesTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWebServiceSourcesTooltip;
-            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWebServiceEditSourceTooltip;
-            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWebServiceNewSourceTooltip;
+            SourcesTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWebServiceSourcesTooltip;
+            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWebServiceEditSourceTooltip;
+            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWebServiceNewSourceTooltip;
 
             if (SourceId != Guid.Empty)
             {
@@ -151,10 +151,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 _sourceId = value;
-                if (_modelItem != null)
-                {
-                    _modelItem.SetProperty("SourceId", value);
-                }
+                _modelItem?.SetProperty("SourceId", value);
             }
         }
 
@@ -269,10 +266,7 @@ namespace Dev2.Activities.Designers2.Core.Source
                 OnSomethingChanged(this);
             }
             var delegateCommand = EditSourceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
-            if (delegateCommand != null)
-            {
-                delegateCommand.RaiseCanExecuteChanged();
-            }
+            delegateCommand?.RaiseCanExecuteChanged();
 
             _selectedSource = value;
         }
@@ -342,19 +336,13 @@ namespace Dev2.Activities.Designers2.Core.Source
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            handler?.Invoke(this, args);
         }
     }
 }

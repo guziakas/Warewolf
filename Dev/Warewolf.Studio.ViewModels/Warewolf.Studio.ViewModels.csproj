@@ -136,10 +136,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConnectControlViewModel.cs" />
+    <Compile Include="DatabaseSourceViewModelBase.cs" />
     <Compile Include="DeploySourceExplorerViewModel.cs" />
     <Compile Include="DeployDestinationViewModel.cs" />
     <Compile Include="DeployStatsViewerViewModel.cs" />
+    <Compile Include="DLLChooser.cs" />
     <Compile Include="DummyServiceTest.cs" />
+    <Compile Include="FileChooser.cs" />
+    <Compile Include="FileChooserModel.cs" />
+    <Compile Include="IProcessor.cs" />
+    <Compile Include="ManageMySqlSourceViewModel.cs" />
+    <Compile Include="ManageOdbcSourceViewModel.cs" />
+    <Compile Include="ManageOracleSourceViewModel.cs" />
+    <Compile Include="ManagePostgreSqlSourceViewModel.cs" />
+    <Compile Include="ManageSqlServerSourceViewModel.cs" />
+    <Compile Include="ServiceTestStep.cs" />
     <Compile Include="SingleExplorerDeployViewModel.cs" />
     <Compile Include="ExplorerItemViewModelCommandController.cs" />
     <Compile Include="IDuplicateResourceViewModel.cs" />
@@ -149,8 +160,6 @@
     <Compile Include="ManageDbServiceModel.cs" />
     <Compile Include="ManageOAuthSourceModel.cs" />
     <Compile Include="ManageOAuthSourceViewModel.cs" />
-    <Compile Include="EmailAttachmentModel.cs" />
-    <Compile Include="EmailAttachmentVm.cs" />
     <Compile Include="EnvironmentViewModel.cs" />
     <Compile Include="ExchangeServiceModel.cs" />
     <Compile Include="ExplorerItemNodeViewModel.cs" />
@@ -162,7 +171,6 @@
     <Compile Include="Help\IHelpChangedEvent.cs" />
     <Compile Include="IDockViewModel.cs" />
     <Compile Include="ManageDatabaseSourceModel.cs" />
-    <Compile Include="ManageDatabaseSourceViewModel.cs" />
     <Compile Include="ManageRabbitMQSourceViewModel.cs" />
     <Compile Include="ManageRabbitMQSourceModel.cs" />
     <Compile Include="ManageEmailSourceModel.cs" />
@@ -186,6 +194,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="RequestServiceNameViewModel.cs" />
     <Compile Include="SharepointServerSourceModel.cs" />
     <Compile Include="SharepointServerSourceViewModel.cs" />
@@ -203,6 +215,10 @@
     <Compile Include="VersionViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Dev2.Activities.Designers\Dev2.Activities.Designers.csproj">
+      <Project>{B95B724A-B052-4E18-98A4-88072C8DF2C2}</Project>
+      <Name>Dev2.Activities.Designers</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Activities\Dev2.Activities.csproj">
       <Project>{0A369A8B-0906-47EB-8EEE-CA20E9D4F151}</Project>
       <Name>Dev2.Activities</Name>

@@ -10,6 +10,8 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
+using Microsoft.Practices.Prism;
+
 // ReSharper disable NotAccessedField.Local
 
 namespace Dev2.Activities.Designers2.Core.Web.Put
@@ -38,7 +40,7 @@ namespace Dev2.Activities.Designers2.Core.Web.Put
             _source.SomethingChanged += SourceOnSomethingChanged;
             IsEnabled = false;
             SetupHeaders(modelItem);
-            if (source != null && source.SelectedSource != null)
+            if (source?.SelectedSource != null)
             {
                 RequestUrl = source.SelectedSource.HostName;
                 IsEnabled = true;
@@ -48,7 +50,7 @@ namespace Dev2.Activities.Designers2.Core.Web.Put
         private void SourceOnSomethingChanged(object sender, IToolRegion args)
         {
             // ReSharper disable once ExplicitCallerInfoArgument
-            if (_source != null && _source.SelectedSource != null)
+            if (_source?.SelectedSource != null)
             {
                 RequestUrl = _source.SelectedSource.HostName;
                 QueryString = _source.SelectedSource.DefaultQuery;
@@ -67,8 +69,10 @@ namespace Dev2.Activities.Designers2.Core.Web.Put
         private void SetupHeaders(ModelItem modelItem)
         {
             var existing = modelItem.GetProperty<IList<INameValue>>("Headers");
-            var headerCollection = new ObservableCollection<INameValue>(existing ?? new List<INameValue>());
+            var nameValues = existing ?? new List<INameValue>();
+            var headerCollection = new ObservableCollection<INameValue>();
             headerCollection.CollectionChanged += HeaderCollectionOnCollectionChanged;
+            headerCollection.AddRange(nameValues);
             Headers = headerCollection;
 
             if (Headers.Count == 0)
@@ -95,7 +99,39 @@ namespace Dev2.Activities.Designers2.Core.Web.Put
 
         private void HeaderCollectionOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            AddItemPropertyChangeEvent(e);
+            RemoveItemPropertyChangeEvent(e);
+
+            
+        }
+
+        private void AddItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        {
+            if (args.NewItems == null) return;
+            foreach (INotifyPropertyChanged item in args.NewItems)
+            {
+                if (item != null)
+                {
+                    item.PropertyChanged += ItemPropertyChanged;
+                }
+            }
+        }
+
+        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
             _modelItem.SetProperty("Headers", _headers.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
+        }
+
+        private void RemoveItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        {
+            if (args.OldItems == null) return;
+            foreach (INotifyPropertyChanged item in args.OldItems)
+            {
+                if (item != null)
+                {
+                    item.PropertyChanged -= ItemPropertyChanged;
+                }
+            }
         }
 
         #region Implementation of INotifyPropertyChanged
@@ -105,10 +141,7 @@ namespace Dev2.Activities.Designers2.Core.Web.Put
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion

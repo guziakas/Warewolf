@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -93,10 +93,7 @@ namespace Dev2.Activities.Designers.Tests
         static void OnGloabalBuild(BuildArgs args)
         {
             var handler = GloabalBuild;
-            if(handler != null)
-            {
-                handler(null, args);
-            }
+            handler?.Invoke(null, args);
         }
 
         public void DoSomething()
@@ -111,10 +108,7 @@ namespace Dev2.Activities.Designers.Tests
         protected virtual void OnDobuilding(BuildArgs args)
         {
             var handler = Dobuilding;
-            if(handler != null)
-            {
-                handler(this, args);
-            }
+            handler?.Invoke(this, args);
         }
     }
 

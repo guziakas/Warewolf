@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System.Activities.Presentation;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Dev2.Studio.Core.Interfaces;
 using Dev2.UI;
 using Microsoft.Practices.Prism.Mvvm;
+using Warewolf.Studio.ViewModels;
 
 namespace Warewolf.Studio.Views
 {
@@ -17,39 +19,55 @@ namespace Warewolf.Studio.Views
         public ServiceTestView()
         {
             InitializeComponent();
-            
-
+            WorkflowControl.PreviewMouseLeftButtonUp += WorkflowDesignerViewPreviewMouseUp;
+            PreviewDragOver += DropPointOnDragEnter;
+            PreviewDrop += DropPointOnDragEnter;
         }
 
-        private static IList<Control> GetControls(DependencyObject parent)
+        private void DropPointOnDragEnter(object sender, DragEventArgs e)
         {
-            var result = new List<Control>();
-            for (int x = 0; x < VisualTreeHelper.GetChildrenCount(parent); x++)
+            if (sender != null)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(parent, x);
-                var instance = child as Control;
-
-                if (null != instance)
-                    result.Add(instance);
-
-                result.AddRange(GetControls(child));
-            }
-            return result;
-        }
-
-        private void TxtValue_OnTextChanged(object sender, RoutedEventArgs e)
-        {
-            var textBox = sender as IntellisenseTextBox;
-            if(textBox != null)
-            {
-                RefreshCommands(e);
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
             }
         }
 
+        void WorkflowDesignerViewPreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DependencyObject node = e.OriginalSource as DependencyObject;
+                while (node != null)
+                {
+                    if (node is WorkflowViewElement)
+                    {
+                        var dt = DataContext as ServiceTestViewModel;
+                        var wd = dt?.WorkflowDesignerViewModel;
+                        var designer = node as WorkflowViewElement;
+                        var modelItem = designer.ModelItem;
+                        if (wd != null && wd.IsTestView && modelItem != null)
+                        {
+                            wd.ItemSelectedAction?.Invoke(modelItem);
+                        }
+                        break;
+                    }
+                    if (node is Visual)
+                    {
+                        node = VisualTreeHelper.GetParent(node);
+                    }
+                    else
+                    {
+                        node = null;
+                    }
+                }
+            }
+        }
         private void ToggleButton_OnChecked(object sender, RoutedEventArgs e)
         {
-            var textBox = sender as CheckBox;
-            if (textBox != null)
+            var control = sender as ToggleButton;
+
+            if (control != null)
             {
                 RefreshCommands(e);
             }
@@ -85,57 +103,37 @@ namespace Warewolf.Studio.Views
         private void MainGrid_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var serviceTestViewModel = DataContext as IServiceTestViewModel;
-            serviceTestViewModel?.UpdateHelpDescriptor(Studio.Resources.Languages.Core.ServiceTestGenericHelpText);
+            serviceTestViewModel?.UpdateHelpDescriptor(Studio.Resources.Languages.HelpText.ServiceTestGenericHelpText);
             e.Handled = true;
         }
 
         private void ListBoxItemGrid_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var serviceTestViewModel = DataContext as IServiceTestViewModel;
-            serviceTestViewModel?.UpdateHelpDescriptor(Studio.Resources.Languages.Core.ServiceTestSelectedTestHelpText);
+            serviceTestViewModel?.UpdateHelpDescriptor(Studio.Resources.Languages.HelpText.ServiceTestSelectedTestHelpText);
             e.Handled = true;
         }
 
-        private void WorkflowControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private void AutoCompleteBox_OnTextChanged(object sender, RoutedEventArgs e)
         {
-            //var elements = GetControls(WorkflowControl);
+            var textBox = sender as IntellisenseTextBox;
+            if (textBox != null)
+                RefreshCommands(e);
+            if(textBox == null)
+            {
+                var box = sender as TextBox;
+                if (box != null)
+                {
+                    RefreshCommands(e);
+                }
+            }
+        }
 
-            //var toggleButtons = elements.Where(a => a.GetType() == typeof (System.Windows.Controls.Primitives.ToggleButton));
-            //foreach (var toggleButton in toggleButtons)
-            //{
-            //    if (toggleButton.Name == "expandAllButton" || toggleButton.Name == "collapseAllButton")
-            //    {
-            //        toggleButton.Visibility = Visibility.Collapsed;
-            //    }
-            //}
-            ////var activityToggleButtons = elements.Where(a => a.GetType() == typeof (CustomControls.ActivityDesignerToggleButton));
-            ////foreach (var toggleButton in activityToggleButtons)
-            ////{
-            ////    toggleButton.Visibility = Visibility.Collapsed;
-            ////}
-            ////var dev2Grids = elements.Where(a => a.GetType() == typeof (Dev2DataGrid));
-            ////foreach (var toggleButton in dev2Grids)
-            ////{
-            ////    toggleButton.IsEnabled = false;
-            ////}
-
-            //var multiAssigns = elements.Where(a => a.GetType() == typeof (MultiAssignDesigner));
-            //foreach (var assign in multiAssigns)
-            //{
-            //    //assign.IsEnabled = false;
-            //    //var assignVm = assign.DataContext as MultiAssignDesignerViewModel;
-            //    //if (assignVm != null)
-            //    //{
-            //    //    assignVm.HasLargeView = false;
-            //    //    assignVm.ThumbVisibility = Visibility.Collapsed;
-            //    //}
-            //}
-
-            //var thumbs = elements.Where(a => a.GetType() == typeof (System.Windows.Controls.Primitives.Thumb));
-            //foreach (var thumb in thumbs)
-            //{
-            //    thumb.Visibility = Visibility.Collapsed;
-            //}
+        private void Selector_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var routedEventArgs = new RoutedEventArgs(e.RoutedEvent);
+            RefreshCommands(routedEventArgs);
+            e.Handled = true;
         }
     }
 }

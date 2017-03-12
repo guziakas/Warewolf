@@ -13,8 +13,8 @@
         d:DataContext="{d:DesignInstance Type=saveDialog:IRequestServiceNameViewModel, IsDesignTimeCreatable=False}"
         FocusManager.IsFocusScope="True"
         WindowStartupLocation="CenterScreen"
-        ShowInTaskbar="False" Topmost="True"
-        MouseDown="RequestServiceNameView_OnMouseDown"
+        ShowInTaskbar="True" 
+        MouseDown="RequestServiceNameView_OnMouseDown" KeyUp="RequestServiceNameView_OnKeyUp"
         Title="SaveDialogView"
         mc:Ignorable="d">
     
@@ -25,9 +25,6 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Window.InputBindings>
-        <KeyBinding Command="{Binding Path=CancelCommand}" Key="Escape" />
-    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -59,7 +56,7 @@
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch"
                                 x:Name="ExplorerView"
-                                Loaded="ExplorerView_OnLoaded"
+                                KeyUp="ExplorerView_OnKeyUp"
                                 DataContext="{Binding SingleEnvironmentExplorerViewModel}" />
         </DockPanel>
         <Grid Grid.Row="2"
@@ -93,7 +90,7 @@
                        TextAlignment="Right" />
             <CheckBox Visibility="{Binding IsDuplicate, Converter={StaticResource BoolToVisibilityConverter}}" 
                       Content="Update duplicated relationships?" IsChecked="{Binding FixReferences}" Margin="{StaticResource ControlBorderBottomRight}"
-                      ToolTip="{x:Static languages:Core.DuplicateCheckBoxTooltip}"/>
+                      ToolTip="{x:Static languages:Tooltips.DuplicateCheckBoxTooltip}"/>
             <views:CircularProgressBar     Width="25"
                                            Height="25"
                                            Padding="2.5"
@@ -106,7 +103,7 @@
                     Content="Duplicate"
                     Visibility="{Binding IsDuplicate, Converter={StaticResource BoolToVisibilityConverter}}" 
                     Style="{StaticResource ButtonStyle}"
-                    ToolTip="{x:Static languages:Core.DuplicateButtonTooltip}"/>
+                    ToolTip="{x:Static languages:Tooltips.DuplicateButtonTooltip}"/>
            
             <Button x:Name="OkButton"
                     Width="60"
@@ -115,7 +112,7 @@
                     Content="Save"
                     Visibility="{Binding IsDuplicate, Converter={StaticResource BoolToVisibilityConverterNegative}}" 
                     Style="{StaticResource ButtonStyle}"
-                    ToolTip="{x:Static languages:Core.SaveButtonTooltip}"/>
+                    ToolTip="{x:Static languages:Tooltips.SaveButtonTooltip}"/>
             
             <Button x:Name="CancelButton"
                     Width="60"
@@ -123,7 +120,7 @@
                     Content="Cancel"
                     Margin="{StaticResource ControlBorderBottomRight}"
                     Style="{StaticResource ButtonStyle}"
-                    ToolTip="{x:Static languages:Core.CancelButtonTooltip}"/>
+                    ToolTip="{x:Static languages:Tooltips.CancelButtonTooltip}"/>
         </DockPanel>
     </Grid>
 </Window>

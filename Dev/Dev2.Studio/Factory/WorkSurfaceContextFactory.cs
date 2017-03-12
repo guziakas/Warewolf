@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +17,7 @@ using Dev2.Settings.Scheduler;
 using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Studio.ViewModels.WorkSurface;
 
@@ -29,7 +30,6 @@ namespace Dev2.Studio.Factory
         {
             var key = WorkSurfaceKeyFactory.CreateKey(resourceModel);
 
-            //TODO Juries move to factory
             var workSurfaceVm = new WorkflowDesignerViewModel(resourceModel, createDesigner);
 
             var contextVm = new WorkSurfaceContextViewModel(key, workSurfaceVm)
@@ -64,6 +64,13 @@ namespace Dev2.Studio.Factory
         {
 
             var key = WorkSurfaceKeyFactory.CreateKey(workSurfaceContext) as WorkSurfaceKey;
+            if(vm is HelpViewModel)
+            {
+                if(key != null)
+                {
+                    key.ResourceID = Guid.Empty;
+                }
+            }
             if (vm is SchedulerViewModel || vm is SettingsViewModel)
                 key = WorkSurfaceKeyFactory.CreateEnvKey(workSurfaceContext, CustomContainer.Get<IShellViewModel>().ActiveServer.EnvironmentID) as WorkSurfaceKey;
             return CreateWorkSurfaceContextViewModel(vm, workSurfaceContext, key);

@@ -8,6 +8,10 @@ using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
+// ReSharper disable UnusedMember.Global
+// ReSharper disable ConvertToAutoProperty
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 // ReSharper disable ExplicitCallerInfoArgument
 
@@ -50,7 +54,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             IsEnabled = true;
             _modelItem = modelItem;
             CommandText = _modelItem.GetProperty<string>("CommandText") ?? "";
-            IsActionEnabled = _source != null && _source.SelectedSource != null;
+            IsActionEnabled = _source?.SelectedSource != null;
         }
 
         private void SourceOnSomethingChanged(object sender, IToolRegion args)
@@ -60,7 +64,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 Errors.Clear();
                 IsRefreshing = true;
                 // ReSharper disable once ExplicitCallerInfoArgument
-                if (_source != null && _source.SelectedSource != null)
+                if (_source?.SelectedSource != null)
                 {
                     CommandText = String.Empty;
                     IsActionEnabled = true;
@@ -84,10 +88,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         private void CallErrorsEventHandler()
         {
-            if (ErrorsHandler != null)
-            {
-                ErrorsHandler(this, new List<string>(Errors));
-            }
+            ErrorsHandler?.Invoke(this, new List<string>(Errors));
         }
 
         public IDbAction SelectedAction
@@ -262,20 +263,12 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
-            var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            SomethingChanged?.Invoke(this, args);
         }
     }
 }

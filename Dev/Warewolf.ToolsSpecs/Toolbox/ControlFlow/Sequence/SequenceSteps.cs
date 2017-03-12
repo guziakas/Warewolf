@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -534,7 +534,7 @@ namespace Dev2.Activities.Specs.Toolbox.ControlFlow.Sequence
             scenarioContext.TryGetValue("activity", out sequence);
             if(sequence != null)
             {
-                var innerActivitiesDebugStates = debugStates.Where(state => state.ParentID.ToString() == sequence.UniqueID);
+                var innerActivitiesDebugStates = debugStates.Where(state => state.ParentID.ToString() == sequence.UniqueID.ToString());
                 var count = innerActivitiesDebugStates.Count();
                 Assert.IsTrue(count > 0);
             }

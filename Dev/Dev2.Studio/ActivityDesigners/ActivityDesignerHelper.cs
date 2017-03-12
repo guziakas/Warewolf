@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -39,7 +39,6 @@ using Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout;
 using Dev2.Activities.Designers2.Move;
 using Dev2.Activities.Designers2.MultiAssign;
 using Dev2.Activities.Designers2.MySqlDatabase;
-using Dev2.Activities.Designers2.Net_DLL;
 using Dev2.Activities.Designers2.ODBC;
 using Dev2.Activities.Designers2.Oracle;
 using Dev2.Activities.Designers2.PostgreSql;
@@ -106,7 +105,7 @@ namespace Dev2.Studio.ActivityDesigners
 {
     public static class ActivityDesignerHelper
     {
-        static readonly Dictionary<Type, Type> DesignerAttributes = new Dictionary<Type, Type>
+        public static readonly Dictionary<Type, Type> DesignerAttributes = new Dictionary<Type, Type>
             {
                 { typeof(DsfMultiAssignActivity), typeof(MultiAssignDesigner) },
                 { typeof(DsfMultiAssignObjectActivity), typeof(MultiAssignObjectDesigner) },
@@ -162,7 +161,8 @@ namespace Dev2.Studio.ActivityDesigners
                   { typeof(DsfODBCDatabaseActivity), typeof(ODBCDatabaseDesigner) },
                   { typeof(DsfPostgreSqlActivity), typeof(PostgreSqlDatabaseDesigner) },
                 {typeof(DsfExchangeEmailActivity),typeof(ExchangeEmailDesigner) },
-                { typeof(DsfDotNetDllActivity), typeof(DotNetDllDesigner) },
+                { typeof(DsfDotNetDllActivity), typeof(Activities.Designers2.Net_DLL.DotNetDllDesigner) },
+                { typeof(DsfEnhancedDotNetDllActivity), typeof(Dev2.Activities.Designers2.Net_Dll_Enhanced.DotNetDllDesigner) },
                 { typeof(DsfComDllActivity), typeof(ComDllDesigner) },
                 { typeof(DsfWebGetActivity), typeof(WebServiceGetDesigner) },
                 { typeof(DsfWebPostActivity), typeof(WebServicePostDesigner) },

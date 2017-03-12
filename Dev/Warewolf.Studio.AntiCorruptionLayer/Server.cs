@@ -22,11 +22,12 @@ namespace Warewolf.Studio.AntiCorruptionLayer
     public class Server : Resource, IServer, INotifyPropertyChanged
     {
         readonly Guid _serverId;
-        readonly StudioServerProxy _proxyLayer;
+        readonly IExplorerRepository _proxyLayer;
         IList<IToolDescriptor> _tools;
         readonly IEnvironmentModel _environmentModel;
         bool _hasloaded;
         string _version;
+        Dictionary<string, string> _serverInformation;
         private string _minversion;
         private List<IWindowsGroupPermission> _permissions;
 
@@ -35,6 +36,7 @@ namespace Warewolf.Studio.AntiCorruptionLayer
             EnvironmentConnection = environmentModel.Connection;
             EnvironmentID = environmentModel.ID;
             _serverId = EnvironmentConnection.ServerID;
+            ResourceID = environmentModel.ID;
             var communicationControllerFactory = new CommunicationControllerFactory();
             _proxyLayer = new StudioServerProxy(communicationControllerFactory, EnvironmentConnection);
             UpdateRepository = new StudioResourceUpdateManager(communicationControllerFactory, EnvironmentConnection);
@@ -42,8 +44,13 @@ namespace Warewolf.Studio.AntiCorruptionLayer
             ResourceName = EnvironmentConnection.DisplayName;
             EnvironmentConnection.NetworkStateChanged += RaiseNetworkStateChangeEvent;
             EnvironmentConnection.ItemAddedMessageAction += ItemAdded;
-            environmentModel.WorkflowSaved += (sender, args) => UpdateRepository.FireItemSaved(true);
             _environmentModel = environmentModel;
+        }
+
+        public Server(IExplorerRepository repository, IEnvironmentModel environmentModel)
+            : this(environmentModel)
+        {
+            _proxyLayer = repository;
         }
 
         public bool CanDeployTo => _environmentModel.IsAuthorizedDeployTo;
@@ -81,13 +88,24 @@ namespace Warewolf.Studio.AntiCorruptionLayer
             ItemAddedEvent?.Invoke(obj);
         }
 
+        public Dictionary<string, string> GetServerInformation()
+        {
+            if (!EnvironmentConnection.IsConnected)
+            {
+                EnvironmentConnection.Connect(Guid.Empty);
+            }
+            _serverInformation = ProxyLayer.AdminManagerProxy.GetServerInformation();
+
+            return _serverInformation;
+        }
+
         public string GetServerVersion()
         {
-                if (!EnvironmentConnection.IsConnected)
-                {
-                    EnvironmentConnection.Connect(Guid.Empty);
-                }
-                _version = ProxyLayer.AdminManagerProxy.GetServerVersion();
+            if (!EnvironmentConnection.IsConnected)
+            {
+                EnvironmentConnection.Connect(Guid.Empty);
+            }
+            _version = ProxyLayer.AdminManagerProxy.GetServerVersion();
 
             return _version;
         }
@@ -142,10 +160,9 @@ namespace Warewolf.Studio.AntiCorruptionLayer
         {
             get
             {
-                var displayName = Resources.Languages.Core.NewServerLabel;
                 if (EnvironmentConnection != null)
                 {
-                    displayName = EnvironmentConnection.DisplayName;
+                    var displayName = EnvironmentConnection.DisplayName;
                     if (IsConnected && (HasLoaded || EnvironmentConnection.IsLocalHost))
                     {
                         if (!displayName.Contains(Resources.Languages.Core.ConnectedLabel))
@@ -153,9 +170,14 @@ namespace Warewolf.Studio.AntiCorruptionLayer
                             displayName += Resources.Languages.Core.ConnectedLabel;
                         }
                     }
+                    else if (!IsConnected && (HasLoaded || EnvironmentConnection.IsLocalHost))
+                    {
+                        displayName = EnvironmentConnection.DisplayName.Replace("(Connected)", "");
+                    }
+                    return displayName;
                 }
 
-                return displayName;
+                return EnvironmentConnection?.DisplayName ?? Resources.Languages.Core.NewServerLabel;
             }
             // ReSharper disable once ValueParameterNotUsed
             set
@@ -171,17 +193,34 @@ namespace Warewolf.Studio.AntiCorruptionLayer
             HasLoaded = true;
             return result;
         }
-        
+
         public Task<List<string>> LoadExplorerDuplicates()
         {
             var result = ProxyLayer.LoadExplorerDuplicates();
             HasLoaded = true;
             return result;
         }
-        
+
         public IList<IServer> GetServerConnections()
-        {            
+        {
             var environmentModels = EnvironmentRepository.Instance.ReloadServers();
+            return environmentModels.Select(environmentModel => new Server(environmentModel)).Cast<IServer>().ToList();
+        }
+
+        public IServer FetchServer(Guid savedServerID)
+        {
+            var environmentModels = EnvironmentRepository.Instance.ReloadAllServers();
+            var requiredEnv = environmentModels.FirstOrDefault(model => model.ID == savedServerID);
+            if (requiredEnv != null)
+            {
+                return new Server(requiredEnv);
+            }
+            return null;
+        }
+
+        public IList<IServer> GetAllServerConnections()
+        {
+            var environmentModels = EnvironmentRepository.Instance.ReloadAllServers();
             return environmentModels.Select(environmentModel => new Server(environmentModel)).Cast<IServer>().ToList();
         }
 
@@ -245,6 +284,8 @@ namespace Warewolf.Studio.AntiCorruptionLayer
 
         public IExplorerRepository ProxyLayer => _proxyLayer;
         public IEnvironmentConnection EnvironmentConnection { get; set; }
+
+        public IEnvironmentModel EnvironmentModel => _environmentModel;
 
         #endregion
 

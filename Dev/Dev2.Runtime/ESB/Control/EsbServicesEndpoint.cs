@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,8 +15,8 @@ using System.Threading.Tasks;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Communication;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Execution;
@@ -167,11 +167,13 @@ namespace Dev2.Runtime.ESB.Control
 
             var principle = Thread.CurrentPrincipal;
             Dev2Logger.Info("SUB-EXECUTION USER CONTEXT IS [ " + principle.Identity.Name + " ] FOR SERVICE  [ " + dataObject.ServiceName + " ]");
-
+            var oldStartTime = dataObject.StartTime;
+            dataObject.StartTime = DateTime.Now;
             if (dataObject.RunWorkflowAsync)
             {
 
                 ExecuteRequestAsync(dataObject, inputDefs, invoker, isLocal, oldID, out invokeErrors, update);
+                dataObject.StartTime = oldStartTime;
                 errors.MergeErrors(invokeErrors);
             }
             else
@@ -181,7 +183,7 @@ namespace Dev2.Runtime.ESB.Control
                     if (GetResource(workspaceId, dataObject.ResourceID) == null && GetResource(workspaceId, dataObject.ServiceName) == null)
                     {
                         errors.AddError(string.Format(ErrorResource.ResourceNotFound, dataObject.ServiceName));
-
+                        dataObject.StartTime = oldStartTime;
                         return null;
                     }
                 }
@@ -205,11 +207,13 @@ namespace Dev2.Runtime.ESB.Control
                         string errorString = dataObject.Environment.FetchErrors();
                         invokeErrors = ErrorResultTO.MakeErrorResultFromDataListString(errorString);
                         errors.MergeErrors(invokeErrors);
+                        dataObject.StartTime = oldStartTime;
                         return env;
                     }
                     errors.AddError(string.Format(ErrorResource.ResourceNotFound, dataObject.ServiceName));
                 }
             }
+            dataObject.StartTime = oldStartTime;
             return new ExecutionEnvironment();
         }
 

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -107,7 +107,6 @@ namespace Dev2.TO
 
     public class JsonMappingCompoundTo
     {
-        readonly IExecutionEnvironment _env;
         JsonMappingTo Compound { get; set; }
         List<JsonMappingEvaluated> Evaluations { get; set; }
 
@@ -115,20 +114,20 @@ namespace Dev2.TO
             IExecutionEnvironment env,
             JsonMappingTo compound)
         {
-            _env = env;
+            var env1 = env;
 
             Compound = compound;
             Evaluations = new List<JsonMappingEvaluated>();
 
             if (!IsCompound)
             {
-                Evaluations.Add(new JsonMappingEvaluated(_env, compound.SourceName));
+                Evaluations.Add(new JsonMappingEvaluated(env1, compound.SourceName));
             }
             else
             {
                 if (FsInteropFunctions.ParseLanguageExpression(Compound.SourceName,0).IsRecordSetNameExpression)
                 {
-                    Evaluations = new List<JsonMappingEvaluated> { new JsonMappingEvaluated(_env, Compound.SourceName) };
+                    Evaluations = new List<JsonMappingEvaluated> { new JsonMappingEvaluated(env1, Compound.SourceName) };
                 }
                 else
                 {
@@ -140,7 +139,7 @@ namespace Dev2.TO
                             .Where(x => !x.IsWarewolfAtomExpression)
                             .Select(FsInteropFunctions.LanguageExpressionToString)
                             .Select(x =>
-                                new JsonMappingEvaluated(_env, x))
+                                new JsonMappingEvaluated(env1, x))
                             .ToList();
                 }         // ReSharper restore MaximumChainedReferences
             }

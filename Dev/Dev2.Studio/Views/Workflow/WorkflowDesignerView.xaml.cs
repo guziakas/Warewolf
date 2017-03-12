@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Dev2.Studio.ViewModels.Workflow;
 
 // ReSharper disable CheckNamespace
 namespace Dev2.Studio.Views.Workflow
@@ -31,10 +32,15 @@ namespace Dev2.Studio.Views.Workflow
             PreviewDragOver += DropPointOnDragEnter;
             PreviewMouseDown += WorkflowDesignerViewPreviewMouseDown;
             _dragDropHelpers = new DragDropHelpers(this);
+            
         }
 
         void WorkflowDesignerViewPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.OriginalSource.GetType() == typeof (System.Windows.Documents.Run))
+            {
+                return;
+            }
             if (e.ChangedButton == MouseButton.Right)
             {
                 DependencyObject node = e.OriginalSource as DependencyObject;
@@ -78,7 +84,38 @@ namespace Dev2.Studio.Views.Workflow
         void DropPointOnDragEnter(object sender, DragEventArgs e)
         {
             var dataObject = e.Data;
-            if (_dragDropHelpers.PreventDrop(dataObject))
+            var workSurfaceServiceId = ((Core.Models.ResourceModel)
+                             ((WorkflowDesignerViewModel)
+                             ((FrameworkElement)e.Source)
+                             .DataContext).ResourceModel).ID;
+            var data = dataObject.GetData("Warewolf.Studio.ViewModels.ExplorerItemViewModel");
+            var itemBeingDraggedOntoTheSurface = data as Warewolf.Studio.ViewModels.ExplorerItemViewModel;
+
+            if (e.OriginalSource.GetType() == typeof(ScrollViewer))
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+            else if (e.OriginalSource.GetType() == typeof(Border))
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+            else if (e.OriginalSource.GetType() == typeof(Grid))
+            {
+                var grid = e.OriginalSource as Grid;
+                if (grid != null && grid.DataContext.GetType() == typeof (WorkflowDesignerViewModel))
+                {
+                    e.Effects = DragDropEffects.None;
+                    e.Handled = true;
+                }
+            }
+            else if (itemBeingDraggedOntoTheSurface != null && workSurfaceServiceId == itemBeingDraggedOntoTheSurface.ResourceId)
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+            else if (_dragDropHelpers.PreventDrop(dataObject))
             {
                 e.Effects = DragDropEffects.None;
                 e.Handled = true;

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +9,7 @@
 */
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
@@ -17,7 +18,7 @@ using System.Reflection;
 
 [assembly: AssemblyCompany("Warewolf")]
 [assembly: AssemblyProduct("Warewolf")]
-[assembly: AssemblyCopyright("Copyright Warewolf 2016")]
+[assembly: AssemblyCopyright("Copyright Warewolf 2017")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -29,3 +30,5 @@ using System.Reflection;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 [assembly: AssemblyVersion("0.0.*")]
+[assembly: InternalsVisibleTo("Dev2.Activities.Designers.Tests")]
+[assembly: InternalsVisibleTo("Warewolf.Studio.ViewModels.Tests")]

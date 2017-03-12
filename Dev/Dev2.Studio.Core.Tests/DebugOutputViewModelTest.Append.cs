@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +14,8 @@ using Dev2.Common.Interfaces.Infrastructure.Events;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Diagnostics.Debug;
 using Dev2.Services.Security;
+using Dev2.Studio.Core;
 using Dev2.Studio.ViewModels.Diagnostics;
-using Dev2.ViewModels.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 

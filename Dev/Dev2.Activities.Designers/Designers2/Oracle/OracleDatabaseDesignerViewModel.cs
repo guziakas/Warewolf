@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,6 +25,7 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.Database;
 using Dev2.Communication;
@@ -50,19 +51,13 @@ namespace Dev2.Activities.Designers2.Oracle
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
-
-        public OracleDatabaseDesignerViewModel(ModelItem modelItem)
+        
+        public OracleDatabaseDesignerViewModel(ModelItem modelItem, IAsyncWorker worker)
             : base(modelItem)
         {
+            _worker = worker;
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             var server = shellViewModel.ActiveServer;
             var model = CustomContainer.CreateInstance<IDbServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
@@ -70,6 +65,7 @@ namespace Dev2.Activities.Designers2.Oracle
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_Oracle;
         }
 
         Guid UniqueId => GetProperty<Guid>();
@@ -170,10 +166,11 @@ namespace Dev2.Activities.Designers2.Oracle
             UpdateWorstError();
         }
 
-        public OracleDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model)
+        public OracleDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model, IAsyncWorker worker)
             : base(modelItem)
         {
             Model = model;
+            _worker = worker;
             SetupCommonProperties();
         }
 
@@ -234,7 +231,7 @@ namespace Dev2.Activities.Designers2.Oracle
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -300,6 +297,7 @@ namespace Dev2.Activities.Designers2.Oracle
         DependencyProperty.Register("WorstError", typeof(ErrorType), typeof(OracleDatabaseDesignerViewModel), new PropertyMetadata(ErrorType.None));
 
         bool _generateOutputsVisible;
+        private IAsyncWorker _worker;
 
         public ICommand TestInputCommand { get; set; }
 
@@ -324,10 +322,7 @@ namespace Dev2.Activities.Designers2.Oracle
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -341,7 +336,7 @@ namespace Dev2.Activities.Designers2.Oracle
             {
                 SourceRegion = new DatabaseSourceRegion(Model, ModelItem, enSourceType.Oracle) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 regions.Add(SourceRegion);
-                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
+                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion,_worker) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 ActionRegion.ErrorsHandler += (sender, list) =>
                 {
                     List<ActionableErrorInfo> errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
@@ -432,20 +427,7 @@ namespace Dev2.Activities.Designers2.Oracle
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }

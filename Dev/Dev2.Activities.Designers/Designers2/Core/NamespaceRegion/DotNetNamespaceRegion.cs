@@ -9,6 +9,11 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.DotNet;
 using Dev2.Studio.Core.Activities.Utils;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+// ReSharper disable UnusedMember.Global
 
 // ReSharper disable FieldCanBeMadeReadOnly.Local
 // ReSharper disable ExplicitCallerInfoArgument
@@ -40,7 +45,7 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
             try
             {
                 Errors = new List<string>();
-                LabelWidth = 70;
+                LabelWidth = 74;
                 ToolRegionName = "DotNetNamespaceRegion";
                 _modelItem = modelItem;
                 _model = model;
@@ -58,8 +63,9 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
                     IsRefreshing = true;
                     if (_source.SelectedSource != null)
                     {
-                        Namespaces = model.GetNameSpaces(_source.SelectedSource);
+                        Namespaces = _modelItem.ItemType == typeof(DsfEnhancedDotNetDllActivity) ? _model.GetNameSpacesWithJsonRetunrs(_source.SelectedSource) : _model.GetNameSpaces(_source.SelectedSource);
                     }
+
                     IsRefreshing = false;
                 }, CanRefresh);
 
@@ -71,6 +77,8 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
                 Errors.Add(e.Message);
             }
         }
+
+        public bool IsNewPluginNamespace { get; set; }
         INamespaceItem Namespace
         {
             get
@@ -95,17 +103,6 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
             }
         }
 
-        public string NamespaceDisplayText
-        {
-            get
-            {
-                if(ToolRegionName.ToUpper().Contains("DOTNET"))
-                {
-                    return "Namespace/Class";
-                }
-                return "Namespace";
-            }
-        }
 
         private void SourceOnSomethingChanged(object sender, IToolRegion args)
         {
@@ -123,8 +120,6 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
             {
                 _errors.Add(e.Message);
                 Errors = _errors;
-
-
             }
             finally
             {
@@ -134,13 +129,20 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
 
         private void UpdateBasedOnSource()
         {
-            if (_source != null && _source.SelectedSource != null)
+            if (_source?.SelectedSource != null)
             {
-                Namespaces = _model.GetNameSpaces(_source.SelectedSource);
-
-
-                IsNamespaceEnabled = true;
-                IsEnabled = true;
+                if (_modelItem.ItemType == typeof(DsfEnhancedDotNetDllActivity))
+                {
+                    Namespaces = _model.GetNameSpacesWithJsonRetunrs(_source.SelectedSource);
+                    IsNamespaceEnabled = true;
+                    IsEnabled = true;
+                }
+                else
+                {
+                    Namespaces = _model.GetNameSpaces(_source.SelectedSource);
+                    IsNamespaceEnabled = true;
+                    IsEnabled = true;
+                }
             }
         }
 
@@ -163,15 +165,14 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
                 OnSomethingChanged(this);
 
                 var delegateCommand = RefreshNamespaceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
-                if (delegateCommand != null)
-                {
-                    delegateCommand.RaiseCanExecuteChanged();
-                }
+                delegateCommand?.RaiseCanExecuteChanged();
 
                 _selectedNamespace = value;
                 OnPropertyChanged();
             }
         }
+        
+
         public ICollection<INamespaceItem> Namespaces
         {
             get

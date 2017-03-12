@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +24,7 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.Database;
 using Dev2.Communication;
@@ -31,9 +32,7 @@ using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-using Warewolf.Storage;
 
-// ReSharper disable UnusedMember.Local
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -51,19 +50,13 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
-
-        public MySqlDatabaseDesignerViewModel(ModelItem modelItem)
+        public MySqlDatabaseDesignerViewModel(ModelItem modelItem, IAsyncWorker worker)
             : base(modelItem)
         {
+            _worker = worker;
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             var server = shellViewModel.ActiveServer;
             var model = CustomContainer.CreateInstance<IDbServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
@@ -71,6 +64,7 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_MySQL;
         }
 
         Guid UniqueID => GetProperty<Guid>();
@@ -172,10 +166,11 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
             UpdateWorstError();
         }
 
-        public MySqlDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model)
+        public MySqlDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model, IAsyncWorker worker)
             : base(modelItem)
         {
             Model = model;
+            _worker = worker;
             SetupCommonProperties();
         }
 
@@ -236,7 +231,7 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -302,6 +297,7 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
         DependencyProperty.Register("WorstError", typeof(ErrorType), typeof(MySqlDatabaseDesignerViewModel), new PropertyMetadata(ErrorType.None));
 
         bool _generateOutputsVisible;
+        private readonly IAsyncWorker _worker;
 
         public DelegateCommand TestInputCommand { get; set; }
 
@@ -330,10 +326,7 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -347,7 +340,7 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
             {
                 SourceRegion = new DatabaseSourceRegion(Model, ModelItem,enSourceType.MySqlDatabase) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 regions.Add(SourceRegion);
-                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
+                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion,_worker) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 ActionRegion.ErrorsHandler += (sender, list) =>
                 {
                     List<ActionableErrorInfo> errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
@@ -437,20 +430,7 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }
@@ -495,38 +475,6 @@ namespace Dev2.Activities.Designers2.MySqlDatabase
             if (!string.IsNullOrWhiteSpace(outputFieldName))
             {
                 DisplayName = displayName + outputFieldName;
-            }
-        }
-
-        private IList<IServiceInput> InputsFromModel()
-        {
-            var dt = new List<IServiceInput>();
-            foreach (var nameValue in InputArea.Inputs)
-            {
-                GetValue(nameValue.Name, dt);
-                GetValue(nameValue.Value, dt);
-            }
-            return dt;
-        }
-
-        private static void GetValue(string s, List<IServiceInput> dt)
-        {
-            var exp = FsInteropFunctions.ParseLanguageExpressionWithoutUpdate(s);
-            if (exp.IsComplexExpression)
-            {
-                var item = ((LanguageAST.LanguageExpression.ComplexExpression)exp).Item;
-                var vals = item.Where(a => a.IsRecordSetExpression || a.IsScalarExpression).Select(FsInteropFunctions.LanguageExpressionToString);
-                dt.AddRange(vals.Select(a => new ServiceInput(a, "")));
-            }
-            if (exp.IsScalarExpression)
-            {
-
-                dt.Add(new ServiceInput(s, ""));
-            }
-            if (exp.IsRecordSetExpression)
-            {
-
-                dt.Add(new ServiceInput(s, ""));
             }
         }
 

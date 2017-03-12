@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -202,7 +202,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                             dbColumn.SqlDataType = sqlDataType;
                         }
 
-                        var columnLength = row["ColumnSize"] is int ? (int)row["ColumnSize"] : -1;
+                        var columnLength = row["ColumnSize"] as int? ?? -1;
                         dbColumn.MaxLength = columnLength;
                         dbColumns.Items.Add(dbColumn);
                     }

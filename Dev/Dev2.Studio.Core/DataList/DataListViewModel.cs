@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,6 @@ using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Models.DataList;
 using Dev2.Studio.Core.ViewModels.Base;
-using Dev2.Studio.Core.Views;
 using ServiceStack.Common.Extensions;
 using System;
 using System.Collections.Generic;
@@ -39,8 +38,10 @@ using System.Linq;
 using System.Text;
 using System.Windows.Input;
 using System.Xml;
+using Dev2.Data.TO;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+// ReSharper disable MemberCanBePrivate.Global
 
 // ReSharper disable CheckNamespace
 namespace Dev2.Studio.ViewModels.DataList
@@ -100,22 +101,25 @@ namespace Dev2.Studio.ViewModels.DataList
         {
             if (_scalarCollection != null && _scalarCollection.Count > 1)
             {
-                foreach (var scalarItemModel in _scalarCollection)
+                for (int index = _scalarCollection.Count - 1; index >= 0; index--)
                 {
+                    var scalarItemModel = _scalarCollection[index];
                     scalarItemModel.Filter(searchText);
                 }
             }
             if (_recsetCollection != null && _recsetCollection.Count > 1)
             {
-                foreach (var recordSetItemModel in _recsetCollection)
+                for(int index = _recsetCollection.Count-1; index >= 0; index--)
                 {
+                    var recordSetItemModel = _recsetCollection[index];
                     recordSetItemModel.Filter(searchText);
                 }
             }
             if (_complexObjectCollection != null && _complexObjectCollection.Count > 0)
             {
-                foreach (var complexObjectItemModel in _complexObjectCollection)
+                for (int index = _complexObjectCollection.Count - 1; index >= 0; index--)
                 {
+                    var complexObjectItemModel = _complexObjectCollection[index];
                     complexObjectItemModel.Filter(searchText);
                 }
             }
@@ -169,14 +173,16 @@ namespace Dev2.Studio.ViewModels.DataList
                     return _scalarCollection.Where(model => model.IsVisible).ToObservableCollection();
                 }
                 _scalarCollection = new ObservableCollection<IScalarItemModel>();
-                _scalarCollection.CollectionChanged += (o, args) =>
-                {
-                    RemoveItemPropertyChangeEvent(args);
-                    AddItemPropertyChangeEvent(args);
-                };
+                _scalarCollection.CollectionChanged += OnScalarCollectionOnCollectionChanged;
                 return _scalarCollection;
             }
         }
+
+        private void OnScalarCollectionOnCollectionChanged(object o, NotifyCollectionChangedEventArgs args)
+        {
+            RemoveItemPropertyChangeEvent(args);
+            AddItemPropertyChangeEvent(args);
+        }        
 
         public ObservableCollection<IComplexObjectItemModel> ComplexObjectCollection
         {
@@ -261,7 +267,6 @@ namespace Dev2.Studio.ViewModels.DataList
 
         private bool _toggleSortOrder = true;
         private ObservableCollection<IComplexObjectItemModel> _complexObjectCollection;
-        private IJsonObjectsView _jsonObjectView;
 
         #endregion Properties
 
@@ -286,11 +291,7 @@ namespace Dev2.Studio.ViewModels.DataList
             _helper = new DataListViewModelHelper(this);
         }
 
-        public IJsonObjectsView JsonObjectsView
-        {
-            private get { return _jsonObjectView ?? (_jsonObjectView = new JsonObjectsView()); }
-            set { _jsonObjectView = value; }
-        }
+        public IJsonObjectsView JsonObjectsView => CustomContainer.GetInstancePerRequestType<IJsonObjectsView>();
 
         private void ViewJsonObjects(IComplexObjectItemModel item)
         {
@@ -350,6 +351,7 @@ namespace Dev2.Studio.ViewModels.DataList
                     WriteToResourceModel();
                     FindUnusedAndMissingCommand.RaiseCanExecuteChanged();
                     DeleteCommand.RaiseCanExecuteChanged();
+                    UpdateIntellisenseList();
                 }, CanDelete));
             }
         }
@@ -398,6 +400,7 @@ namespace Dev2.Studio.ViewModels.DataList
             FindUnusedAndMissingCommand.RaiseCanExecuteChanged();
             ViewComplexObjectsCommand.RaiseCanExecuteChanged();
             DeleteCommand.RaiseCanExecuteChanged();
+            UpdateIntellisenseList();
         }
 
         public void AddMissingDataListItems(IList<IDataListVerifyPart> parts)
@@ -447,10 +450,21 @@ namespace Dev2.Studio.ViewModels.DataList
             if (parts.Count > 0)
                 AddBlankRow(null);
 
-            var items = RefreshTries(_scalarCollection.ToList(), new List<string>()).Union(RefreshRecordSets(_recsetCollection.ToList(), new List<string>())).Union(_complexObjectHandler.RefreshJsonObjects(_complexObjectCollection.ToList()));
-            Provider.VariableList = new ObservableCollection<string>(items);
+            UpdateIntellisenseList();
 
             WriteToResourceModel();
+        }
+
+        private void UpdateIntellisenseList()
+        {
+            if(_scalarCollection != null && _recsetCollection != null && _complexObjectCollection != null && _complexObjectHandler != null)
+            {
+                var items = RefreshTries(_scalarCollection.ToList(), new List<string>()).Union(RefreshRecordSets(_recsetCollection.ToList(), new List<string>())).Union(_complexObjectHandler.RefreshJsonObjects(_complexObjectCollection.ToList()));
+                if(Provider != null)
+                {
+                    Provider.VariableList = new ObservableCollection<string>(items);
+                }
+            }
         }
 
         #endregion Add/Remove Missing Methods
@@ -471,7 +485,7 @@ namespace Dev2.Studio.ViewModels.DataList
             var items = RefreshTries(_scalarCollection.ToList(), new List<string>()).Union(RefreshRecordSets(_recsetCollection.ToList(), new List<string>())).Union(_complexObjectHandler.RefreshJsonObjects(_complexObjectCollection.ToList()));
             Provider.VariableList = new ObservableCollection<string>(items);
         }
-
+        
         private IEnumerable<string> RefreshTries(IEnumerable<IScalarItemModel> toList, IList<string> accList)
         {
             foreach (var dataListItemModel in toList)
@@ -693,7 +707,7 @@ namespace Dev2.Studio.ViewModels.DataList
                 return false;
             }
 
-            bool hasUnused = false;
+            bool hasUnused;
 
             if (ScalarCollection != null)
             {
@@ -728,7 +742,7 @@ namespace Dev2.Studio.ViewModels.DataList
                     return true;
                 }
             }
-            return hasUnused;
+            return false;
         }
 
         /// <summary>
@@ -745,9 +759,18 @@ namespace Dev2.Studio.ViewModels.DataList
             try
             {
                 IsSorting = true;
-                _scalarHandler.SortScalars(_toggleSortOrder);
-                _recordsetHandler.SortRecset(_toggleSortOrder);
-                _complexObjectHandler.SortComplexObjects(_toggleSortOrder);
+                if (_scalarCollection.Any(model => !model.IsBlank))
+                {
+                    _scalarHandler.SortScalars(_toggleSortOrder);
+                }
+                if (_recsetCollection.Any(model => !model.IsBlank))
+                {
+                    _recordsetHandler.SortRecset(_toggleSortOrder);
+                }
+                if (_complexObjectCollection.Any(model => !model.IsBlank))
+                {
+                    _complexObjectHandler.SortComplexObjects(_toggleSortOrder);
+                }
                 _toggleSortOrder = !_toggleSortOrder;
                 WriteToResourceModel();
             }

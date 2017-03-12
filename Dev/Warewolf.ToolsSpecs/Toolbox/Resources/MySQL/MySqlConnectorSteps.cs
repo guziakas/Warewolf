@@ -1,7 +1,6 @@
 ﻿using Dev2.Activities;
 using Dev2.Activities.Designers2.MySqlDatabase;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ServerProxyLayer;
@@ -13,6 +12,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
+using Dev2.Common.Interfaces.Core;
+using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechTalk.SpecFlow;
 using Warewolf.Core;
@@ -82,7 +83,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
             mockDatabaseInputViewModel.SetupAllProperties();
             mockDatabaseInputViewModel.Setup(model => model.OkSelected).Returns(true);
 
-            var mysqlDesignerViewModel = new MySqlDatabaseDesignerViewModel(modelItem, mockDbServiceModel.Object);
+            var mysqlDesignerViewModel = new MySqlDatabaseDesignerViewModel(modelItem, mockDbServiceModel.Object, new SynchronousAsyncWorker());
 
             scenarioContext.Add("mysqlActivity", mysqlActivity);
             scenarioContext.Add("viewModel", mysqlDesignerViewModel);
@@ -325,7 +326,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
             
             mockDatabaseInputViewModel.Setup(model => model.OkSelected).Returns(true);
 
-            var mysqlDesignerViewModel = new MySqlDatabaseDesignerViewModel(modelItem, mockDbServiceModel.Object);
+            var mysqlDesignerViewModel = new MySqlDatabaseDesignerViewModel(modelItem, mockDbServiceModel.Object, new SynchronousAsyncWorker());
 
             var selectedSource = SetupSelectedSource(mysqlDesignerViewModel);            
 
@@ -426,7 +427,6 @@ namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
             var viewModel = GetViewModel();
             Assert.IsNotNull(viewModel);
             Assert.IsTrue(viewModel.ActionRegion.IsActionEnabled);
-            Assert.IsNull(viewModel.ActionRegion.SelectedAction);
         }
 
         [Then(@"Inputs on mysql connector tool is null")]

@@ -1,10 +1,8 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core.Help;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
@@ -42,7 +40,7 @@ namespace Dev2.ViewModels
                     NotifyOfPropertyChange(() => DisplayName);
                 }
             };
-            DebugOutputViewModel = new DebugOutputViewModel(new EventPublisher(), EnvironmentRepository.Instance, new DebugOutputFilterStrategy());
+            DebugOutputViewModel = new DebugOutputViewModel(new EventPublisher(), EnvironmentRepository.Instance, new DebugOutputFilterStrategy(), ViewModel.WorkflowDesignerViewModel.ResourceModel) { IsTestView = true };
         }
 
         public override bool HasVariables => false;
@@ -59,14 +57,14 @@ namespace Dev2.ViewModels
         {
             return View;
         }
-
+        [ExcludeFromCodeCoverage]
         protected override void OnViewAttached(object view, object context)
         {
             base.OnViewAttached(view, ViewModel);
         }
 
         public override string DisplayName => ViewModel.DisplayName;
-
+        [ExcludeFromCodeCoverage]
         protected override void OnViewLoaded(object view)
         {
             var loadedView = view as IView;
@@ -102,11 +100,11 @@ namespace Dev2.ViewModels
         {
             Dev2Logger.Info(message.GetType().Name);
             DebugOutputViewModel.Clear();
+            DebugOutputViewModel.DebugStatus = DebugStatus.Ready;
             foreach (var debugState in message.DebugStates)
             {
                 if (debugState != null)
                 {
-                    debugState.StateType = StateType.Clear;
                     debugState.SessionID = DebugOutputViewModel.SessionID;
                     DebugOutputViewModel.Append(debugState);
                 }
@@ -119,6 +117,11 @@ namespace Dev2.ViewModels
 
         public bool IsDirty => ViewModel.CanSave;
 
+        [ExcludeFromCodeCoverage]
+        public void CloseView()
+        {
+        }
+
         public bool DoDeactivate(bool showMessage)
         {
             if (showMessage)
@@ -129,7 +132,7 @@ namespace Dev2.ViewModels
                     var result = _popupController.Show(string.Format(StringResources.ItemSource_NotSaved),
                         $"Save {ViewModel.DisplayName.Replace("*", "")}?",
                         MessageBoxButton.YesNoCancel,
-                        MessageBoxImage.Information, "", false, false, true, false);
+                        MessageBoxImage.Information, "", false, false, true, false, false, false);
 
                     switch (result)
                     {
@@ -154,11 +157,11 @@ namespace Dev2.ViewModels
             }
             else
             {
-                ViewModel.UpdateHelpDescriptor(String.Empty);
+                ViewModel.UpdateHelpDescriptor(string.Empty);
                 if (ViewModel.CanSave)
                 {
                     ViewModel.Save();
-                }
+                }                
             }
             return true;
         }

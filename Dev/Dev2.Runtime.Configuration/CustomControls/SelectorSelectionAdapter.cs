@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -124,7 +124,7 @@ namespace System.Windows.Controls
         {
             get
             {
-                return SelectorControl == null ? null : SelectorControl.SelectedItem;
+                return SelectorControl?.SelectedItem;
             }
 
             set
@@ -155,7 +155,7 @@ namespace System.Windows.Controls
         {
             get
             {
-                return SelectorControl == null ? null : SelectorControl.ItemsSource;
+                return SelectorControl?.ItemsSource;
             }
             set
             {
@@ -172,14 +172,8 @@ namespace System.Windows.Controls
         /// </summary>
         private void ResetScrollViewer()
         {
-            if(SelectorControl != null)
-            {
-                ScrollViewer sv = SelectorControl.GetLogicalChildrenBreadthFirst().OfType<ScrollViewer>().FirstOrDefault();
-                if(sv != null)
-                {
-                    sv.ScrollToTop();
-                }
-            }
+            ScrollViewer sv = SelectorControl?.GetLogicalChildrenBreadthFirst().OfType<ScrollViewer>().FirstOrDefault();
+            sv?.ScrollToTop();
         }
 
         /// <summary>
@@ -205,10 +199,7 @@ namespace System.Windows.Controls
             }
 
             SelectionChangedEventHandler handler = SelectionChanged;
-            if(handler != null)
-            {
-                handler(sender, e);
-            }
+            handler?.Invoke(sender, e);
         }
 
         /// <summary>
@@ -305,10 +296,7 @@ namespace System.Windows.Controls
         private void OnCommit(object sender, RoutedEventArgs e)
         {
             RoutedEventHandler handler = Commit;
-            if(handler != null)
-            {
-                handler(sender, e);
-            }
+            handler?.Invoke(sender, e);
 
             AfterAdapterAction();
         }
@@ -331,10 +319,7 @@ namespace System.Windows.Controls
         private void OnCancel(object sender, RoutedEventArgs e)
         {
             RoutedEventHandler handler = Cancel;
-            if(handler != null)
-            {
-                handler(sender, e);
-            }
+            handler?.Invoke(sender, e);
 
             AfterAdapterAction();
         }

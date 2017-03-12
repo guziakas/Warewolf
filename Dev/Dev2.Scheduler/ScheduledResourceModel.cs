@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -206,7 +206,24 @@ namespace Dev2.Scheduler
 
                     };
 
-                    res.WorkflowName = resourceId == Guid.Empty ? split[1] : _pathResolve(res);
+                    string resWorkflowName;
+                    if (resourceId == Guid.Empty)
+                    {
+                        resWorkflowName = split[1];
+                    }
+                    else
+                    {
+                        try
+                        {
+                            resWorkflowName = _pathResolve(res);
+                        }
+                        catch(NullReferenceException)
+                        {
+                            resWorkflowName = split[1];
+                            res.Errors.AddError($"Workflow: {resWorkflowName} not found. Task is invalid.");
+                        }
+                    }
+                    res.WorkflowName = resWorkflowName;
 
                     return res;
                 }
@@ -348,7 +365,7 @@ namespace Dev2.Scheduler
             created.Settings.StartWhenAvailable = resource.RunAsapIfScheduleMissed;
             created.Settings.MultipleInstances = resource.AllowMultipleIstances ? TaskInstancesPolicy.Parallel : TaskInstancesPolicy.Queue;
             created.Settings.Hidden = true;
-            if (created.Instance != null && created.Instance.Principal != null)
+            if (created.Instance?.Principal != null)
             {
                 created.Instance.Principal.RunLevel = TaskRunLevel.Highest;
             }

@@ -84,7 +84,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             //arrange
             var canCreateNewServiceCommand = _target.NewServiceCommand.CanExecute(null);
             var canCreateNewServerCommand = _target.NewServerCommand.CanExecute(null);
-            var canCreateNewDatabaseSourceCommand = _target.NewDatabaseSourceCommand.CanExecute(null);
+            var canCreateNewSqlServerSourceCommand = _target.NewSqlServerSourceCommand.CanExecute(null);
+            var canCreateNewMySqlSourceCommand = _target.NewMySqlSourceCommand.CanExecute(null);
+            var canCreateNewPostgreSqlSourceCommand = _target.NewPostgreSqlSourceCommand.CanExecute(null);
+            var canCreateNewOracleSourceCommand = _target.NewOracleSourceCommand.CanExecute(null);
+            var canCreateNewOdbcSourceCommand = _target.NewOdbcSourceCommand.CanExecute(null);
             var canCreateNewPluginSourceCommand = _target.NewPluginSourceCommand.CanExecute(null);
             var canCreateNewWebSourceSourceCommand = _target.NewWebSourceSourceCommand.CanExecute(null);
             var canCreateNewEmailSourceSourceCommand = _target.NewEmailSourceSourceCommand.CanExecute(null);
@@ -100,7 +104,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             //assert
             Assert.IsTrue(canCreateNewServiceCommand);
             Assert.IsTrue(canCreateNewServerCommand);
-            Assert.IsTrue(canCreateNewDatabaseSourceCommand);
+            Assert.IsTrue(canCreateNewSqlServerSourceCommand);
+            Assert.IsTrue(canCreateNewMySqlSourceCommand);
+            Assert.IsTrue(canCreateNewPostgreSqlSourceCommand);
+            Assert.IsTrue(canCreateNewOracleSourceCommand);
+            Assert.IsTrue(canCreateNewOdbcSourceCommand);
             Assert.IsTrue(canCreateNewPluginSourceCommand);
             Assert.IsTrue(canCreateNewWebSourceSourceCommand);
             Assert.IsTrue(canCreateNewEmailSourceSourceCommand);
@@ -469,12 +477,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             var child = new Mock<IExplorerItemViewModel>();
             child.SetupGet(it => it.ResourceId).Returns(Guid.Empty);
             child.SetupGet(it => it.IsVisible).Returns(true);
+            child.SetupGet(it => it.ResourceName).Returns("child");
             _target.AddChild(child.Object);
             var id = Guid.NewGuid();
             var child2 = new Mock<IExplorerItemViewModel>();
             child2.SetupGet(it => it.IsVisible).Returns(true);
             child2.SetupGet(it => it.ResourceId).Returns(id);
             child2.SetupGet(it => it.IsExpanded).Returns(false);
+            child2.SetupGet(it => it.ResourceName).Returns("child2");
             _target.AddChild(child2.Object);
 
             //act
@@ -528,7 +538,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             _serverMock.Setup(a => a.ExplorerRepository).Returns(explorerRepositoryMock.Object);
             _target.CanCreateSource = true;
             _target.ShowContextMenu = true;
-
+            var server = new Mock<IServer>();
+            server.Setup(server1 => server1.UserPermissions).Returns(Permissions.Administrator);
+            server.Setup(server1 => server1.GetPermissions(It.IsAny<Guid>())).Returns(Permissions.Administrator);
+            _target.Server = server.Object;
             //act
             _target.CreateFolder();
 
@@ -537,9 +550,9 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.Children[0].CanCreateSource);
             Assert.IsTrue(_target.Children[0].ShowContextMenu);
             Assert.IsTrue(_target.Children[0].CanDelete);
-            Assert.IsFalse(_target.Children[0].CanCreateFolder);
+            Assert.IsTrue(_target.Children[0].CanCreateFolder);
             Assert.IsFalse(_target.Children[0].CanShowVersions);
-            Assert.IsFalse(_target.Children[0].CanCreateWorkflowService);
+            Assert.IsTrue(_target.Children[0].CanCreateWorkflowService);
         }
 
         [TestMethod]
@@ -563,7 +576,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             var folder = _target.Children[0];
             Assert.IsTrue(isChildrenChanged);
             Assert.IsTrue(_target.IsExpanded);
-            explorerRepositoryMock.Verify(it => it.CreateFolder("root", folder.ResourceName, folder.ResourceId));
             Assert.AreEqual(_target.AllowResourceCheck, folder.AllowResourceCheck);
             Assert.AreEqual(_target.IsResourceChecked, folder.IsResourceChecked);
             Assert.AreEqual(_target.CanCreateFolder, folder.CanCreateFolder);
@@ -597,9 +609,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             var folder = _target.Children[0];
             Assert.IsTrue(isChildrenChanged);
             Assert.IsTrue(_target.IsExpanded);
-            explorerRepositoryMock.Verify(it => it.CreateFolder("root", folder.ResourceName, folder.ResourceId));
-
-           
             Assert.IsFalse(folder.AllowResourceCheck);
             Assert.IsFalse(folder.IsResourceChecked.HasValue && folder.IsResourceChecked.Value);
             Assert.IsFalse(folder.CanCreateSource);

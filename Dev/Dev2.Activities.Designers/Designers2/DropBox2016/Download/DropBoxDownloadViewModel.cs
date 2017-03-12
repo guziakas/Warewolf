@@ -2,7 +2,6 @@
 using System.Activities.Presentation.Model;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Input;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
@@ -38,7 +37,6 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
         public DropBoxDownloadViewModel(ModelItem modelItem, IDropboxSourceManager sourceManager)
             : base(modelItem,"File Or Folder", String.Empty)
         {
-            ThumbVisibility = Visibility.Visible;
             _sourceManager = sourceManager;
             EditDropboxSourceCommand = new RelayCommand(o => EditDropBoxSource(), p => IsDropboxSourceSelected);
             NewSourceCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(CreateOAuthSource);
@@ -46,7 +44,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
             Sources = LoadOAuthSources();
             AddTitleBarLargeToggle();
             EditDropboxSourceCommand.RaiseCanExecuteChanged();
-
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Dropbox_Download;
         }
         public ICommand NewSourceCommand { get; set; }
         public OauthSource SelectedSource
@@ -155,8 +153,10 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
 
         private void EditDropBoxSource()
         {
-            CustomContainer.Get<IShellViewModel>().OpenResource(SelectedSource.ResourceID, CustomContainer.Get<IShellViewModel>().ActiveServer);
-
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var activeServer = shellViewModel.ActiveServer;
+            if (activeServer != null)
+                shellViewModel.OpenResource(SelectedSource.ResourceID,activeServer.EnvironmentID, activeServer);
         }
 
         public void CreateOAuthSource()

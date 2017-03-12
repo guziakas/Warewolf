@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,7 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Data.ServiceModel
 {
-    public class Connection : Resource, IResourceSource
+    public class Connection : Resource, IResourceSource, IConnection
     {
         public const int DefaultWebServerPort = 3142;
 
@@ -94,20 +94,17 @@ namespace Dev2.Data.ServiceModel
         {
             var result = Address;
 
-            if(result != null)
+            if(result?.IndexOf("dsf", StringComparison.Ordinal) < 0)
             {
-                if(result.IndexOf("dsf", StringComparison.Ordinal) < 0)
+                if(result.EndsWith("/"))
                 {
-                    if(result.EndsWith("/"))
-                    {
-                        result += "dsf";
-                    }
-                    else
-                    {
-                        result += "/dsf";
-                    }
-
+                    result += "dsf";
                 }
+                else
+                {
+                    result += "/dsf";
+                }
+
             }
 
             return result;

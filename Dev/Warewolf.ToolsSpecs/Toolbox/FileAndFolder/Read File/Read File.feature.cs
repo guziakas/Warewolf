@@ -89,25 +89,25 @@ this.ScenarioSetup(scenarioInfo);
 #line 15
  testRunner.And("the execution has \"<AN>\" error", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
-            TechTalk.SpecFlow.Table table767 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table771 = new TechTalk.SpecFlow.Table(new string[] {
                         "Input Path",
                         "Username",
                         "Password",
                         "Private Key File"});
-            table767.AddRow(new string[] {
+            table771.AddRow(new string[] {
                         string.Format("{0} = {1}", source, sourceLocation),
                         string.Format("{0}", username),
                         "String",
                         string.Format("{0}", sourcePrivateKeyFile)});
 #line 16
- testRunner.And("the debug inputs as", ((string)(null)), table767, "And ");
+ testRunner.And("the debug inputs as", ((string)(null)), table771, "And ");
 #line hidden
-            TechTalk.SpecFlow.Table table768 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table772 = new TechTalk.SpecFlow.Table(new string[] {
                         ""});
-            table768.AddRow(new string[] {
+            table772.AddRow(new string[] {
                         string.Format("{0} = {1}", resultVar, result)});
 #line 19
- testRunner.And("the debug output as", ((string)(null)), table768, "And ");
+ testRunner.And("the debug output as", ((string)(null)), table772, "And ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -141,7 +141,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:NO", "2")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:Name", "UNC")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:source", "[[path]]")]
-        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\filetoread.txt")]
+        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\filetoread.txt")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:username", "\"\"")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:password", "\"\"")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:resultVar", "[[result]]")]
@@ -150,7 +150,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourcePrivateKeyFile", "")]
         public virtual void ReadFileAtLocation_2()
         {
-            this.ReadFileAtLocation("2", "UNC", "[[path]]", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\filetoread.txt", "\"\"", "\"\"", "[[result]]", "Guid", "NO", "", ((string[])(null)));
+            this.ReadFileAtLocation("2", "UNC", "[[path]]", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\filetoread.txt", "\"\"", "\"\"", "[[result]]", "Guid", "NO", "", ((string[])(null)));
 #line hidden
         }
         
@@ -162,7 +162,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:NO", "3")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:Name", "UNC Secure")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:source", "[[path]]")]
-        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt")]
+        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:username", "dev2.local\\IntegrationTester")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:password", "I73573r0")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:resultVar", "[[result]]")]
@@ -171,7 +171,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourcePrivateKeyFile", "")]
         public virtual void ReadFileAtLocation_3()
         {
-            this.ReadFileAtLocation("3", "UNC Secure", "[[path]]", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt", "dev2.local\\IntegrationTester", "I73573r0", "[[result]]", "Guid", "NO", "", ((string[])(null)));
+            this.ReadFileAtLocation("3", "UNC Secure", "[[path]]", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt", "dev2.local\\IntegrationTester", "I73573r0", "[[result]]", "Guid", "NO", "", ((string[])(null)));
 #line hidden
         }
         
@@ -309,7 +309,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:NO", "2")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:Name", "UNC")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:source", "[[path]]")]
-        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\filetoread.txt")]
+        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\filetoread.txt")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:username", "\"\"")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:password", "\"\"")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:resultVar", "[[result]]")]
@@ -318,7 +318,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourcePrivateKeyFile", "")]
         public virtual void ReadFileAtLocationNull_2()
         {
-            this.ReadFileAtLocationNull("2", "UNC", "[[path]]", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\filetoread.txt", "\"\"", "\"\"", "[[result]]", "Guid", "NO", "", ((string[])(null)));
+            this.ReadFileAtLocationNull("2", "UNC", "[[path]]", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\filetoread.txt", "\"\"", "\"\"", "[[result]]", "Guid", "NO", "", ((string[])(null)));
 #line hidden
         }
         
@@ -330,7 +330,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:NO", "3")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:Name", "UNC Secure")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:source", "[[path]]")]
-        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt")]
+        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:username", "dev2.local\\IntegrationTester")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:password", "I73573r0")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:resultVar", "[[result]]")]
@@ -339,7 +339,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourcePrivateKeyFile", "")]
         public virtual void ReadFileAtLocationNull_3()
         {
-            this.ReadFileAtLocationNull("3", "UNC Secure", "[[path]]", "\\\\RSAKLFSVRSBSPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt", "dev2.local\\IntegrationTester", "I73573r0", "[[result]]", "Guid", "NO", "", ((string[])(null)));
+            this.ReadFileAtLocationNull("3", "UNC Secure", "[[path]]", "\\\\RSAKLFSVRPDC\\FileSystemShareTestingSite\\Secure\\filetoread.txt", "dev2.local\\IntegrationTester", "I73573r0", "[[result]]", "Guid", "NO", "", ((string[])(null)));
 #line hidden
         }
         
@@ -372,7 +372,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:NO", "5")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:Name", "FTPS")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:source", "[[path]]")]
-        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "ftps://rsaklfsvrsbspdc:1002/FORTESTING/filetodele.txt")]
+        [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourceLocation", "ftps://rsaklfsvrpdc:1002/FORTESTING/filetodele.txt")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:username", "IntegrationTester")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:password", "I73573r0")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:resultVar", "[[result]]")]
@@ -381,7 +381,7 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("Parameter:sourcePrivateKeyFile", "")]
         public virtual void ReadFileAtLocationNull_5()
         {
-            this.ReadFileAtLocationNull("5", "FTPS", "[[path]]", "ftps://rsaklfsvrsbspdc:1002/FORTESTING/filetodele.txt", "IntegrationTester", "I73573r0", "[[result]]", "Guid", "NO", "", ((string[])(null)));
+            this.ReadFileAtLocationNull("5", "FTPS", "[[path]]", "ftps://rsaklfsvrpdc:1002/FORTESTING/filetodele.txt", "IntegrationTester", "I73573r0", "[[result]]", "Guid", "NO", "", ((string[])(null)));
 #line hidden
         }
         
@@ -459,23 +459,23 @@ this.ScenarioSetup(scenarioInfo);
 #line 63
  testRunner.And(string.Format("the execution has \"{0}\" error", errorOccured), ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
-            TechTalk.SpecFlow.Table table769 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table773 = new TechTalk.SpecFlow.Table(new string[] {
                         "Input Path",
                         "Username",
                         "Password"});
-            table769.AddRow(new string[] {
+            table773.AddRow(new string[] {
                         string.Format("{0} = {1}", fileOrFolder, sourceLocation),
                         string.Format("{0}", username),
                         "String"});
 #line 65
- testRunner.And("the debug inputs as", ((string)(null)), table769, "And ");
+ testRunner.And("the debug inputs as", ((string)(null)), table773, "And ");
 #line hidden
-            TechTalk.SpecFlow.Table table770 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table774 = new TechTalk.SpecFlow.Table(new string[] {
                         ""});
-            table770.AddRow(new string[] {
+            table774.AddRow(new string[] {
                         string.Format("{0} = {1}", resultVar, result)});
 #line 68
- testRunner.And("the debug output as", ((string)(null)), table770, "And ");
+ testRunner.And("the debug output as", ((string)(null)), table774, "And ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -1685,23 +1685,23 @@ this.ScenarioSetup(scenarioInfo);
 #line 127
  testRunner.And(string.Format("the execution has \"{0}\" error", errorOccured), ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
-            TechTalk.SpecFlow.Table table771 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table775 = new TechTalk.SpecFlow.Table(new string[] {
                         "Input Path",
                         "Username",
                         "Password"});
-            table771.AddRow(new string[] {
+            table775.AddRow(new string[] {
                         string.Format("{0} = {1}", source, sourceLocation),
                         string.Format("{0}", username),
                         "String"});
 #line 128
- testRunner.And("the debug inputs as", ((string)(null)), table771, "And ");
+ testRunner.And("the debug inputs as", ((string)(null)), table775, "And ");
 #line hidden
-            TechTalk.SpecFlow.Table table772 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table776 = new TechTalk.SpecFlow.Table(new string[] {
                         ""});
-            table772.AddRow(new string[] {
+            table776.AddRow(new string[] {
                         string.Format("{0} = {1}", resultVar, result)});
 #line 131
- testRunner.And("the debug output as", ((string)(null)), table772, "And ");
+ testRunner.And("the debug output as", ((string)(null)), table776, "And ");
 #line hidden
             this.ScenarioCleanup();
         }

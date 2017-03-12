@@ -104,6 +104,13 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="DependencyVisualization\DependencyVisualizationNode.cs" />
+    <Compile Include="DeplyResult.cs" />
+    <Compile Include="Dev2MethodInfo.cs" />
     <Compile Include="DuplicateResource.cs" />
     <Compile Include="ApisJson.cs" />
     <Compile Include="Common\DeleteHelper.cs" />
@@ -128,7 +135,6 @@
     <Compile Include="DependencyGraphGenerator.cs" />
     <Compile Include="DependencyVisualization\CircularDependency.cs" />
     <Compile Include="DependencyVisualization\Graph.cs" />
-    <Compile Include="DependencyVisualization\Node.cs" />
     <Compile Include="Dev2EnumConverter.cs" />
     <Compile Include="Dev2Tokenizer.cs" />
     <Compile Include="Exchange\ExchangeEmailSender.cs" />
@@ -154,7 +160,11 @@
     <Compile Include="Interfaces\ITimeZoneBuilder.cs" />
     <Compile Include="Lookups\CompressionRatios.cs" />
     <Compile Include="MaintainerApi.cs" />
+    <Compile Include="Mapper.cs" />
     <Compile Include="Patterns\SpookyAction.cs" />
+    <Compile Include="PluginAction.cs" />
+    <Compile Include="PluginConstructor.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="PropertyApi.cs" />
     <Compile Include="RecordSetSearchPayload.cs" />
     <Compile Include="SaveResult.cs" />

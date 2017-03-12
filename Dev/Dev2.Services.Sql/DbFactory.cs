@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Collections;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
@@ -38,7 +37,7 @@ namespace Dev2.Services.Sql
             _sqlConnection.StatisticsEnabled = true;
             _sqlConnection.InfoMessage += (sender, args) =>
             {
-                Dev2Logger.Debug("Sql Server:" + args.Message + " Source:" + args.Source);
+                Dev2Logger.Debug("SQL Server:" + args.Message + " Source:" + args.Source);
                 foreach (SqlError error in args.Errors)
                 {
                     var errorMessages = new StringBuilder();
@@ -48,7 +47,7 @@ namespace Dev2.Services.Sql
                                         "Source: " + error.Source + Environment.NewLine +
                                         "Procedure: " + error.Procedure + Environment.NewLine);
 
-                    Dev2Logger.Error("Sql Error:" + errorMessages.ToString());
+                    Dev2Logger.Error("SQL Error:" + errorMessages.ToString());
                 }
                 
             };
@@ -84,16 +83,15 @@ namespace Dev2.Services.Sql
             }
         }
 
-        public DataTable CreateTable(IDataReader reader, LoadOption overwriteChanges)
-        {
-            var table = new DataTable();
-            table.Load(reader, LoadOption.OverwriteChanges);
-            var retrieveStatistics = _sqlConnection.RetrieveStatistics();
-            foreach (DictionaryEntry retrieveStatistic in retrieveStatistics)
+        public DataTable CreateTable(IDataAdapter reader, LoadOption overwriteChanges)
+        {           
+            DataSet ds = new DataSet(); //conn is opened by dataadapter
+            reader.Fill(ds);
+            if (ds.Tables.Count > 0)
             {
-                Dev2Logger.Debug("Sql Stat:"+retrieveStatistic.Key+": "+retrieveStatistic.Value);
+                return ds.Tables[0];
             }
-            return table;
+            return new DataTable();
         }
 
         public DataSet FetchDataSet(IDbCommand command)

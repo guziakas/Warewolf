@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,7 @@ namespace Dev2.Studio.Diagnostics
             {
                 throw new ArgumentNullException("e");
             }
-            if (_busy || (e.Source!=null && (e.Source.Contains("InfragisticsWPF4.DragDrop") || e.Source.Contains("PresentationFramework"))))
+            if (_busy || e.Message.ToLowerInvariant().Equals("The remote name could not be resolved: 'warewolf.io'".ToLowerInvariant()) || (e.Source!=null && (e.Source.Contains("InfragisticsWPF4.DragDrop") || e.Source.Contains("PresentationFramework"))))
             {
                 return true;
             }
@@ -38,7 +38,6 @@ namespace Dev2.Studio.Diagnostics
                 Dev2Logger.Error("Unhandled Exception" ,e);
                 _exception = e;
                 _busy = true;                
-                Dev2Logger.Error(_exception);
                 var popupController = CreatePopupController();
                 var exceptionString = ToErrorString(_exception);
                 var lastExceptionSignature = _lastExceptionSignature;

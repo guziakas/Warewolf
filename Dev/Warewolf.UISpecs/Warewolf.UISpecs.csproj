@@ -58,15 +58,19 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="DBConnector.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>DBConnector.feature</DependentUpon>
     </Compile>
-    <Compile Include="PluginConnector.feature.cs">
+    <Compile Include="DeploySpecs.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>PluginConnector.feature</DependentUpon>
+      <DependentUpon>DeploySpecs.feature</DependentUpon>
     </Compile>
     <Compile Include="SaveDialog.feature.cs">
       <AutoGen>True</AutoGen>
@@ -79,11 +83,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Explorer.feature</DependentUpon>
     </Compile>
-    <Compile Include="SettingsTab.feature.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>SettingsTab.feature</DependentUpon>
-    </Compile>
     <Compile Include="SharepointConnectors.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -93,6 +92,11 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>SwitchTool.feature</DependentUpon>
+    </Compile>
+    <Compile Include="TestingFrameworkMocking.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>TestingFrameworkMocking.feature</DependentUpon>
     </Compile>
     <Compile Include="WebConnector.feature.cs">
       <AutoGen>True</AutoGen>
@@ -113,22 +117,18 @@
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>DBConnector.feature.cs</LastGenOutput>
     </None>
+    <None Include="DeploySpecs.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>DeploySpecs.feature.cs</LastGenOutput>
+    </None>
     <None Include="Explorer.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Explorer.feature.cs</LastGenOutput>
     </None>
     <None Include="packages.config" />
-    <None Include="PluginConnector.feature">
-      <Generator>SpecFlowSingleFileGenerator</Generator>
-      <LastGenOutput>PluginConnector.feature.cs</LastGenOutput>
-    </None>
     <None Include="SaveDialog.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>SaveDialog.feature.cs</LastGenOutput>
-    </None>
-    <None Include="SettingsTab.feature">
-      <Generator>SpecFlowSingleFileGenerator</Generator>
-      <LastGenOutput>SettingsTab.feature.cs</LastGenOutput>
     </None>
     <None Include="SharepointConnectors.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
@@ -137,6 +137,10 @@
     <None Include="SwitchTool.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>SwitchTool.feature.cs</LastGenOutput>
+    </None>
+    <None Include="TestingFrameworkMocking.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>TestingFrameworkMocking.feature.cs</LastGenOutput>
     </None>
     <None Include="WebConnector.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>

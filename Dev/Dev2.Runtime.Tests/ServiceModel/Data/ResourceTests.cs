@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -346,6 +346,81 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual(2, resource.Dependencies.Count);
             Assert.AreEqual("GenDev", resource.Dependencies[1].ResourceName);
             Assert.AreEqual("62505a00-b304-4ac0-a55c-50ce85111f16", resource.Dependencies[1].ResourceID.ToString());
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebPutTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("put");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebDeleteTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("delete");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebPostTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("post");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebGetTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("delete");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasSharepointSourceFromSharepointCopyTool_ShouldHaveSharepointSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("Sharepoint Connectors Testing");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
         }
 
 

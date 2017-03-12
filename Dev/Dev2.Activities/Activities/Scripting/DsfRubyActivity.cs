@@ -8,6 +8,7 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Development.Languages.Scripting;
 using Dev2.Diagnostics;
@@ -25,7 +26,7 @@ namespace Dev2.Activities.Scripting
     /// <summary>
     /// Activity used for executing JavaScript through a tool
     /// </summary>
-    [ToolDescriptorInfo("Scripting-Ruby", "Ruby", ToolType.Native, "3E9FF6C9-E9C6-4C6C-B605-EF6D803373DC", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "ruby_Tag")]
+    [ToolDescriptorInfo("Scripting-Ruby", "Ruby", ToolType.Native, "3E9FF6C9-E9C6-4C6C-B605-EF6D803373DC", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Ruby")]
     public class DsfRubyActivity : DsfActivityAbstract<string>
     {
         public DsfRubyActivity()
@@ -169,17 +170,19 @@ namespace Dev2.Activities.Scripting
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
         #endregion
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
 
         #region Get Debug Inputs/Outputs
 

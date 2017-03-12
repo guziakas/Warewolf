@@ -19,7 +19,7 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Activities.DropBox2016.DeleteActivity
 {
-    [ToolDescriptorInfo("Dropbox", "Delete", ToolType.Native, "8AC94835-0A28-4166-A53A-D7B07730C135", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Delete_Tags")]
+    [ToolDescriptorInfo("Dropbox", "Delete", ToolType.Native, "8AC94835-0A28-4166-A53A-D7B07730C135", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Delete")]
     public class DsfDropBoxDeleteActivity : DsfBaseActivity
     {
         private DropboxClient _client;
@@ -52,13 +52,7 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
             return _client;
         }
 
-        #region Overrides of DsfActivity
-
-        public override string DisplayName { get; set; }
-
-        #endregion Overrides of DsfActivity
-
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             DropboxSingleExecutor = new DropboxDelete(evaluatedValues["DeletePath"]);
             var dropboxExecutionResult = DropboxSingleExecutor.ExecuteTask(GetClient());
@@ -66,14 +60,14 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
             if (dropboxSuccessResult != null)
             {
                 dropboxSuccessResult.GerFileMetadata();
-                return GlobalConstants.DropBoxSucces;
+                return new List<string> { GlobalConstants.DropBoxSuccess };
             }
             var dropboxFailureResult = dropboxExecutionResult as DropboxFailureResult;
             if (dropboxFailureResult != null)
             {
                 Exception = dropboxFailureResult.GetException();
             }
-            var executionError = Exception.InnerException == null ? Exception.Message : Exception.InnerException.Message;
+            var executionError = Exception.InnerException?.Message ?? Exception.Message;
             throw new Exception(executionError);
         }
 

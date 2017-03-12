@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -137,8 +138,8 @@ namespace Dev2.Core.Tests.Settings
             Assert.IsNotNull(viewModel.ServerPermissions);
             Assert.IsNotNull(viewModel.ResourcePermissions);
 
-            var serverPerms = securitySettingsTO == null ? new List<WindowsGroupPermission>() : securitySettingsTO.WindowsGroupPermissions.Where(p => p.IsServer).ToList();
-            var resourcePerms = securitySettingsTO == null ? new List<WindowsGroupPermission>() : securitySettingsTO.WindowsGroupPermissions.Where(p => !p.IsServer).ToList();
+            var serverPerms = securitySettingsTO?.WindowsGroupPermissions.Where(p => p.IsServer).ToList() ?? new List<WindowsGroupPermission>();
+            var resourcePerms = securitySettingsTO?.WindowsGroupPermissions.Where(p => !p.IsServer).ToList() ?? new List<WindowsGroupPermission>();
 
             // constructor adds an extra "new"  permission
             Assert.AreEqual(serverPerms.Count + 1, viewModel.ServerPermissions.Count);
@@ -797,7 +798,7 @@ namespace Dev2.Core.Tests.Settings
             //------------Execute Test---------------------------
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Core.SettingsSecurityResourceHelpResource, viewModel.HelpText);
+            Assert.AreEqual(Warewolf.Studio.Resources.Languages.HelpText.SettingsSecurityResourceHelpResource, viewModel.HelpText);
         }
 
         [TestMethod]
@@ -1102,6 +1103,84 @@ namespace Dev2.Core.Tests.Settings
             var hasDuplicateResourcePermissions = securityViewModel.HasDuplicateResourcePermissions();
             //------------Assert Results-------------------------
             Assert.IsFalse(hasDuplicateResourcePermissions);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("SecurityViewModel_HasDuplicateResourcePermissions")]
+        public void SecurityViewModel_ResourcePermissionsCompare_IsDeleted_ReturnsTrue()
+        {
+            //------------Setup for test--------------------------
+            var securityViewModel = new SecurityViewModel(new SecuritySettingsTO(), new Mock<DirectoryObjectPickerDialog>().Object, new Mock<IWin32Window>().Object, new Mock<IEnvironmentModel>().Object, () => new Mock<IResourcePickerDialog>().Object);
+            var resourceId = Guid.NewGuid();
+
+            var groupPermission = new WindowsGroupPermission
+            {
+                WindowsGroup = "Some Group",
+                ResourceID = resourceId,
+                IsServer = false,
+                IsDeleted = false,
+                ResourceName = "a"
+
+            };
+            securityViewModel.ResourcePermissions.Clear();
+            securityViewModel.ResourcePermissions.Add(groupPermission);
+            var methodInfo = typeof(SecurityViewModel).GetMethod("ResourcePermissionsCompare", BindingFlags.Instance | BindingFlags.NonPublic);
+            //------------Execute Test---------------------------
+            var groupPermissions = new ObservableCollection<WindowsGroupPermission>()
+            {
+                        new WindowsGroupPermission
+                            {
+                                WindowsGroup = "Some Group",
+                                ResourceID = resourceId,
+                                IsServer = false,
+                                IsDeleted = true,
+                            ResourceName = "a"
+
+                            }
+            };
+            var invoke = methodInfo.Invoke(securityViewModel, new object[] { groupPermissions , true});
+            //------------Assert Results-------------------------
+            Assert.IsFalse(bool.Parse(invoke.ToString()));
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("SecurityViewModel_HasDuplicateResourcePermissions")]
+        public void SecurityViewModel_ServerPermissionsCompare_IsDeleted_ReturnsTrue()
+        {
+            //------------Setup for test--------------------------
+            var securityViewModel = new SecurityViewModel(new SecuritySettingsTO(), new Mock<DirectoryObjectPickerDialog>().Object, new Mock<IWin32Window>().Object, new Mock<IEnvironmentModel>().Object, () => new Mock<IResourcePickerDialog>().Object);
+            var resourceId = Guid.NewGuid();
+
+            var groupPermission = new WindowsGroupPermission
+            {
+                WindowsGroup = "Some Group",
+                ResourceID = resourceId,
+                IsServer = false,
+                IsDeleted = false,
+                ResourceName = "a"
+
+            };
+            securityViewModel.ResourcePermissions.Clear();
+            securityViewModel.ResourcePermissions.Add(groupPermission);
+            var methodInfo = typeof(SecurityViewModel).GetMethod("ServerPermissionsCompare", BindingFlags.Instance | BindingFlags.NonPublic);
+            //------------Execute Test---------------------------
+            var groupPermissions = new ObservableCollection<WindowsGroupPermission>()
+            {
+                        new WindowsGroupPermission
+                            {
+                                WindowsGroup = "Some Group",
+                                ResourceID = resourceId,
+                                IsServer = false,
+                                IsDeleted = true,
+                            ResourceName = "a"
+
+                            }
+            };
+            var invoke = methodInfo.Invoke(securityViewModel, new object[] { groupPermissions, true });
+            //------------Assert Results-------------------------
+            Assert.IsFalse(bool.Parse(invoke.ToString()));
         }
 
         [TestMethod]

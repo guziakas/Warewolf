@@ -30,7 +30,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Warewolf.Tests\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -51,6 +51,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Reference Include="AeroWizard, Version=2.1.7.0, Culture=neutral, PublicKeyToken=915e74f5d64b8f37, processorArchitecture=MSIL">
       <HintPath>..\packages\AeroWizard.2.1.7\lib\net40\AeroWizard.dll</HintPath>
       <Private>True</Private>
@@ -91,6 +95,7 @@
     <Reference Include="InfragisticsWPF4.Math.Calculators.v15.1">
       <HintPath>..\Binaries\InfragisticsWPF4.Math.Calculators.v15.1.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.AspNet.SignalR.Client, Version=2.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" />
     <Reference Include="Microsoft.AspNet.SignalR.Core, Version=2.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.AspNet.SignalR.Core.2.2.0\lib\net45\Microsoft.AspNet.SignalR.Core.dll</HintPath>
@@ -227,9 +232,11 @@
     <Compile Include="Hosting\ServerExplorerRepositoryTests.cs" />
     <Compile Include="Hosting\ServerVersionRepositoryTests.cs" />
     <Compile Include="Hosting\TestCatalogTests.cs" />
+    <Compile Include="Hosting\ServiceActionRepoTests.cs" />
     <Compile Include="Hosting\UpgradePathTests.cs" />
     <Compile Include="Hosting\VersionStrategyTests.cs" />
     <Compile Include="Plugins\DllExtractor.cs" />
+    <Compile Include="Plugins\ServiceConstructorListTests.cs" />
     <Compile Include="ResourceUpgraders\BaseUpgradeConvertorTests.cs" />
     <Compile Include="ResourceUpgraders\EncryptionResourceUpgraderTests.cs" />
     <Compile Include="ServiceModel\ComPluginServicesTest.cs" />
@@ -242,18 +249,22 @@
     <Compile Include="Services\CreateFolderTest.cs" />
     <Compile Include="Services\DeleteItemsTest.cs" />
     <Compile Include="Security\SecurityConfigFetcher.cs" />
+    <Compile Include="Services\DeleteResourceServiceTests.cs" />
     <Compile Include="Services\DeleteScheduledResourceTest.cs" />
     <Compile Include="Services\DeleteTestTests.cs" />
     <Compile Include="Services\DeleteVersionTest.cs" />
     <Compile Include="Services\DuplicateFolderServiceTests.cs" />
     <Compile Include="Services\DuplicateResourceServiceTests.cs" />
+    <Compile Include="Services\FetchPluginActionsWithReturnsTypesTests.cs" />
     <Compile Include="Services\FetchComPluginActionsTests.cs" />
     <Compile Include="Services\FetchExplorerIDuplicatesTests.cs" />
     <Compile Include="Services\FetchExplorerItemsTest.cs" />
     <Compile Include="Services\FetchPerformanceCountersTests.cs" />
+    <Compile Include="Services\FetchPluginConstructorTests.cs" />
     <Compile Include="Services\FetchTestsForDeployTest.cs" />
     <Compile Include="Services\FetchTestsTest.cs" />
     <Compile Include="Services\FindDependenciesTests.cs" />
+    <Compile Include="Services\GetServerInformationTest.cs" />
     <Compile Include="Services\GetServerVersionTest.cs" />
     <Compile Include="Services\GetVersionTest.cs" />
     <Compile Include="Services\GetDirectoriesRelativeToServerTests.cs" />
@@ -313,9 +324,12 @@
     <Compile Include="Services\HostSecureConfigTests.cs" />
     <Compile Include="Services\MockServiceExecutionAbstract.cs" />
     <Compile Include="Services\MoveItemsServiceTest.cs" />
+    <Compile Include="Services\ReloadTestsTests.cs" />
     <Compile Include="Services\RenameItemsTest.cs" />
     <Compile Include="Services\RollBackToTest.cs" />
+    <Compile Include="Services\SavePluginServiceTests.cs" />
     <Compile Include="Services\SaveScheduledResourceTest.cs" />
+    <Compile Include="Services\DirectDeployTest.cs" />
     <Compile Include="Services\SaveTestsTest.cs" />
     <Compile Include="Services\SchedulerTestBase.cs" />
     <Compile Include="Services\SecurityReadTests.cs" />
@@ -435,6 +449,14 @@
     <ProjectReference Include="..\Dev2.Warewolf.Security\Warewolf.Security.csproj">
       <Project>{ca5e9373-46fe-41b9-ab2e-bd637f48b456}</Project>
       <Name>Warewolf.Security</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestingDotnetDllCascading\TestingDotnetDllCascading.csproj">
+      <Project>{a4f1daa7-9eab-4e46-9e73-bae87179f737}</Project>
+      <Name>TestingDotnetDllCascading</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Core\Warewolf.Core.csproj">
+      <Project>{8fd23ce0-02bb-48e1-a914-ba467938ce78}</Project>
+      <Name>Warewolf.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.ResourceManagement\Warewolf.ResourceManagement.csproj">
       <Project>{f36b2034-94bf-485c-b584-4e590ccc6dd3}</Project>
@@ -632,6 +654,13 @@
     <EmbeddedResource Include="XML\OauthSource.xml" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="XML\Sharepoint Connectors Testing.xml" />
+    <EmbeddedResource Include="XML\SharePoint Test Server.xml" />
+    <EmbeddedResource Include="XML\delete.xml" />
+    <EmbeddedResource Include="XML\get.xml" />
+    <EmbeddedResource Include="XML\post.xml" />
+    <EmbeddedResource Include="XML\put.xml" />
+    <EmbeddedResource Include="XML\WebPutServiceSource.xml" />
     <EmbeddedResource Include="XML\Big Bulk Testing.xml" />
     <Content Include="XML\GenDev.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

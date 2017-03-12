@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +9,10 @@
 */
 
 using System;
+using System.Collections.Generic;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
@@ -441,7 +442,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
         {
             //------------Setup for test--------------------------
             var service = CreateDummyWebService();
-            service.RequestHeaders = "[[test1]]";
+            service.Headers = new List<NameValue>() {new NameValue {Name="Accept",Value = "[[test1]]" } };
             service.RequestBody = "[[test2]]";
             service.RequestUrl = "[[test3]]";
             service.Method.Parameters.Add(new MethodParameter { Name = "test1", Value = "val1" });
@@ -452,7 +453,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             ErrorResultTO errors;
             WebServices.ExecuteRequest(service, false, out errors, DummyWebExecute);
             //------------Assert Results-------------------------
-            Assert.AreEqual("val1", _requestHeadersEvaluated[0]);
+            Assert.AreEqual("Accept:val1", _requestHeadersEvaluated[0]);
             Assert.AreEqual("val2", _requestBodyEvaluated);
             Assert.AreEqual("val3", _requestUrlEvaluated);
         }

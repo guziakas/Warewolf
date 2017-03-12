@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -147,20 +147,31 @@ namespace Dev2.Runtime.Hosting
 
         public void LoadWorkspace(Guid workspaceID)
         {
-            var @lock = ResourceCatalogImpl.Common.GetWorkspaceLock(workspaceID);
-            if (_loading)
+            try
             {
-                return;
+                var @lock = ResourceCatalogImpl.Common.GetWorkspaceLock(workspaceID);
+                if (_loading)
+                {
+                    return;
+                }
+                _loading = true;
+                lock (@lock)
+                {
+                    WorkspaceResources.AddOrUpdate(workspaceID,
+                        id => LoadWorkspaceImpl(workspaceID),
+                        (id, resources) => LoadWorkspaceImpl(workspaceID));
+                }
+                
             }
-            _loading = true;
-            lock (@lock)
+            catch (Exception e)
             {
-                WorkspaceResources.AddOrUpdate(workspaceID,
-                    id => LoadWorkspaceImpl(workspaceID),
-                    (id, resources) => LoadWorkspaceImpl(workspaceID));
+                Dev2Logger.Error("Error Loading Resources.", e);
+                throw;
             }
-
-            _loading = false;
+            finally
+            {
+                _loading = false;
+            }
         }
 
         #endregion
@@ -293,6 +304,7 @@ namespace Dev2.Runtime.Hosting
         #region SaveResource
 
         public ResourceCatalogResult SaveResource(Guid workspaceID, StringBuilder resourceXml, string savedPath, string reason = "", string user = "") => _catalogPluginContainer.SaveProvider.SaveResource(workspaceID, resourceXml, savedPath, reason, user);
+        public string SetResourceFilePath(Guid workspaceID, IResource resource, ref string savedPath) => _catalogPluginContainer.SaveProvider.SetResourceFilePath(workspaceID, resource, ref savedPath);
         public ResourceCatalogResult SaveResource(Guid workspaceID, IResource resource, string savedPath, string reason = "", string user = "") => _catalogPluginContainer.SaveProvider.SaveResource(workspaceID, resource, savedPath, reason, user);
         public ResourceCatalogResult SaveResource(Guid workspaceID, IResource resource, StringBuilder contents, string savedPath, string reason = "", string user = "") => _catalogPluginContainer.SaveProvider.SaveResource(workspaceID, resource,contents,savedPath, reason, user);
 
@@ -420,6 +432,7 @@ namespace Dev2.Runtime.Hosting
             {
                 var sa = service.Actions.FirstOrDefault();
                 MapServiceActionDependencies(workspaceID, sa);
+                ServiceActionRepo.Instance.AddToCache(resourceID, service);
                 var activity = GetActivity(sa);
                 if (parser != null)
                 {
@@ -436,9 +449,9 @@ namespace Dev2.Runtime.Hosting
 
         
 
-        public ResourceCatalogResult DuplicateResource(Guid resourceId, string sourcePath, string destinationPath) => _catalogPluginContainer.DuplicateProvider.DuplicateResource(resourceId, sourcePath, destinationPath);
+        public ResourceCatalogDuplicateResult DuplicateResource(Guid resourceId, string sourcePath, string destinationPath) => _catalogPluginContainer.DuplicateProvider.DuplicateResource(resourceId, sourcePath, destinationPath);
 
-        public ResourceCatalogResult DuplicateFolder(string sourcePath, string destinationPath, string newName, bool fixRefences) => _catalogPluginContainer.DuplicateProvider.DuplicateFolder(sourcePath, destinationPath, newName, fixRefences);
+        public ResourceCatalogDuplicateResult DuplicateFolder(string sourcePath, string destinationPath, string newName, bool fixRefences) => _catalogPluginContainer.DuplicateProvider.DuplicateFolder(sourcePath, destinationPath, newName, fixRefences);
         
 
     }

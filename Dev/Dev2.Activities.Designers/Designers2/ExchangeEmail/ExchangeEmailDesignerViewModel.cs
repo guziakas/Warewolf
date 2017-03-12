@@ -25,6 +25,7 @@ using Dev2.Studio.Core.Messages;
 using Dev2.Threading;
 using Dev2.Validation;
 using Warewolf.Resource.Errors;
+// ReSharper disable UnusedMember.Global
 
 // ReSharper disable NotAccessedField.Local
 // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -37,19 +38,10 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
 {
     public class ExchangeEmailDesignerViewModel : CustomToolWithRegionBase, IExchangeServiceViewModel
     {
-        // ReSharper disable UnusedMember.Local
-        readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
 
         readonly IEventAggregator _eventPublisher;
         readonly IEnvironmentModel _environmentModel;
-        public IAsyncWorker AsyncWorker;
+        readonly IAsyncWorker _asyncWorker;
         private ISourceToolRegion<IExchangeSource> _sourceRegion;
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
@@ -66,7 +58,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             TestEmailAccountCommand = new RelayCommand(o => TestEmailAccount(), o => CanTestEmailAccount);
             ChooseAttachmentsCommand = new DelegateCommand(o => ChooseAttachments());
             _eventPublisher = eventPublisher;
-            AsyncWorker = asyncWorker;
+            _asyncWorker = asyncWorker;
             Model = model;
             SetupCommonProperties();
         }
@@ -77,7 +69,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             VerifyArgument.IsNotNull("environmentModel", environmentModel);
-            AsyncWorker = asyncWorker;
+            _asyncWorker = asyncWorker;
             _environmentModel = environmentModel;
             _eventPublisher = eventPublisher;
             _eventPublisher.Subscribe(this);
@@ -92,6 +84,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             var model = CustomContainer.CreateInstance<IExchangeServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
             Model = model;
             SetupCommonProperties();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Email_Exchange_Send;
         }
 
         private void SetupCommonProperties()
@@ -116,7 +109,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         void InitializeProperties()
         {
             Properties = new List<KeyValuePair<string, string>>();
-            AddProperty("Source :", SourceRegion.SelectedSource == null ? "" : SourceRegion.SelectedSource.Name);
+            AddProperty("Source :", SourceRegion.SelectedSource == null ? "" : SourceRegion.SelectedSource.ResourceName);
         }
 
         public void AddProperty(string key, string value)
@@ -280,7 +273,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
 
         private void SendEmail(ExchangeSource testSource, ExchangeTestMessage testMessage)
         {
-            AsyncWorker.Start(() =>
+            _asyncWorker.Start(() =>
             {
                 try
                 {
@@ -426,3 +419,10 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         }
     }
 }
+
+
+
+
+
+
+

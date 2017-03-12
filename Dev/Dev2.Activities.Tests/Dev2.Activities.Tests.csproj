@@ -26,7 +26,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Warewolf.Tests\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -172,6 +172,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="ActivityTests\AbstractMultipleFilesActivityTests.cs" />
     <Compile Include="ActivityTests\AggregateCalculateActivityTest.cs" />
     <Compile Include="ActivityTests\BaseActivityTests.cs" />
@@ -179,6 +183,7 @@
     <Compile Include="ActivityTests\CaseConvertActivityTests.cs" />
     <Compile Include="ActivityTests\CommentActivityTests.cs" />
     <Compile Include="ActivityTests\CountRecordsTest.cs" />
+    <Compile Include="ActivityTests\DecisionActivityTests.cs" />
     <Compile Include="ActivityTests\DeleteRecordsActivityTests.cs" />
     <Compile Include="ActivityTests\DropBox2016\Delete\DropBoxDeleteTests.cs" />
     <Compile Include="ActivityTests\DropBox2016\Download\DropBoxDownloadTests.cs" />
@@ -196,6 +201,7 @@
     <Compile Include="ActivityTests\DropBox2016\DropboxSoureFileValidatorShould.cs" />
     <Compile Include="ActivityTests\DropBox2016\Upload\DropBoxUploadTests.cs" />
     <Compile Include="ActivityTests\DropBox2016\Upload\DsfDropBoxUploadAcivtityTestShould.cs" />
+    <Compile Include="ActivityTests\DsfEnhancedDotNetDllActivityTests.cs" />
     <Compile Include="ActivityTests\MultiAssignObjectActivityTest.cs" />
     <Compile Include="ActivityTests\RecordsLengthTest.cs" />
     <Compile Include="ActivityTests\Scripting\DsfJavascriptActivityTests.cs" />
@@ -255,9 +261,9 @@
     <Compile Include="ActivityTests\Web\DsfWebPostActivityTests.cs" />
     <Compile Include="ActivityTests\UnZipTests.cs" />
     <Compile Include="ActivityTests\BaseActivityUnitTest.cs" />
+    <Compile Include="ActivityTests\Web\ResponseManagerTests.cs" />
     <Compile Include="ActivityTests\Web\WebGetRequestActivityTests.cs" />
     <Compile Include="ActivityTests\Web\WebRequestDataDtoTests.cs" />
-    <Compile Include="ActivityTests\Web\WebResponseManagerTests.cs" />
     <Compile Include="ActivityTests\XPathActivityTests.cs" />
     <Compile Include="ActivityTests\ZipTests.cs" />
     <Compile Include="ActivityTests\Web\DsfWebBaseActivityTests.cs" />
@@ -289,6 +295,7 @@
     <Compile Include="TOTests\JsonMappingToTest.cs" />
     <Compile Include="TOTests\SharepointSearchToTests.cs" />
     <Compile Include="TOTests\ValidatedObjectTests.cs" />
+    <Compile Include="ServiceTestHelperTests.cs" />
     <Compile Include="Utils\FindRecordsDisplayUtilTests.cs" />
     <Compile Include="Utils\StringComparer.cs" />
     <Compile Include="Utils\SharepointUtilsTests.cs" />
@@ -368,6 +375,10 @@
     <ProjectReference Include="..\Dev2.Util\Dev2.Util.csproj">
       <Project>{1990550D-EA6F-4DAC-9B5E-8571E86923ED}</Project>
       <Name>Dev2.Util</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestingDotnetDllCascading\TestingDotnetDllCascading.csproj">
+      <Project>{a4f1daa7-9eab-4e46-9e73-bae87179f737}</Project>
+      <Name>TestingDotnetDllCascading</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Core\Warewolf.Core.csproj">
       <Project>{8FD23CE0-02BB-48E1-A914-BA467938CE78}</Project>

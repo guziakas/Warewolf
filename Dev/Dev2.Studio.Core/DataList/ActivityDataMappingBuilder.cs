@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -179,13 +179,10 @@ namespace Dev2.DataList
                         if (!DataListUtil.IsSystemTag(c.Name))
                         {
                             var jsonAttribute = false;
-                            if (c.Attributes != null)
+                            var xmlAttribute = c.Attributes?["IsJson"];
+                            if (xmlAttribute != null)
                             {
-                                var xmlAttribute = c.Attributes["IsJson"];
-                                if (xmlAttribute != null)
-                                {
-                                    bool.TryParse(xmlAttribute.Value, out jsonAttribute);
-                                }
+                                bool.TryParse(xmlAttribute.Value, out jsonAttribute);
                             }
                             if (jsonAttribute)
                             {

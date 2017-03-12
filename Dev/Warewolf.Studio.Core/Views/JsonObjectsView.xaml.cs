@@ -18,7 +18,6 @@ namespace Dev2.Studio.Core.Views
         public JsonObjectsView()
         {
             InitializeComponent();
-            PopupViewManageEffects.AddBlackOutEffect(_blackoutGrid);
         }
 
         void JsonObjectsView_OnMouseDown(object sender, MouseButtonEventArgs e)
@@ -40,9 +39,19 @@ namespace Dev2.Studio.Core.Views
 
         public void ShowJsonString(string jsonString)
         {
+            PopupViewManageEffects.AddBlackOutEffect(_blackoutGrid);
             ResponseTextbox.Text = jsonString;
             Height = 280;
             ShowDialog();
+        }
+
+        private void JsonObjectsView_OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
+            {
+                var mainViewModel = CustomContainer.Get<IShellViewModel>();
+                mainViewModel?.ResetMainView();
+            }
         }
     }
 }

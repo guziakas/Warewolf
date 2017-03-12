@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,8 +19,8 @@ using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Data.Decision;
 using Dev2.Data.SystemTemplates.Models;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Diagnostics.Debug;
 using Dev2.Interfaces;
@@ -71,7 +71,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 _expression.ExpressionText = value;
             }
         }
-
         #endregion
 
         #region CacheMetadata
@@ -130,7 +129,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     DispatchDebugState(dataObject, StateType.After, 0);
                 }
 
-                OnExecutedCompleted(context, false, false);
+                OnExecutedCompleted(context);
             }
             finally
             {
@@ -151,7 +150,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 DispatchDebugState(dataObject, StateType.After, 0);
             }
-            OnExecutedCompleted(faultContext, true, false);
+            OnExecutedCompleted(faultContext);
         }
 
         #endregion
@@ -179,11 +178,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
                 foreach (Dev2Decision dev2Decision in dds.TheStack)
                 {
-                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dds.Mode, dev2Decision.Col1, out  error);
+                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dev2Decision.Col1, out  error);
                     allErrors.MergeErrors(error);
-                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dds.Mode, dev2Decision.Col2, out error);
+                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dev2Decision.Col2, out error);
                     allErrors.MergeErrors(error);
-                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dds.Mode, dev2Decision.Col3, out error);
+                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dev2Decision.Col3, out error);
                     allErrors.MergeErrors(error);
                 }
 
@@ -229,7 +228,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return result.Select(a => a as DebugItem).ToList();
         }
 
-        void AddInputDebugItemResultsAfterEvaluate(List<IDebugItem> result, ref string userModel, IExecutionEnvironment env, Dev2DecisionMode decisionMode, string expression, out ErrorResultTO error, DebugItem parent = null)
+        void AddInputDebugItemResultsAfterEvaluate(List<IDebugItem> result, ref string userModel, IExecutionEnvironment env, string expression, out ErrorResultTO error, DebugItem parent = null)
         {
             error = new ErrorResultTO();
             if(expression != null && DataListUtil.IsEvaluated(expression))

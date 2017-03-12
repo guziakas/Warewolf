@@ -5,10 +5,12 @@ using System.Globalization;
 using System.Linq;
 using Dev2.Activities.Debug;
 using Dev2.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
@@ -22,7 +24,7 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities.Exchange
 {
-    [ToolDescriptorInfo("Utility-SendMail", "Exchange Send", ToolType.Native, "8926E59B-18A3-03BB-A92F-6090C5C3EA80", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Email", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Email_Exchange Send_Tags")]
+    [ToolDescriptorInfo("Utility-SendMail", "Exchange Send", ToolType.Native, "8926E59B-18A3-03BB-A92F-6090C5C3EA80", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Email", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Email_Exchange_Send")]
     public class DsfExchangeEmailActivity : DsfActivityAbstract<string>
     {
         private readonly IDev2EmailSender _emailSender;
@@ -76,6 +78,12 @@ namespace Dev2.Activities.Exchange
         public new string Result { get; set; }
 
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
+
+
         #region Overrides of DsfNativeActivity<string>
 
         private bool IsDebug
@@ -112,7 +120,7 @@ namespace Dev2.Activities.Exchange
             InitializeDebug(dataObject);
             try
             {
-                var runtimeSource = ResourceCatalog.GetResource<ExchangeSource>(dataObject.WorkspaceID, SavedSource.ResourceID);
+                IExchange runtimeSource = ResourceCatalog.GetResource<ExchangeSource>(dataObject.WorkspaceID, SavedSource.ResourceID);
 
                 if (runtimeSource == null)
                 {
@@ -280,13 +288,10 @@ namespace Dev2.Activities.Exchange
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

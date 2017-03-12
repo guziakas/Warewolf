@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,7 @@ using Warewolf.Security.Encryption;
 namespace Dev2.Runtime.ServiceModel.Data
 {
     // PBI 953 - 2013.05.16 - TWR - Created
-    public class EmailSource : Resource, IResourceSource
+    public class EmailSource : Resource, IResourceSource,IEmailSource
     {
         public static int DefaultTimeout = 100000; // (100 seconds)
         public static int DefaultPort = 25;

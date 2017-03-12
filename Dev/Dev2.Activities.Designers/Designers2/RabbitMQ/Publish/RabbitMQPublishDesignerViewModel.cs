@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,6 +42,7 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Publish
             IServer server = shellViewModel.ActiveServer;
             _model = CustomContainer.CreateInstance<IRabbitMQSourceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel);
             SetupCommonViewModelProperties();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Rabbit_MQ_Publish;
         }
 
         public RabbitMQPublishDesignerViewModel(ModelItem modelItem, IRabbitMQSourceModel model)
@@ -57,7 +58,6 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Publish
         private void SetupCommonViewModelProperties()
         {
             ShowLarge = false;
-            ThumbVisibility = Visibility.Visible;
 
             EditRabbitMQSourceCommand = new RelayCommand(o => EditRabbitMQSource(), o => IsRabbitMQSourceSelected);
             NewRabbitMQSourceCommand = new RelayCommand(o => NewRabbitMQSource());
@@ -93,7 +93,7 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Publish
             set
             {
                 _selectedRabbitMQSource = value;
-                RabbitMQSourceResourceId = _selectedRabbitMQSource == null ? Guid.Empty : _selectedRabbitMQSource.ResourceID;
+                RabbitMQSourceResourceId = _selectedRabbitMQSource?.ResourceID ?? Guid.Empty;
                 OnPropertyChanged("IsRabbitMQSourceSelected");
                 EditRabbitMQSourceCommand.RaiseCanExecuteChanged();
             }
@@ -224,19 +224,13 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Publish
         private void OnPropertyChanged(string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

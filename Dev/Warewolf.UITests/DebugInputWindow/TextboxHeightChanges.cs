@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Warewolf.UITests.WorkflowTab.WorkflowTabUIMapClasses;
 using Keyboard = Microsoft.VisualStudio.TestTools.UITesting.Keyboard;
 using System.Windows.Input;
+using Warewolf.UITests.ExplorerUIMapClasses;
 
 namespace Warewolf.UITests
 {
@@ -10,10 +12,10 @@ namespace Warewolf.UITests
     {
         [TestMethod]
         [TestCategory("Debug Input")]
-        public void DebugInputTextboxHeightChangesUITest()
+        public void DebugInputWindow_TextboxHeightChanges_UITest()
         {
-            UIMap.Filter_Explorer("Hello World");
-            UIMap.Open_Explorer_First_Item_With_Context_Menu();
+            ExplorerUIMap.Filter_Explorer("Hello World");
+            ExplorerUIMap.Open_ExplorerFirstItem_From_ExplorerContextMenu();
             UIMap.Press_F5_To_Debug();
             var varValue = UIMap.MainStudioWindow.DebugInputDialog.TabItemsTabList.InputDataTab.InputsTable.Row1.InputValueCell.InputValueComboboxl.InputValueText;
 
@@ -24,6 +26,7 @@ namespace Warewolf.UITests
 
             Keyboard.SendKeys(varValue, "{Back}", ModifierKeys.None);
             Assert.AreEqual(heightBeforeEnterClick, varValue.Height, "Debug input dialog value textbox does not resize after deleting second line.");
+
             UIMap.Click_Cancel_DebugInput_Window();
         }
 
@@ -33,9 +36,7 @@ namespace Warewolf.UITests
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-#if !DEBUG
-            UIMap.CloseHangingDialogs();
-#endif
+            UIMap.AssertStudioIsRunning();
         }
 
         UIMap UIMap
@@ -52,6 +53,36 @@ namespace Warewolf.UITests
         }
 
         private UIMap _UIMap;
+
+        WorkflowTabUIMap WorkflowTabUIMap
+        {
+            get
+            {
+                if (_WorkflowTabUIMap == null)
+                {
+                    _WorkflowTabUIMap = new WorkflowTabUIMap();
+                }
+
+                return _WorkflowTabUIMap;
+            }
+        }
+
+        private WorkflowTabUIMap _WorkflowTabUIMap;
+
+        ExplorerUIMap ExplorerUIMap
+        {
+            get
+            {
+                if (_ExplorerUIMap == null)
+                {
+                    _ExplorerUIMap = new ExplorerUIMap();
+                }
+
+                return _ExplorerUIMap;
+            }
+        }
+
+        private ExplorerUIMap _ExplorerUIMap;
 
         #endregion
     }

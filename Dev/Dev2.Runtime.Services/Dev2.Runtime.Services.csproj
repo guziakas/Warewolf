@@ -190,6 +190,10 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\TestScripts\**\*.*">
+      <Link>Properties\TestScripts\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="DynamicProxy\Constants.cs" />
     <Compile Include="DynamicProxy\DynamicObject.cs" />
     <Compile Include="DynamicProxy\DynamicProxy.cs" />
@@ -198,9 +202,11 @@
     <Compile Include="DynamicProxy\DynamicProxyFactoryOptions.cs" />
     <Compile Include="ESB\Management\Services\AddFolderService.cs" />
     <Compile Include="ESB\Management\Services\ComDllLoaderHandler.cs" />
+    <Compile Include="ESB\Management\Services\DeleteAllTests.cs" />
     <Compile Include="ESB\Management\Services\DeleteItemService.cs" />
     <Compile Include="ESB\Management\Services\DeleteTest.cs" />
     <Compile Include="ESB\Management\Services\DeleteVersion.cs" />
+    <Compile Include="ESB\Management\Services\DirectDeploy.cs" />
     <Compile Include="ESB\Management\Services\DuplicateFolderService.cs" />
     <Compile Include="ESB\Management\Services\DuplicateResourceService.cs" />
     <Compile Include="ESB\Management\Services\FetchComPluginActions.cs" />
@@ -210,6 +216,8 @@
     <Compile Include="ESB\Management\Services\FetchDbSources.cs" />
     <Compile Include="ESB\Management\Services\FetchExchangeSources.cs" />
     <Compile Include="ESB\Management\Services\FetchDropboxSource.cs" />
+    <Compile Include="ESB\Management\Services\FetchPluginActionsWithReturnsTypes.cs" />
+    <Compile Include="ESB\Management\Services\FetchPluginConstructors.cs" />
     <Compile Include="ESB\Management\Services\FetchResourceDuplicates.cs" />
     <Compile Include="ESB\Management\Services\FetchPerfCounters.cs" />
     <Compile Include="ESB\Management\Services\FetchPluginActions.cs" />
@@ -229,6 +237,7 @@
     <Compile Include="ESB\Management\Services\FetchExplorerItems.cs" />
     <Compile Include="ESB\Management\Services\GetDllListings.cs" />
     <Compile Include="ESB\Management\Services\GetFiles.cs" />
+    <Compile Include="ESB\Management\Services\GetServerIformation.cs" />
     <Compile Include="ESB\Management\Services\GetMinSupportedServerVersion.cs" />
     <Compile Include="ESB\Management\Services\GetServerInformationalVersion.cs" />
     <Compile Include="ESB\Management\Services\GetSharepointListFields.cs" />
@@ -240,6 +249,7 @@
     <Compile Include="ESB\Management\Services\LoggingSettingsRead.cs" />
     <Compile Include="ESB\Management\Services\LoggingSettingsWrite.cs" />
     <Compile Include="ESB\Management\Services\MoveItemService.cs" />
+    <Compile Include="ESB\Management\Services\ReloadTests.cs" />
     <Compile Include="ESB\Management\Services\ReloadAllTests.cs" />
     <Compile Include="ESB\Management\Services\RenameFolderService.cs" />
     <Compile Include="ESB\Management\Services\RenameItemService.cs" />
@@ -310,6 +320,7 @@
     <Compile Include="Hosting\ResourceUpgraderFactory.cs" />
     <Compile Include="Hosting\ServerToolRepository.cs" />
     <Compile Include="Hosting\ServerVersionRepository.cs" />
+    <Compile Include="Hosting\ServiceActionRepo.cs" />
     <Compile Include="Hosting\UpgradePath.cs" />
     <Compile Include="Hosting\VersionStrategy.cs" />
     <Compile Include="Hosting\ServerExplorerRepository.cs" />
@@ -365,9 +376,12 @@
     <Compile Include="Security\SSLCertificateBuilder.cs" />
     <Compile Include="ServiceModel\ComPluginServices.cs" />
     <Compile Include="ServiceModel\Data\ComPluginService.cs" />
+    <Compile Include="ServiceModel\Data\ConstructorParameter.cs" />
     <Compile Include="ServiceModel\Data\ExchangeSource.cs" />
     <Compile Include="ServiceModel\Data\RecordsetList.cs" />
     <Compile Include="ServiceModel\Data\RecordsetListHelper.cs" />
+    <Compile Include="ServiceModel\Data\ServiceConstructor.cs" />
+    <Compile Include="ServiceModel\Data\ServiceConstructorList.cs" />
     <Compile Include="ServiceModel\Data\WcfProxyService.cs" />
     <Compile Include="ServiceModel\Data\WcfService.cs" />
     <Compile Include="ServiceModel\Data\WcfSource.cs" />
@@ -382,11 +396,15 @@
     <Compile Include="ServiceModel\Esb\Brokers\OracleDatabaseBroker.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\Plugin\AssemblyLoader.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\Plugin\IRuntime.cs" />
+    <Compile Include="ServiceModel\Esb\Brokers\Plugin\PluginExecutionDto.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\Plugin\PluginInvokeArgs.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\Plugin\PluginRuntimeHandler.cs" />
+    <Compile Include="ServiceModel\Esb\Brokers\Plugin\PluginRuntimeHandler.partial.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\Plugin\PluginServiceExecutionFactory.cs" />
+    <Compile Include="ServiceModel\Esb\Brokers\Plugin\PluginServiceExecutionFactory.partial.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\PostgreSqlDataBaseBroker.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\SqlDatabaseBroker.cs" />
+    <Compile Include="ServiceModel\IConnections.cs" />
     <Compile Include="ServiceModel\PluginServices.cs" />
     <Compile Include="ServiceModel\Utils\ServiceMappingHelper.cs" />
     <Compile Include="ServiceModel\WebServices.cs" />
@@ -499,9 +517,17 @@
       <Project>{dff93ecb-fdd1-405e-ae02-9f4bc7571c1b}</Project>
       <Name>Warewolf.Resource</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Storage\Warewolf.Storage.csproj">
+      <Project>{b3d070e0-11c1-4c1c-81a5-e680c1494945}</Project>
+      <Name>Warewolf.Storage</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WarewolfCOMIPC.Client\WarewolfCOMIPC.Client.csproj">
       <Project>{bca6f2b3-c102-45b5-8f64-f0cce2533f1f}</Project>
       <Name>WarewolfCOMIPC.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WarewolfParserInterop\WarewolfParserInterop.csproj">
+      <Project>{6EB59EEE-4E16-4F29-B1B0-715E56E9139D}</Project>
+      <Name>WarewolfParserInterop</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

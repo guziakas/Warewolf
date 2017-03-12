@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,8 +19,8 @@ using Dev2;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Data.Decision;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -364,9 +364,12 @@ namespace ActivityUnitTests
                 result = env.FetchErrors();
                 return;
             }
+            var brackettedField = DataListUtil.AddBracketsToValueIfNotExist(fieldToRetrieve);
+            CommonFunctions.WarewolfEvalResult evalResult = null;
             try
             {
-                result = ExecutionEnvironment.WarewolfEvalResultToString(env.Eval(DataListUtil.AddBracketsToValueIfNotExist(fieldToRetrieve), 0, true));
+                evalResult = env.Eval(brackettedField, 0, true);
+                result = ExecutionEnvironment.WarewolfEvalResultToString(evalResult);
             }
             catch( Exception err)
             {

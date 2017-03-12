@@ -10,22 +10,33 @@ namespace Warewolf.Studio.ViewModels
     {
         bool _isLoading;
         private bool _deployTests;
+        private Version _serverVersion;
         public IDeployStatsViewerViewModel StatsArea { private get; set; }
 
         #region Implementation of IDeployDestinationExplorerViewModel
 
         public DeployDestinationViewModel(IShellViewModel shellViewModel, IEventAggregator aggregator)
-            : base(shellViewModel, aggregator)
+            : base(shellViewModel, aggregator,false)
         {
             ConnectControlViewModel.SelectedEnvironmentChanged += DeploySourceExplorerViewModelSelectedEnvironmentChanged;
             ConnectControlViewModel.ServerConnected+=ServerConnected;
+            ConnectControlViewModel.ServerDisconnected+=ServerDisconnected;
             SelectedEnvironment = _environments.FirstOrDefault();
+            RefreshCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(() => RefreshEnvironment(SelectedEnvironment.ResourceId));
+        }
+
+        private void ServerDisconnected(object sender, IServer server)
+        {
+            if (SelectedEnvironment != null) ServerStateChanged?.Invoke(this, SelectedEnvironment.Server);
         }
 
         private void ServerConnected(object sender, IServer server)
         {
             var environmentViewModel = _environments.FirstOrDefault(a => a.Server.EnvironmentID == server.EnvironmentID);
-            SelectedEnvironment = environmentViewModel;           
+            environmentViewModel?.Server?.GetServerVersion();
+            environmentViewModel?.Server?.GetMinSupportedVersion();
+            SelectedEnvironment = environmentViewModel;
+            StatsArea?.ReCalculate();
         }
 
         void DeploySourceExplorerViewModelSelectedEnvironmentChanged(object sender, Guid environmentid)
@@ -78,7 +89,8 @@ namespace Warewolf.Studio.ViewModels
         public event ServerSate ServerStateChanged;
         public virtual Version MinSupportedVersion => Version.Parse(SelectedEnvironment.Server.GetMinSupportedVersion());
 
-        public virtual Version ServerVersion => Version.Parse(SelectedEnvironment.Server.GetServerVersion());
+        public virtual Version ServerVersion => _serverVersion ?? (_serverVersion = Version.Parse(SelectedEnvironment.Server.GetServerVersion()));
+
         public bool DeployTests
         {
             get

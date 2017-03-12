@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,11 @@
 using Dev2.Common.Interfaces.Infrastructure;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Dev2.Common.Interfaces.Explorer;
 
 namespace Dev2.Common.Interfaces
 {
@@ -51,11 +53,15 @@ namespace Dev2.Common.Interfaces
         void SetPropertiesForDialogFromPermissions(IWindowsGroupPermission permissions);
 
         Action SelectAll { get; set; }
+        ObservableCollection<IExplorerItemViewModel> UnfilteredChildren { get; set; }
 
         Task<bool> Load(bool isDeploy = false,bool reloadCatalogue = false);
 
         Task<bool> LoadDialog(string selectedId, bool b = false, bool reloadCatalogue = false);
 
         Task<bool> LoadDialog(Guid selectedPath);
+        IExplorerTreeItem FindByPath(string path);
+
+        ObservableCollection<IExplorerItemViewModel> CreateExplorerItemModels(IEnumerable<IExplorerItem> explorerItems, IServer server, IExplorerTreeItem parent, bool isDialog, bool isDeploy);
     }
 }

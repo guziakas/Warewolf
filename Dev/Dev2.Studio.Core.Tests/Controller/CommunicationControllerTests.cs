@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using Dev2.Common;
 using Dev2.Common.Common;
-using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Communication;
 using Dev2.Controller;
@@ -27,7 +26,7 @@ namespace Dev2.Core.Tests.Controller
         {
             //---------------Set up test pack-------------------
             var mock = new Mock<IPopupController>();
-            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false));
+            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false));
             CustomContainer.Register(mock.Object);
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(environmentConnection => environmentConnection.IsConnected).Returns(true);
@@ -45,7 +44,7 @@ namespace Dev2.Core.Tests.Controller
 
             controller.ExecuteCommand<ExecuteMessage>(connection.Object, GlobalConstants.ServerWorkspaceID);
             //---------------Test Result -----------------------
-            mock.Verify(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false), Times.Once);
+            mock.Verify(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false), Times.Once);
         }
 
         [TestMethod]
@@ -54,7 +53,7 @@ namespace Dev2.Core.Tests.Controller
         {
             //---------------Set up test pack-------------------
             var mock = new Mock<IPopupController>();
-            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false));
+            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false));
             CustomContainer.Register(mock.Object);
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(environmentConnection => environmentConnection.IsConnected).Returns(true);
@@ -75,7 +74,7 @@ namespace Dev2.Core.Tests.Controller
 
             controller.ExecuteCommand<ExplorerRepositoryResult>(connection.Object, GlobalConstants.ServerWorkspaceID);
             //---------------Test Result -----------------------
-            mock.Verify(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false), Times.Once);
+            mock.Verify(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false), Times.Once);
         }
 
         [TestMethod]
@@ -84,7 +83,7 @@ namespace Dev2.Core.Tests.Controller
         {
             //---------------Set up test pack-------------------
             var mock = new Mock<IPopupController>();
-            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false));
+            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false));
             CustomContainer.Register(mock.Object);
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(environmentConnection => environmentConnection.IsConnected).Returns(true);
@@ -105,7 +104,7 @@ namespace Dev2.Core.Tests.Controller
 
             var explorerRepositoryResult = controller.ExecuteCommandAsync<ExplorerRepositoryResult>(connection.Object, GlobalConstants.ServerWorkspaceID).Result;
             //---------------Test Result -----------------------
-            mock.Verify(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false), Times.Once);
+            mock.Verify(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false), Times.Once);
         }
 
         [TestMethod]
@@ -114,7 +113,7 @@ namespace Dev2.Core.Tests.Controller
         {
             //---------------Set up test pack-------------------
             var mock = new Mock<IPopupController>();
-            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false));
+            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false));
             CustomContainer.Register(mock.Object);
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(environmentConnection => environmentConnection.IsConnected).Returns(true);
@@ -128,7 +127,7 @@ namespace Dev2.Core.Tests.Controller
             {
                 //---------------Test Result -----------------------
                 Assert.IsNotNull(d);
-                mock.Verify(c => c.Show(ErrorResource.NotAuthorizedToCreateException, "ServiceNotAuthorizedException", MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false), Times.Once);
+                mock.Verify(c => c.Show(ErrorResource.NotAuthorizedToCreateException, "ServiceNotAuthorizedException", MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false), Times.Once);
             });
             
         }
@@ -139,7 +138,7 @@ namespace Dev2.Core.Tests.Controller
         {
             //---------------Set up test pack-------------------
             var mock = new Mock<IPopupController>();
-            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false));
+            mock.Setup(c => c.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false));
             CustomContainer.Register(mock.Object);
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(environmentConnection => environmentConnection.IsConnected).Returns(true);
@@ -155,7 +154,7 @@ namespace Dev2.Core.Tests.Controller
             {
                 //---------------Test Result -----------------------
                 Assert.IsNotNull(d);
-                mock.Verify(c => c.Show(ErrorResource.NotAuthorizedToCreateException, "ServiceNotAuthorizedException", MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false), Times.Never);
+                mock.Verify(c => c.Show(ErrorResource.NotAuthorizedToCreateException, "ServiceNotAuthorizedException", MessageBoxButton.OK, MessageBoxImage.Error, "", false, false, true, false, false, false), Times.Never);
             });
             
         }

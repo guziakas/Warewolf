@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -188,7 +188,8 @@ namespace Dev2.Studio.Views.DependencyVisualization
         void Nodes_OnNodeMouseDoubleClick(object sender, NetworkNodeClickEventArgs e)
         {
             var id = ((ExplorerItemNodeViewModel)e.NodeControl.Node.Data).ResourceId;
-            CustomContainer.Get<IShellViewModel>().OpenResource(id, CustomContainer.Get<IShellViewModel>().ActiveServer);
+            var activeServer = CustomContainer.Get<IShellViewModel>().ActiveServer;
+            CustomContainer.Get<IShellViewModel>().OpenResource(id,activeServer.EnvironmentID, activeServer);
             
         }
     }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -84,6 +84,7 @@ namespace Dev2.Activities.Designers2.Email
             ChooseAttachmentsCommand = new DelegateCommand(o => ChooseAttachments());
 
             RefreshSources(true);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Email_SMTP_Send;
         }
 
         public EmailSource SelectedEmailSource
@@ -364,10 +365,7 @@ namespace Dev2.Activities.Designers2.Email
                 {
                     EmailSources.Add(source);
                 }
-                if(continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -378,22 +376,21 @@ namespace Dev2.Activities.Designers2.Email
 
         void ChooseAttachments()
         {
-
-            const string Separator = @";";
-            var message = new FileChooserMessage { SelectedFiles = Attachments.Split(Separator.ToCharArray()) };
+            const string separator = @";";
+            var message = new FileChooserMessage { SelectedFiles = Attachments.Split(separator.ToCharArray()) };
             message.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == @"SelectedFiles")
                 {
-                    if (message.SelectedFiles != null)
+                    if (message.SelectedFiles == null || !message.SelectedFiles.Any())
                     {
-                        if(string.IsNullOrEmpty(Attachments))
+                        Attachments = "";
+                    }
+                    else
+                    {
+                        if (message.SelectedFiles != null)
                         {
-                            Attachments = string.Join(Separator, message.SelectedFiles);
-                        }
-                        else
-                        {
-                            Attachments +=Separator+string.Join(Separator, message.SelectedFiles);
+                            Attachments = string.Join(separator, message.SelectedFiles);
                         }
                     }
                 }
@@ -515,10 +512,7 @@ namespace Dev2.Activities.Designers2.Email
         public override void UpdateHelpDescriptor(string helpText)
         {
             var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }
